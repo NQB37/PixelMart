@@ -1,0 +1,17 @@
+enum RoleType {
+  ADMIN
+  CUSTOMER
+  DELIVERY
+}
+
+model Role {
+  id          String       @id @default(uuid())
+  name        RoleType     @default(CUSTOMER)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  users       User[]
+  permissions Permission[]
+
+  @@unique([name])
+  @@map("roles")
+}

@@ -1,0 +1,23 @@
+enum Status {
+  ACTIVE
+  INACTIVE
+  BANNED
+}
+
+model User {
+  id        String    @id @default(uuid())
+  email     String    @unique
+  password  String?
+  roleId    String
+  status    Status    @default(ACTIVE)
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  accounts  Account[]
+  addresses Address[]
+  profile   Profile?
+
+  role      Role      @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  @@index([roleId])
+  @@map("users")
+}

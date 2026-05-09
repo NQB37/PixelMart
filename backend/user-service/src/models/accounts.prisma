@@ -1,0 +1,17 @@
+enum Provider {
+  CREDENTIAL
+  GOOGLE
+}
+
+model Account {
+  id                String   @id @default(uuid())
+  userId            String
+  provider          Provider @default(CREDENTIAL)
+  providerAccountId String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+  @@map("accounts")
+}
