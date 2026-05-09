@@ -1,0 +1,97 @@
+import { Product } from '@/components/shared/ProductCard';
+
+export const CATEGORIES = [
+  { name: 'Smartphones', icon: '📱', accent: 'cyan' },
+  { name: 'Laptops', icon: '💻', accent: 'pink' },
+  { name: 'Gaming PCs', icon: '🖥️', accent: 'green' },
+  { name: 'Components', icon: '🧠', accent: 'yellow' },
+  { name: 'Monitors', icon: '📺', accent: 'cyan' },
+  { name: 'Keyboards', icon: '⌨️', accent: 'pink' },
+  { name: 'Audio', icon: '🎧', accent: 'green' },
+  { name: 'Gaming Gear', icon: '🕹️', accent: 'yellow' },
+] as const;
+
+export const DEALS: Product[] = [
+  {
+    id: '1',
+    name: 'ARCADE-X PRO PHONE',
+    category: 'Smartphones',
+    price: 699,
+    oldPrice: 899,
+    rating: 4.6,
+    badge: 'HOT',
+    emoji: '📱',
+    accent: 'pink',
+  },
+  {
+    id: '2',
+    name: 'PIXEL BLADE LAPTOP 16',
+    category: 'Laptops',
+    price: 1299,
+    oldPrice: 1599,
+    rating: 4.8,
+    badge: 'SALE',
+    emoji: '💻',
+    accent: 'cyan',
+  },
+  {
+    id: '3',
+    name: 'NEON RIG TOWER RTX',
+    category: 'Gaming PCs',
+    price: 1899,
+    oldPrice: 2299,
+    rating: 4.9,
+    emoji: '🖥️',
+    accent: 'green',
+  },
+  {
+    id: '4',
+    name: '8-BIT MECH KEYBOARD',
+    category: 'Accessories',
+    price: 119,
+    oldPrice: 159,
+    rating: 4.7,
+    badge: 'NEW',
+    emoji: '⌨️',
+    accent: 'yellow',
+  },
+];
+
+export const BEST: Product[] = [
+  {
+    id: '5',
+    name: 'QUASAR HEADSET 7.1',
+    category: 'Audio',
+    price: 149,
+    rating: 4.5,
+    emoji: '🎧',
+    accent: 'cyan',
+  },
+  {
+    id: '6',
+    name: 'RGB GAMING MOUSE',
+    category: 'Accessories',
+    price: 59,
+    rating: 4.4,
+    emoji: '🖱️',
+    accent: 'pink',
+  },
+  {
+    id: '7',
+    name: 'ULTRA OLED 27"',
+    category: 'Monitors',
+    price: 549,
+    rating: 4.7,
+    emoji: '📺',
+    accent: 'green',
+  },
+  {
+    id: '8',
+    name: 'RETRO ARCADE STICK',
+    category: 'Gaming Gear',
+    price: 89,
+    rating: 4.6,
+    emoji: '🕹️',
+    accent: 'yellow',
+  },
+];
