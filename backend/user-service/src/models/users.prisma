@@ -16,6 +16,7 @@ model User {
   accounts  Account[]
   addresses Address[]
   profile   Profile?
+  refreshTokens RefreshToken[]
 
   role      Role      @relation(fields: [roleId], references: [id], onDelete: Restrict)
   @@index([roleId])
