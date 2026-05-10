@@ -2,7 +2,7 @@ import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express from 'express';
 import { FRONTEND_URL, PORT } from './config/env.js';
-import { errorHandler } from './middlewares/error-handler.js';
+import { errorHandler } from './middlewares/errorHandle.middleware.js';
 import { corsOption } from './config/corsOption.js';
 import { APIs_V1 } from './routes/v1/index.route.js';
 
