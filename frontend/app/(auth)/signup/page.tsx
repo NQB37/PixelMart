@@ -130,10 +130,6 @@ export default function SignUpPage() {
                   />
                 )}
               />
-              <label className='flex items-start gap-2 font-retro text-base'>
-                <span className='mt-1 grid h-4 w-4 place-items-center border-2 border-foreground bg-input' />
-                I agree to the terms and privacy policy
-              </label>
               {formError && (
                 <div className='border-[3px] border-destructive bg-destructive/10 p-3 font-retro text-base text-destructive'>
                   {formError}
