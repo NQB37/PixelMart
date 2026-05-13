@@ -3,14 +3,20 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
+  ChevronDown,
   Gamepad2,
-  LogOut,
   Menu,
   Search,
   ShoppingCart,
   User,
 } from 'lucide-react';
 import { useState } from 'react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { useAuthStore } from '@/stores/auth-store';
 
 const NAV = [
@@ -84,32 +90,45 @@ export function Header() {
             </span>
           </Link>
           {isAuthenticated ? (
-            <>
-              <Link
-                href='/profile'
-                className='grid h-10 w-10 place-items-center border-[3px] border-foreground bg-card hover:bg-neon-cyan hover:text-background'
-                aria-label='Profile'
-                title={user?.email}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type='button'
+                  className='flex h-10 items-center gap-2 border-[3px] border-foreground bg-card px-3 font-pixel text-[10px] uppercase hover:bg-neon-cyan hover:text-background'
+                  aria-label='Open profile menu'
+                  title={user?.email}
+                >
+                  <User className='h-4 w-4' />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align='end'
+                className='min-w-36 rounded-none border-[3px] border-foreground bg-card p-1'
               >
-                <User className='h-4 w-4' />
-              </Link>
-              <button
-                type='button'
-                onClick={onLogout}
-                disabled={isLoading}
-                className='grid h-10 w-10 place-items-center border-[3px] border-foreground bg-card hover:bg-neon-pink hover:text-background disabled:cursor-not-allowed disabled:opacity-60'
-                aria-label='Log out'
-              >
-                <LogOut className='h-4 w-4' />
-              </button>
-            </>
+                <DropdownMenuItem asChild>
+                  <Link
+                    href='/profile'
+                    className='font-pixel text-[10px] uppercase focus:bg-neon-cyan focus:text-background'
+                  >
+                    Profile
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onSelect={onLogout}
+                  disabled={isLoading}
+                  className='font-pixel text-[10px] uppercase focus:bg-neon-pink focus:text-background'
+                >
+                  Logout
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           ) : (
             <Link
               href='/login'
-              className='grid h-10 w-10 place-items-center border-[3px] border-foreground bg-card hover:bg-neon-cyan hover:text-background'
+              className='flex h-10 items-center border-[3px] border-foreground bg-neon-green px-4 font-pixel text-[10px] uppercase text-background pixel-shadow hover:bg-neon-green/90'
               aria-label='Login'
             >
-              <User className='h-4 w-4' />
+              Login
             </Link>
           )}
         </div>
