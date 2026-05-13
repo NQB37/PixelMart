@@ -1,9 +1,17 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { Search, ShoppingCart, User, Menu, Gamepad2 } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
+import {
+  Gamepad2,
+  LogOut,
+  Menu,
+  Search,
+  ShoppingCart,
+  User,
+} from 'lucide-react';
 import { useState } from 'react';
+import { useAuthStore } from '@/stores/auth-store';
 
 const NAV = [
   { to: '/', label: 'Home' },
@@ -13,6 +21,18 @@ const NAV = [
 export function Header() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
+  const user = useAuthStore((state) => state.user);
+  const status = useAuthStore((state) => state.status);
+  const logout = useAuthStore((state) => state.logout);
+  const isAuthenticated = Boolean(user);
+  const isLoading = status === 'loading';
+
+  const onLogout = async () => {
+    await logout();
+    setOpen(false);
+    router.push('/login');
+  };
 
   return (
     <header className='sticky top-0 z-40 border-b-[3px] border-foreground bg-background/95 backdrop-blur'>
@@ -56,23 +76,49 @@ export function Header() {
           <Link
             href='/cart'
             className='relative grid h-10 w-10 place-items-center border-[3px] border-foreground bg-card hover:bg-neon-yellow hover:text-background'
+            aria-label='Cart'
           >
             <ShoppingCart className='h-4 w-4' />
             <span className='absolute -right-2 -top-2 grid h-5 min-w-5 place-items-center bg-neon-pink px-1 font-pixel text-[8px] text-background pixel-border'>
               3
             </span>
           </Link>
-          <Link
-            href='/login'
-            className='grid h-10 w-10 place-items-center border-[3px] border-foreground bg-card hover:bg-neon-cyan hover:text-background'
-          >
-            <User className='h-4 w-4' />
-          </Link>
+          {isAuthenticated ? (
+            <>
+              <Link
+                href='/profile'
+                className='grid h-10 w-10 place-items-center border-[3px] border-foreground bg-card hover:bg-neon-cyan hover:text-background'
+                aria-label='Profile'
+                title={user?.email}
+              >
+                <User className='h-4 w-4' />
+              </Link>
+              <button
+                type='button'
+                onClick={onLogout}
+                disabled={isLoading}
+                className='grid h-10 w-10 place-items-center border-[3px] border-foreground bg-card hover:bg-neon-pink hover:text-background disabled:cursor-not-allowed disabled:opacity-60'
+                aria-label='Log out'
+              >
+                <LogOut className='h-4 w-4' />
+              </button>
+            </>
+          ) : (
+            <Link
+              href='/login'
+              className='grid h-10 w-10 place-items-center border-[3px] border-foreground bg-card hover:bg-neon-cyan hover:text-background'
+              aria-label='Login'
+            >
+              <User className='h-4 w-4' />
+            </Link>
+          )}
         </div>
 
         <button
+          type='button'
           onClick={() => setOpen(!open)}
           className='ml-auto grid h-10 w-10 place-items-center border-[3px] border-foreground bg-card md:hidden'
+          aria-label='Open menu'
         >
           <Menu className='h-4 w-4' />
         </button>
@@ -105,13 +151,33 @@ export function Header() {
             >
               Cart
             </Link>
-            <Link
-              href='/login'
-              className='py-2 font-pixel text-[10px] uppercase'
-              onClick={() => setOpen(false)}
-            >
-              Login
-            </Link>
+            {isAuthenticated ? (
+              <>
+                <Link
+                  href='/profile'
+                  className='py-2 font-pixel text-[10px] uppercase'
+                  onClick={() => setOpen(false)}
+                >
+                  Profile
+                </Link>
+                <button
+                  type='button'
+                  className='py-2 text-left font-pixel text-[10px] uppercase disabled:cursor-not-allowed disabled:opacity-60'
+                  onClick={onLogout}
+                  disabled={isLoading}
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
+              <Link
+                href='/login'
+                className='py-2 font-pixel text-[10px] uppercase'
+                onClick={() => setOpen(false)}
+              >
+                Login
+              </Link>
+            )}
           </nav>
         </div>
       )}

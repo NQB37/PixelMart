@@ -21,7 +21,7 @@ export default function UnauthorizedPage() {
           <Link href='/login' className='btn-pixel'>
             LOG IN
           </Link>
-          <Link href='/sign-up' className='btn-pixel btn-pixel-pink'>
+          <Link href='/signup' className='btn-pixel btn-pixel-pink'>
             SIGN UP
           </Link>
           <Link href='/' className='btn-pixel btn-pixel-ghost'>
