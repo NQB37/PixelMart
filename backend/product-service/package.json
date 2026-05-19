@@ -1,0 +1,20 @@
+{
+  "name": "product-service",
+  "version": "1.0.0",
+  "description": "",
+  "license": "ISC",
+  "author": "NQB37",
+  "type": "module",
+  "main": "server.ts",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@types/express": "^5.0.6",
+    "express": "^5.2.1",
+    "mongoose": "^9.6.2",
+    "typescript": "^6.0.3",
+    "zod": "^4.4.3"
+  }
+}
