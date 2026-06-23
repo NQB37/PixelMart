@@ -63,3 +63,4 @@ pnpm-workspace.yaml
 docker-compose.override.yml
 
 generated
+/generated/prisma

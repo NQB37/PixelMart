@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { ApiError } from "@/utils/ApiError";
+import { env } from "@/config/env";
 
 export const errorHandler = (
   err: Error,
@@ -23,4 +24,11 @@ export const errorHandler = (
       errors: (err as any).errors,
     });
   }
+
+  console.error("Unhandled Error:", err);
+  return res.status(500).json({
+    success: false,
+    message:
+      env.nodeEnv === "production" ? "Internal server error" : err.message,
+  });
 };
