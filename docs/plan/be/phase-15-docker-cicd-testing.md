@@ -241,42 +241,10 @@ services:
     volumes:
       - ./server/src:/app/src  # Hot reload in dev
 
-  client-web:
-    build:
-      context: .
-      dockerfile: infra/docker/Dockerfile.client-web
-      args:
-        NEXT_PUBLIC_API_URL: http://localhost:8000/api/v1
-    container_name: pixelmart-client-web
-    ports:
-      - "3000:3000"
-    depends_on:
-      - server
-
-  seller-web:
-    build:
-      context: .
-      dockerfile: infra/docker/Dockerfile.seller-web
-    container_name: pixelmart-seller-web
-    ports:
-      - "3001:80"
-    depends_on:
-      - server
-
-  admin-web:
-    build:
-      context: .
-      dockerfile: infra/docker/Dockerfile.admin-web
-    container_name: pixelmart-admin-web
-    ports:
-      - "3002:80"
-    depends_on:
-      - server
-
 volumes:
   postgres_data:
   redis_data:
-```
+
 
 #### ⚠️ Lỗi fresher hay mắc:
 - **Copy `node_modules` vào image:** Thêm `.dockerignore`: `node_modules`, `.next`, `.env`, `dist`
@@ -317,7 +285,7 @@ jobs:
       - uses: actions/checkout@v4
       
       - uses: actions/setup-node@v4
-        with:
+         with:
           node-version: 20
           cache: 'npm'
           cache-dependency-path: server/package-lock.json
@@ -353,42 +321,6 @@ jobs:
         working-directory: server
         run: npm run build
 
-  lint-and-build-web-workspace:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Install pnpm
-        uses: pnpm/action-setup@v3
-        with:
-          version: 8
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: 'pnpm'
-          cache-dependency-path: web/pnpm-lock.yaml
-
-      - name: Install dependencies
-        working-directory: web
-        run: pnpm install --frozen-lockfile
-
-      - name: Lint and build client-web
-        working-directory: web
-        run: |
-          pnpm --filter client-web lint
-          pnpm --filter client-web build
-
-      - name: Lint and build seller-web
-        working-directory: web
-        run: |
-          pnpm --filter seller-web build
-
-      - name: Lint and build admin-web
-        working-directory: web
-        run: |
-          pnpm --filter admin-web build
-```
 
 ### Task 15.4: Writing Tests (5-7h)
 
@@ -454,12 +386,12 @@ describe('Checkout Flow', () => {
 
 ## 🏁 Checklist Cuối Phase 15
 
-- [ ] `docker compose up` → full system runs (client-web + seller-web + admin-web + server + DB + Redis)
-- [ ] Docker images < 300MB each (multi-stage)
-- [ ] `.dockerignore` blocks `node_modules`, `.env`, `.next`, `dist`
+- [ ] `docker compose up` → backend system runs (server + DB + Redis)
+- [ ] Server Docker image < 300MB (multi-stage)
+- [ ] `.dockerignore` blocks `node_modules`, `.env`, `dist`
 - [ ] Healthcheck endpoints work in containers
-- [ ] GitHub Actions: lint + test + build passes on PR for both server and web workspaces
+- [ ] GitHub Actions: lint + test + build passes on PR for server workspace
 - [ ] Unit tests: auth, cart, order, coupon services
 - [ ] Integration tests: checkout flow, stock management
 - [ ] Test coverage > 60% for critical modules
-- [ ] Commit: "ci: Docker containerization and CI pipeline with tests"
+- [ ] Commit: "ci: Docker containerization and CI pipeline with tests for backend"

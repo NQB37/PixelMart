@@ -22,22 +22,25 @@
 ### Task 6.1: Phát triển Custom Hook `useDebounce` (3h)
 
 **Files:**
+
 - Create: `web/shared/src/hooks/useDebounce.ts`
 - Test: `web/shared/tests/useDebounce.test.ts`
 - Modify: `web/shared/src/index.ts`
 
 **Interfaces:**
+
 - Consumes: React dependency (useState, useEffect)
 - Produces: `useDebounce<T>(value: T, delay: number): T` hook giúp trì hoãn việc cập nhật giá trị đầu vào.
 
 - [ ] **Step 1: Write the failing test**
 
 Tạo file `web/shared/tests/useDebounce.test.ts`. File test này sử dụng fake timers của Jest để mô phỏng sự trễ về thời gian.
-```typescript
-import { renderHook, act } from '@testing-library/react';
-import { useDebounce } from '../src/hooks/useDebounce';
 
-describe('useDebounce Hook', () => {
+```typescript
+import { renderHook, act } from "@testing-library/react";
+import { useDebounce } from "../src/hooks/useDebounce";
+
+describe("useDebounce Hook", () => {
   beforeEach(() => {
     jest.useFakeTimers();
   });
@@ -46,27 +49,27 @@ describe('useDebounce Hook', () => {
     jest.useRealTimers();
   });
 
-  it('should return initial value immediately', () => {
-    const { result } = renderHook(() => useDebounce('hello', 500));
-    expect(result.current).toBe('hello');
+  it("should return initial value immediately", () => {
+    const { result } = renderHook(() => useDebounce("hello", 500));
+    expect(result.current).toBe("hello");
   });
 
-  it('should debounce value updates', () => {
+  it("should debounce value updates", () => {
     const { result, rerender } = renderHook(
       ({ value, delay }) => useDebounce(value, delay),
-      { initialProps: { value: 'hello', delay: 500 } }
+      { initialProps: { value: "hello", delay: 500 } },
     );
 
-    rerender({ value: 'world', delay: 500 });
+    rerender({ value: "world", delay: 500 });
     // Vẫn trả về giá trị cũ do chưa hết thời gian debounce
-    expect(result.current).toBe('hello');
+    expect(result.current).toBe("hello");
 
     // Chạy nhanh thời gian qua 500ms
     act(() => {
       jest.advanceTimersByTime(500);
     });
 
-    expect(result.current).toBe('world');
+    expect(result.current).toBe("world");
   });
 });
 ```
@@ -75,6 +78,7 @@ describe('useDebounce Hook', () => {
 
 Run: `npx jest web/shared/tests/useDebounce.test.ts`
 Expected: FAIL. Không tìm thấy module `../src/hooks/useDebounce`.
+
 ```
 Cannot find module '../src/hooks/useDebounce' or similar import compilation error
 ```
@@ -82,8 +86,9 @@ Cannot find module '../src/hooks/useDebounce' or similar import compilation erro
 - [ ] **Step 3: Write minimal implementation**
 
 Tạo file `web/shared/src/hooks/useDebounce.ts`:
+
 ```typescript
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 
 export function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
@@ -103,15 +108,17 @@ export function useDebounce<T>(value: T, delay: number): T {
 ```
 
 Cập nhật `web/shared/src/index.ts` để export hook mới:
+
 ```typescript
 // Thêm vào cuối file index.ts
-export { useDebounce } from './hooks/useDebounce';
+export { useDebounce } from "./hooks/useDebounce";
 ```
 
 - [ ] **Step 4: Run test to verify it passes**
 
 Run: `npx jest web/shared/tests/useDebounce.test.ts`
 Expected: PASS
+
 ```
 PASS  web/shared/tests/useDebounce.test.ts
   useDebounce Hook
@@ -131,17 +138,20 @@ git commit -m "feat: implement and export useDebounce hook with tests"
 ### Task 6.2: Triển khai Spinner Component (2h)
 
 **Files:**
+
 - Create: `web/shared/src/components/ui/Spinner.tsx`
 - Test: `web/shared/tests/Spinner.test.tsx`
 - Modify: `web/shared/src/index.ts`
 
 **Interfaces:**
+
 - Consumes: React dependency
 - Produces: `Spinner` component hiển thị hiệu ứng xoay loading. Nhận props `size?: 'sm' | 'md' | 'lg'` và `className?: string`.
 
 - [ ] **Step 1: Write the failing test**
 
 Tạo file `web/shared/tests/Spinner.test.tsx`:
+
 ```typescript
 import React from 'react';
 import { render, screen } from '@testing-library/react';
@@ -174,6 +184,7 @@ describe('Spinner Component', () => {
 
 Run: `npx jest web/shared/tests/Spinner.test.tsx`
 Expected: FAIL. Lỗi import do component chưa được khai báo.
+
 ```
 Cannot find module '../src/components/ui/Spinner'
 ```
@@ -181,6 +192,7 @@ Cannot find module '../src/components/ui/Spinner'
 - [ ] **Step 3: Write minimal implementation**
 
 Tạo file `web/shared/src/components/ui/Spinner.tsx`:
+
 ```typescript
 import React from 'react';
 
@@ -207,15 +219,17 @@ export const Spinner: React.FC<SpinnerProps> = ({ size = 'md', className = '' })
 ```
 
 Cập nhật `web/shared/src/index.ts` để export Spinner:
+
 ```typescript
 // Thêm vào cuối file index.ts
-export { Spinner } from './components/ui/Spinner';
+export { Spinner } from "./components/ui/Spinner";
 ```
 
 - [ ] **Step 4: Run test to verify it passes**
 
 Run: `npx jest web/shared/tests/Spinner.test.tsx`
 Expected: PASS
+
 ```
 PASS  web/shared/tests/Spinner.test.tsx
   Spinner Component
@@ -235,17 +249,20 @@ git commit -m "feat: implement and export loading Spinner component with tests"
 ### Task 6.3: Triển khai Alert Component (2h)
 
 **Files:**
+
 - Create: `web/shared/src/components/ui/Alert.tsx`
 - Test: `web/shared/tests/Alert.test.tsx`
 - Modify: `web/shared/src/index.ts`
 
 **Interfaces:**
+
 - Consumes: React dependency
 - Produces: `Alert` component hiển thị các thông báo: `success` | `error` | `warning` | `info` kèm nút tắt đóng thông báo.
 
 - [ ] **Step 1: Write the failing test**
 
 Tạo file `web/shared/tests/Alert.test.tsx`:
+
 ```typescript
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
@@ -281,6 +298,7 @@ describe('Alert Component', () => {
 
 Run: `npx jest web/shared/tests/Alert.test.tsx`
 Expected: FAIL do component `Alert` chưa được tạo.
+
 ```
 Cannot find module '../src/components/ui/Alert'
 ```
@@ -288,6 +306,7 @@ Cannot find module '../src/components/ui/Alert'
 - [ ] **Step 3: Write minimal implementation**
 
 Tạo file `web/shared/src/components/ui/Alert.tsx`:
+
 ```typescript
 import React from 'react';
 
@@ -333,15 +352,17 @@ export const Alert: React.FC<AlertProps> = ({
 ```
 
 Cập nhật `web/shared/src/index.ts` để export Alert:
+
 ```typescript
 // Thêm vào cuối file index.ts
-export { Alert } from './components/ui/Alert';
+export { Alert } from "./components/ui/Alert";
 ```
 
 - [ ] **Step 4: Run test to verify it passes**
 
 Run: `npx jest web/shared/tests/Alert.test.tsx`
 Expected: PASS
+
 ```
 PASS  web/shared/tests/Alert.test.tsx
   Alert Component
@@ -362,17 +383,20 @@ git commit -m "feat: implement and export Alert component with support for style
 ### Task 6.4: Triển khai ProductCard Component (4h)
 
 **Files:**
+
 - Create: `web/shared/src/components/shared/ProductCard.tsx`
 - Test: `web/shared/tests/ProductCard.test.tsx`
 - Modify: `web/shared/src/index.ts`
 
 **Interfaces:**
+
 - Consumes: React dependency
 - Produces: `ProductCard` component để hiển thị chi tiết sản phẩm dưới dạng Card, tính toán phần trăm giảm giá và kích hoạt hàm callback thêm vào giỏ hàng.
 
 - [ ] **Step 1: Write the failing test**
 
 Tạo file `web/shared/tests/ProductCard.test.tsx`:
+
 ```typescript
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
@@ -391,7 +415,7 @@ describe('ProductCard Component', () => {
 
   it('renders product details correctly', () => {
     render(<ProductCard {...defaultProps} />);
-    
+
     expect(screen.getByText('Sample Product Name')).toBeInTheDocument();
     expect(screen.getByAltText('Sample Product Name')).toHaveAttribute('src', 'https://example.com/image.jpg');
     expect(screen.getByText('150.000 ₫')).toBeInTheDocument();
@@ -400,7 +424,7 @@ describe('ProductCard Component', () => {
 
   it('displays discount badge and original price if discounted', () => {
     render(<ProductCard {...defaultProps} originalPrice={200000} />);
-    
+
     expect(screen.getByText('-25%')).toBeInTheDocument();
     expect(screen.getByText('200.000 ₫')).toBeInTheDocument();
   });
@@ -418,6 +442,7 @@ describe('ProductCard Component', () => {
 
 Run: `npx jest web/shared/tests/ProductCard.test.tsx`
 Expected: FAIL do chưa có file components/shared/ProductCard.tsx.
+
 ```
 Cannot find module '../src/components/shared/ProductCard'
 ```
@@ -425,6 +450,7 @@ Cannot find module '../src/components/shared/ProductCard'
 - [ ] **Step 3: Write minimal implementation**
 
 Tạo file `web/shared/src/components/shared/ProductCard.tsx`:
+
 ```typescript
 import React from 'react';
 
@@ -521,15 +547,17 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 ```
 
 Cập nhật `web/shared/src/index.ts` để export ProductCard:
+
 ```typescript
 // Thêm vào cuối file index.ts
-export { ProductCard } from './components/shared/ProductCard';
+export { ProductCard } from "./components/shared/ProductCard";
 ```
 
 - [ ] **Step 4: Run test to verify it passes**
 
 Run: `npx jest web/shared/tests/ProductCard.test.tsx`
 Expected: PASS
+
 ```
 PASS  web/shared/tests/ProductCard.test.tsx
   ProductCard Component

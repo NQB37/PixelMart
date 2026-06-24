@@ -7,17 +7,15 @@
 ## 🎯 MVP Của Phase Này
 
 **Wishlist:**
-- Toggle yêu thích sản phẩm (heart icon)
-- Trang wishlist hiển thị danh sách SP đã thích
-- Remove item từ wishlist
+- API toggle yêu thích sản phẩm
+- API lấy danh sách sản phẩm yêu thích (lọc bỏ sản phẩm inactive)
+- Xóa item từ wishlist
 
 **Coupon:**
-- Seller tạo/quản lý coupon cho shop mình
+- Seller tạo/quản lý coupon cho shop mình qua API
 - Admin tạo coupon platform (toàn sàn)
-- Buyer nhập mã coupon ở trang checkout → validate → apply discount
+- API validate và áp dụng coupon ở checkout
 - Coupon rules: min order value, max discount, usage limit, date range
-
----
 
 ## 🗄️ Database Changes (MVP)
 
@@ -430,24 +428,10 @@ if (couponId) {
 }
 ```
 
-### Task 10.4: Wishlist & Coupon UI (2-3h)
-
-**Wishlist:**
-- Heart icon trên ProductCard (toggle on click)
-- Trang `/wishlist` hiển thị grid sản phẩm đã thích
-- "Add to cart" button trên mỗi wishlist item
-
-**Coupon:**
-- Input mã coupon ở checkout page
-- "Áp dụng" button → gọi validate API → hiện discount amount
-- Seller dashboard: trang quản lý coupon (list, create, edit, deactivate)
-
----
-
 ## 🏁 Checklist Cuối Phase 10
 
 - [ ] Toggle wishlist (add/remove) hoạt động
-- [ ] Trang wishlist hiển thị đúng, filter SP inactive
+- [ ] API wishlist hoạt động, filter/ẩn sản phẩm inactive
 - [ ] Seller CRUD coupon cho shop mình
 - [ ] Admin CRUD coupon platform
 - [ ] Validate coupon: date, usage, min order, shop match

@@ -10,12 +10,10 @@
 
 - Sản phẩm có thể có multiple variants (Size: S/M/L, Color: Đỏ/Xanh, Storage: 128GB/256GB)
 - Mỗi variant combination có: price, stock, SKU riêng
-- UI chọn variant: bấm chọn size → bấm chọn color → giá + stock cập nhật
-- Variant hết hàng → disable option đó
-- Giỏ hàng lưu variant cụ thể (không phải chỉ product)
+- API chi tiết sản phẩm trả về đầy đủ cấu trúc variants để Frontend xử lý
+- Kiểm tra tồn kho và cấm mua variant hết hàng
+- Giỏ hàng lưu variant cụ thể (liên kết với ProductVariant)
 - Order snapshot bao gồm variant info
-
----
 
 ## 🗄️ Database Changes (MVP)
 
@@ -145,49 +143,13 @@ model OrderItem {
 }
 ```
 
-### Task 12.4: Variant UI — Frontend (4-5h)
-
-```
-Hiển thị trên trang chi tiết:
-
-┌──────────────────────────────────────┐
-│  Bộ nhớ:  [256GB]  [512GB]          │
-│                                       │
-│  Màu sắc: [Natural] [Blue] [Black]   │
-│            ━━━━━━━  (selected)       │
-│                                       │
-│  Giá: ₫29.990.000                    │
-│  Kho: Còn 15 sản phẩm               │
-│  SKU: IP15PM-256-BL                  │
-│                                       │
-│  [Thêm vào giỏ hàng]                │
-└──────────────────────────────────────┘
-```
-
-Khi user bấm chọn option:
-1. Tìm variant matching tất cả selections
-2. Cập nhật price, stock, SKU hiển thị
-3. Nếu variant hết hàng → hiện "Hết hàng", disable "Thêm vào giỏ"
-4. Nếu combination không tồn tại → disable option
-
----
-
-## ⚠️ Lỗi fresher hay mắc:
-- **Lưu variants dạng flat string:** `"Size: M, Color: Red"` → không query được, không validate được. Phải dùng relational tables.
-- **Duplicate SKU:** Mỗi variant PHẢI có SKU riêng. "iPhone 256GB Blue" ≠ "iPhone 512GB Blue". Validate unique.
-- **Quên cập nhật Cart/OrderItem:** Cũ: `CartItem → Product`. Mới: `CartItem → ProductVariant`. Phải migration cẩn thận.
-- **Hiện giá sai trên listing page:** Product có variants giá từ 29M-34M → hiện "₫29.990.000" sai vì đó là giá base. Phải hiện "từ ₫29.990.000" hoặc giá của variant rẻ nhất.
-
----
-
 ## 🏁 Checklist Cuối Phase 12
 
 - [ ] DB schema: variant attributes, values, product variants
-- [ ] Seller: tạo/quản lý variants cho sản phẩm
-- [ ] Buyer: chọn variant → giá/stock cập nhật dynamically
+- [ ] Seller: tạo/quản lý variants cho sản phẩm qua API
+- [ ] API chi tiết sản phẩm trả về đầy đủ variants và option values
 - [ ] Cart lưu variant cụ thể
 - [ ] Order snapshot bao gồm variant info
 - [ ] Stock check theo variant (không phải product)
-- [ ] Listing page hiển thị "từ ₫X" cho sản phẩm có variants
-- [ ] Variant hết hàng → disable option trên UI
+- [ ] Listing page API hỗ trợ trả về khoảng giá hoặc giá thấp nhất cho sản phẩm có variants
 - [ ] Commit: "feat: product variants with dynamic pricing and stock management"

@@ -6,15 +6,13 @@
 
 ## 🎯 MVP Của Phase Này
 
-- Checkout flow: Chọn địa chỉ → Chọn phương thức thanh toán (COD/Bank Transfer) → Xác nhận → Tạo đơn
+- API Checkout: Nhận địa chỉ, phương thức thanh toán (COD/Bank Transfer) và tạo đơn hàng
 - 1 checkout tạo N orders (1 per shop) — giống Shopee
 - Stock validation + stock deduction trong transaction
-- Order status flow: PENDING → CONFIRMED → SHIPPING → DELIVERED / CANCELLED
-- Seller quản lý đơn hàng (xem, cập nhật trạng thái)
-- Buyer xem lịch sử đơn hàng + chi tiết đơn
+- Order status flow: PENDING -> CONFIRMED -> SHIPPING -> DELIVERED / CANCELLED
+- Seller quản lý đơn hàng (xem, cập nhật trạng thái qua API)
+- Buyer xem lịch sử đơn hàng + chi tiết đơn qua API
 - Idempotency Key chống tạo đơn trùng (bấm nút 2 lần)
-
----
 
 ## 🗄️ Database Changes (MVP)
 
@@ -583,30 +581,6 @@ export const orderService = new OrderService();
 // GET    /api/v1/seller/orders             — Đơn hàng của shop
 // PATCH  /api/v1/seller/orders/:id/status  — Cập nhật trạng thái
 ```
-
----
-
-### Task 8.4: Checkout UI — Frontend (4-5h)
-
-Checkout flow (multi-step hoặc single page):
-
-```
-Step 1: Xem lại giỏ hàng (nhóm theo shop)
-   ↓
-Step 2: Chọn/thêm địa chỉ giao hàng
-   ↓
-Step 3: Chọn phương thức thanh toán (COD / Bank Transfer)
-   ↓
-Step 4: Xác nhận & Đặt hàng
-   ↓
-Result: Hiện danh sách orders đã tạo (1 per shop)
-```
-
-**Key UX:**
-- Hiện rõ: N đơn hàng sẽ được tạo (1 per shop)
-- Disable nút "Đặt hàng" sau khi bấm 1 lần (prevent double click)
-- Generate idempotency key trên client (`crypto.randomUUID()`)
-- Loading state trong khi chờ API response
 
 ---
 

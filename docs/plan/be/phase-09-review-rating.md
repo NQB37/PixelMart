@@ -9,11 +9,8 @@
 - Buyer chỉ review được khi đã mua hàng (order DELIVERED)
 - Rating 1-5 sao + comment + upload ảnh review
 - Mỗi user chỉ review 1 lần per product per order
-- Hiển thị reviews trên trang chi tiết sản phẩm (phân trang)
-- Thống kê rating (trung bình, phân bố 1-5 sao)
+- API lấy danh sách reviews trên sản phẩm (phân trang, lấy trung bình rating, phân bố 1-5 sao)
 - Shop rating = trung bình rating tất cả sản phẩm
-
----
 
 ## 🗄️ Database Changes (MVP)
 
@@ -226,16 +223,6 @@ export const createReviewSchema = z.object({
 // GET    /api/v1/reviews/stats/:id     — Thống kê rating (public)
 // GET    /api/v1/reviews/my            — Reviews của tôi (buyer)
 ```
-
-### Task 9.4: Review UI Components (3-4h)
-
-- `RatingStars.tsx` — Hiển thị + input sao (clickable)
-- `ReviewForm.tsx` — Form viết review (text + upload ảnh + rating)
-- `ReviewList.tsx` — Danh sách reviews (avatar, name, rating, comment, images, date)
-- `ReviewStats.tsx` — Thống kê: trung bình + thanh phân bố (5⭐: ████ 80%)
-- `ProductReviews.tsx` — Tổng hợp: stats + list + pagination
-
----
 
 ## 🏁 Checklist Cuối Phase 9
 

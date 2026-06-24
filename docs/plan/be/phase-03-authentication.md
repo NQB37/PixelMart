@@ -718,58 +718,6 @@ router.post('/register', loginRateLimiter, validate(registerSchema), authControl
 
 ---
 
-### Task 3.7: Setup Next.js Middleware cho Frontend Auth (2-3h)
-
-#### `web/client-web/middleware.ts`:
-```typescript
-import { NextRequest, NextResponse } from 'next/server';
-
-const publicRoutes = ['/login', '/register', '/forgot-password'];
-const protectedRoutes = ['/profile', '/orders', '/wishlist', '/checkout'];
-
-export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-  const accessToken = request.cookies.get('access_token')?.value;
-
-  // Public routes — cho qua nếu chưa đăng nhập
-  if (publicRoutes.some((route) => pathname.startsWith(route))) {
-    // Đã đăng nhập mà vào login → redirect về home
-    if (accessToken) {
-      return NextResponse.redirect(new URL('/', request.url));
-    }
-    return NextResponse.next();
-  }
-
-  // Protected routes — chưa đăng nhập → redirect về login
-  if (protectedRoutes.some((route) => pathname.startsWith(route))) {
-    if (!accessToken) {
-      const loginUrl = new URL('/login', request.url);
-      loginUrl.searchParams.set('callbackUrl', pathname);
-      return NextResponse.redirect(loginUrl);
-    }
-  }
-
-  return NextResponse.next();
-}
-
-export const config = {
-  matcher: [
-    '/login', '/register', '/forgot-password',
-    '/profile/:path*',
-    '/orders/:path*',
-    '/wishlist',
-    '/checkout',
-  ],
-};
-```
-
-> **Lưu ý:**
-> 1. Next.js middleware ở `web/client-web/middleware.ts` chỉ bảo vệ các trang Buyer storefront.
-> 2. Các ứng dụng Vite `web/seller-web` và `web/admin-web` sẽ được bảo vệ bằng Route Guards ở phía client-side router riêng của từng dự án (dùng cookies/local storage và API `/api/v1/auth/me` để xác thực).
-> 3. Next.js middleware chỉ check cookie TỒN TẠI hay không. Nó KHÔNG verify JWT (vì middleware chạy ở Edge Runtime, không có Node.js crypto). Việc verify token thật sự phải ở Backend middleware.
-
----
-
 ## 🏁 Checklist Cuối Phase 3
 
 - [ ] `POST /api/v1/auth/register` — tạo user mới, trả token trong cookie
@@ -781,7 +729,6 @@ export const config = {
 - [ ] User thường gọi API admin → 403 Forbidden
 - [ ] Password trong DB là bcrypt hash
 - [ ] JWT chỉ chứa `userId` + `role` (không có password hay thông tin nhạy cảm)
-- [ ] Next.js middleware redirect đúng
 - [ ] Commit: "feat: JWT authentication with role-based authorization"
 
 ---

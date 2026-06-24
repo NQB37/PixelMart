@@ -6,14 +6,12 @@
 
 ## 🎯 MVP Của Phase Này
 
-- Admin Dashboard: overview stats (tổng users, shops, orders, revenue)
-- Biểu đồ doanh thu theo ngày/tháng (Recharts)
-- Quản lý users (list, ban/unban)
-- Quản lý shops (list, approve/suspend, xem chi tiết)
-- Quản lý categories (đã làm ở Phase 5, hoàn thiện UI)
-- Seller Dashboard: revenue chart, order stats, top products
-
----
+- API Admin Stats: overview stats (tổng users, shops, orders, revenue)
+- API thống kê doanh thu theo ngày/tháng/năm
+- API quản lý users (list, ban/unban)
+- API quản lý shops (approve/suspend, xem chi tiết)
+- API quản lý categories
+- API Seller Stats: revenue, order stats, top products
 
 ## 🗄️ Database Changes (MVP)
 
@@ -173,68 +171,12 @@ export const adminService = new AdminService();
 // - Đánh giá trung bình shop
 ```
 
-### Task 11.3: Admin UI — React + Vite SPA (web/admin-web) (5-8h)
-
-```bash
-cd web/admin-web
-pnpm add recharts react-router-dom lucide-react
-# Cấu hình React Router và tích hợp thư viện vẽ biểu đồ
-```
-
-**Các trang (Routes) cần cấu hình trong React Router:**
-
-```
-/                       — Dashboard chính (stats cards + biểu đồ doanh thu + đơn hàng mới)
-/users                  — Quản lý người dùng (table danh sách, nút kích hoạt/khóa tài khoản)
-/shops                  — Quản lý cửa hàng (duyệt/tạm dừng hoạt động cửa hàng, xem chi tiết)
-/categories             — Quản lý danh mục sản phẩm (cấu hình cây danh mục)
-/orders                 — Quản lý tất cả đơn hàng trên hệ thống
-/reports                — Báo cáo doanh thu chi tiết (lọc theo ngày, xuất CSV)
-/coupons                — Quản lý mã giảm giá hệ thống
-```
-
-**Key components:**
-- `AdminDashboardStats.tsx` — Grid hiển thị 6 thẻ thống kê
-- `RevenueChart.tsx` — Biểu đồ Recharts AreaChart/LineChart
-- `DataTable.tsx` — Component bảng đa năng (có ô tìm kiếm, phân trang)
-- `ShopApprovalCard.tsx` — Card duyệt shop với các nút Approve/Reject
-
-### Task 11.4: Seller Dashboard UI — React + Vite SPA (web/seller-web) (3-4h)
-
-```bash
-cd web/seller-web
-pnpm add recharts react-router-dom lucide-react
-```
-
-**Các trang (Routes) cần cấu hình trong React Router:**
-
-```
-/                       — Dashboard của Seller (thống kê doanh thu shop + biểu đồ)
-/products               — Quản lý sản phẩm (CRUD sản phẩm, đã làm Phase 5)
-/orders                 — Quản lý đơn hàng của shop (đổi trạng thái, đã làm Phase 8)
-/coupons                — Quản lý coupon của shop (đã làm Phase 10)
-/reviews                — Xem đánh giá từ khách hàng
-/analytics              — Báo cáo phân tích chi tiết của shop
-/shop                   — Cấu hình thông tin Shop (đã làm Phase 4)
-```
-
----
-
-## ⚠️ Lỗi fresher hay mắc:
-- **N+1 Query trong stats:** Gọi riêng `count()` cho mỗi metric = N queries. Dùng `Promise.all()` chạy song song.
-- **Raw SQL injection:** `WHERE name = '${search}'` → SQL injection! Dùng Prisma tagged template literals: `` prisma.$queryRaw`...${variable}` `` — tự parameterize.
-- **Chart render quá nhiều data points:** 365 data points cho biểu đồ year → chậm. Group by month hoặc week.
-- **Không phân quyền admin routes ở cả frontend + backend:** Frontend chặn menu admin, nhưng user type URL trực tiếp `/admin` vẫn vào được nếu Next.js middleware thiếu.
-
----
-
 ## 🏁 Checklist Cuối Phase 11
 
-- [ ] Admin dashboard: 6 stat cards hiển thị đúng
-- [ ] Revenue chart: week/month/year hoạt động
-- [ ] User management: search, ban/unban
-- [ ] Shop management: approve/suspend
-- [ ] Top products + top shops hiển thị
-- [ ] Seller dashboard: revenue, order stats, top products
-- [ ] Responsive trên tablet
-- [ ] Commit: "feat: admin and seller dashboards with revenue analytics"
+- [ ] API Admin dashboard: 6 stat cards hiển thị đúng
+- [ ] API thống kê doanh thu (Revenue) theo tuần/tháng/năm hoạt động đúng
+- [ ] User management APIs: search, ban/unban hoạt động
+- [ ] Shop management APIs: approve/suspend hoạt động
+- [ ] Top products + top shops APIs hoạt động
+- [ ] API Seller stats: revenue, order stats, top products hoạt động
+- [ ] Commit: "feat: admin and seller stats APIs with revenue analytics"
