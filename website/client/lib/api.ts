@@ -27,16 +27,28 @@ api.interceptors.request.use(
   },
 );
 
+let isRefreshing = false;
+let failedQueue: { resolve: (token: string) => void; reject: (err: any) => void }[] = [];
+
+const processQueue = (error: any, token: string | null = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token!);
+    }
+  });
+  failedQueue = [];
+};
+
 // Response interceptor
 api.interceptors.response.use(
   function (response) {
     // Any status code that lie within the range of 2xx cause this function to trigger
-    // Do something with response data
     return response.data;
   },
   async function (error) {
     // Any status codes that falls outside the range of 2xx cause this function to trigger
-    // Do something with response error
     const originalRequest = error.config;
     const status = error.response ? error.response.status : null;
 
@@ -48,7 +60,21 @@ api.interceptors.response.use(
       !originalRequest.url?.includes("auth/refresh") &&
       !originalRequest.url?.includes("auth/login")
     ) {
+      if (isRefreshing) {
+        return new Promise(function (resolve, reject) {
+          failedQueue.push({ resolve, reject });
+        })
+          .then((token) => {
+            originalRequest.headers.Authorization = `Bearer ${token}`;
+            return api(originalRequest);
+          })
+          .catch((err) => {
+            return Promise.reject(err);
+          });
+      }
+
       originalRequest._retry = true;
+      isRefreshing = true;
 
       try {
         const data = await authApi.refreshToken();
@@ -57,12 +83,19 @@ api.interceptors.response.use(
         // Save new access token
         useAuthStore.getState().setAccessToken(newAccessToken);
         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+
+        processQueue(null, newAccessToken);
         return api(originalRequest);
-      } catch (refreshError) {
+      } catch (refreshError: any) {
+        processQueue(refreshError, null);
         toast.error("Refresh token failed. Please login again!");
         useAuthStore.getState().clearAuth();
-        window.location.href = "/login";
+        if (typeof window !== "undefined") {
+          window.location.href = "/login";
+        }
         return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
       }
     }
 
