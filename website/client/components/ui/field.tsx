@@ -12,6 +12,7 @@ export function Field({
       <FormControl>
         <input
           {...rest}
+          value={rest.value ?? ""}
           className='mt-2 h-11 w-full border-[3px] border-foreground bg-input px-3 font-retro text-lg outline-none focus:border-neon-cyan'
         />
       </FormControl>

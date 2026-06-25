@@ -34,7 +34,7 @@ const RegisterForm = () => {
     },
   });
 
-  const { register, handleSubmit, control, formState: { errors }, watch } = methods;
+  const { handleSubmit, control, watch } = methods;
 
   const password = watch("password") || "";
   const passwordStrength = getPasswordStrength(password);
@@ -43,8 +43,9 @@ const RegisterForm = () => {
   const onSubmit = async (values: SignupInput) => {
     setFormError(null);
     registerUser(values, {
-      onError: (error: any) => {
-        setFormError(error?.response?.data?.message || "Register failed!");
+      onError: (error: unknown) => {
+        const err = error as { response?: { data?: { message?: string } } };
+        setFormError(err?.response?.data?.message || "Register failed!");
       },
     });
   };

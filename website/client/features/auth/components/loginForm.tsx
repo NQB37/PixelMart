@@ -15,13 +15,15 @@ const LoginForm = () => {
 
   const methods = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
   });
 
   const {
-    register,
     handleSubmit,
     control,
-    formState: { errors },
   } = methods;
 
   const onSubmit = async (data: LoginInput) => {

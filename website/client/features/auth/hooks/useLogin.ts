@@ -16,7 +16,7 @@ export const useLogin = () => {
       router.push("/");
     },
     onError: (error: any) => {
-      toast.error(error?.response?.data?.message || "Đăng nhập thất bại");
+      toast.error(error?.response?.data?.message || "Login failed!");
     },
   });
 };
