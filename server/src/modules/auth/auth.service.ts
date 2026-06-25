@@ -125,7 +125,11 @@ class AuthService {
   }
 
   private async generateTokenPair(userId: string, email: string) {
-    const payload = { userId, email };
+    const payload = {
+      userId,
+      email,
+      jti: Math.random().toString(36).substring(2) + Date.now().toString(36),
+    };
     const accessToken = generateAccessToken(payload);
     const refreshToken = generateRefreshToken(payload);
 

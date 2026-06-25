@@ -5,6 +5,7 @@ import { ApiError } from "./ApiError";
 export interface JwtPayload {
   userId: string;
   email: string;
+  jti?: string;
 }
 
 const generateAccessToken = (payload: JwtPayload) => {

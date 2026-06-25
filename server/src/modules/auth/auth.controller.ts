@@ -2,6 +2,7 @@ import { asyncHandler } from "@/utils/asyncHandler";
 import { authService } from "./auth.service";
 import { clearTokenCookies, setRefreshTokenCookie } from "@/utils/cookies";
 import { ApiResponse } from "@/utils/ApiResponse";
+import { ApiError } from "@/utils/ApiError";
 
 const register = asyncHandler(async (req, res) => {
   const result = await authService.register(req.body);
@@ -37,7 +38,7 @@ const logout = asyncHandler(async (req, res) => {
 const refreshToken = asyncHandler(async (req, res) => {
   const oldRefreshToken = req.cookies.refreshToken;
   if (!oldRefreshToken) {
-    throw new Error("No refresh token provided");
+    throw ApiError.unauthorized("No refresh token provided");
   }
 
   const tokens = await authService.refreshToken(oldRefreshToken);
