@@ -371,17 +371,18 @@ git commit -m "feat(client-web): develop ProductCard component and render dynami
 
 ---
 
-### Task 6.3: SSR Product Details Page with dynamic SEO Metadata
+### Task 6.3: SSR Product Details Page with dynamic SEO Metadata & Clipboard Sharing
 
 **Files:**
-- Create: `web/client-web/app/(storefront)/products/[slug]/page.tsx`
-- Test: `web/client-web/app/(storefront)/products/[slug]/__tests__/ProductDetailsPage.test.tsx`
+- Create: `web/client-web/app/(storefront)/products/[slug]/page.tsx`, `web/client-web/features/product/components/ShareButton.tsx`
+- Test: `web/client-web/app/(storefront)/products/[slug]/__tests__/ProductDetailsPage.test.tsx`, `web/client-web/features/product/__tests__/ShareButton.test.tsx`
 
 **Interfaces:**
-- Consumes: Next.js 15 generateMetadata
-- Produces: Trang chi tiết sản phẩm kết xuất SSR hiển thị chính xác tiêu đề, mô tả và tối ưu SEO crawlers.
+- Consumes: Next.js 15 generateMetadata, Clipboard API
+- Produces: Trang chi tiết sản phẩm kết xuất SSR hiển thị chính xác tiêu đề, mô tả, tối ưu SEO crawlers và tích hợp nút Chia sẻ sao chép URL vào Clipboard.
 
-- [ ] **Step 1: Write the failing test**
+- [ ] **Step 1: Write the failing tests**
+
 Tạo file test kiểm tra khả năng render SSR và cấu hình generateMetadata:
 Create: `web/client-web/app/(storefront)/products/[slug]/__tests__/ProductDetailsPage.test.tsx`
 ```tsx
@@ -415,22 +416,117 @@ describe('Product Details SSR SEO', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+Tạo file test kiểm tra chức năng Share Button sao chép đường dẫn:
+Create: `web/client-web/features/product/__tests__/ShareButton.test.tsx`
+```tsx
+import React from 'react';
+import { render, screen, fireEvent } from '@testing-library/react';
+import ShareButton from '../components/ShareButton';
+
+describe('ShareButton Component', () => {
+  const originalClipboard = { ...global.navigator.clipboard };
+
+  beforeAll(() => {
+    const mockClipboard = {
+      writeText: jest.fn().mockResolvedValue(undefined),
+    };
+    Object.defineProperty(global.navigator, 'clipboard', {
+      value: mockClipboard,
+      writable: true,
+    });
+    
+    // Mock window.location
+    Object.defineProperty(window, 'location', {
+      value: { href: 'http://localhost/products/test-product' },
+      writable: true,
+    });
+  });
+
+  afterAll(() => {
+    Object.defineProperty(global.navigator, 'clipboard', {
+      value: originalClipboard,
+    });
+  });
+
+  it('copies the product link to clipboard and displays copied message', async () => {
+    render(<ShareButton />);
+    const btn = screen.getByRole('button');
+    expect(btn).toHaveTextContent('Chia sẻ sản phẩm');
+
+    fireEvent.click(btn);
+
+    expect(global.navigator.clipboard.writeText).toHaveBeenCalledWith(
+      'http://localhost/products/test-product'
+    );
+    expect(await screen.findByText('Đã sao chép liên kết!')).toBeInTheDocument();
+  });
+});
+```
+
+- [ ] **Step 2: Run tests to verify they fail**
+
 Run:
 ```bash
 cd /home/nquocbao37/Code/PixelMart/web/client-web
 npm run test
 ```
-Expected: FAIL do chưa tạo page `products/[slug]/page.tsx`.
+Expected: FAIL do chưa tạo các file component và page.
 
 - [ ] **Step 3: Write minimal implementation**
-Tạo SSR Page `products/[slug]/page.tsx`:
+
+Tạo Component ShareButton sử dụng Clipboard API:
+Create: `web/client-web/features/product/components/ShareButton.tsx`
+```tsx
+'use client';
+
+import React, { useState } from 'react';
+
+export default function ShareButton() {
+  const [copied, setCopied] = useState(false);
+
+  const handleShare = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy link:', err);
+    }
+  };
+
+  return (
+    <button
+      onClick={handleShare}
+      className="mt-4 flex w-full items-center justify-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+    >
+      <svg
+        className="h-4 w-4 text-gray-500"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"
+        />
+      </svg>
+      {copied ? 'Đã sao chép liên kết!' : 'Chia sẻ sản phẩm'}
+    </button>
+  );
+}
+```
+
+Tạo SSR Page `products/[slug]/page.tsx` tích hợp `ShareButton`:
 Create: `web/client-web/app/(storefront)/products/[slug]/page.tsx`
 ```tsx
 import React from 'react';
 import Image from 'next/image';
 import { api } from '@pixelmart/shared-web';
 import type { Metadata } from 'next';
+import ShareButton from '../../../../features/product/components/ShareButton';
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -503,9 +599,12 @@ export default async function ProductDetailPage({ params }: Props) {
             <h3 className="text-sm font-medium text-gray-900">Mô tả sản phẩm</h3>
             <p className="mt-4 text-sm text-gray-500 leading-relaxed">{product.description}</p>
           </div>
-          <button className="mt-8 rounded-md bg-brand-primary py-3 text-base font-semibold text-white hover:bg-emerald-600 transition-colors">
-            Thêm vào giỏ hàng
-          </button>
+          <div className="mt-8">
+            <button className="w-full rounded-md bg-brand-primary py-3 text-base font-semibold text-white hover:bg-emerald-600 transition-colors">
+              Thêm vào giỏ hàng
+            </button>
+            <ShareButton />
+          </div>
         </div>
       </div>
     </div>
@@ -513,19 +612,21 @@ export default async function ProductDetailPage({ params }: Props) {
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [ ] **Step 4: Run tests to verify they pass**
+
 Run:
 ```bash
 cd /home/nquocbao37/Code/PixelMart/web/client-web
 npm run test
 ```
-Expected: PASS ProductDetailsPage.test.tsx
+Expected: PASS ProductDetailsPage.test.tsx & ShareButton.test.tsx
 
 - [ ] **Step 5: Commit**
+
 Run:
 ```bash
-git add app/\(storefront\)/products/\[slug\]/page.tsx app/\(storefront\)/products/\[slug\]/__tests__/ProductDetailsPage.test.tsx
-git commit -m "feat(client-web): build SSR Product Details page with dynamic OpenGraph SEO tags"
+git add app/\(storefront\)/products/\[slug\]/page.tsx app/\(storefront\)/products/\[slug\]/__tests__/ProductDetailsPage.test.tsx features/product/components/ShareButton.tsx features/product/__tests__/ShareButton.test.tsx
+git commit -m "feat(client-web): build SSR Product Details page with dynamic OpenGraph SEO tags and clipboard link sharing"
 ```
 
 ---
