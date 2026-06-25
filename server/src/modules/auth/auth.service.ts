@@ -34,12 +34,18 @@ class AuthService {
       },
     });
 
+    // Format user response
+    const userResponse = {
+      id: user.id,
+      email: user.email,
+    };
+
     const { accessToken, refreshToken } = await this.generateTokenPair(
       user.id,
       user.email,
     );
 
-    return { user, accessToken, refreshToken };
+    return { user: userResponse, accessToken, refreshToken };
   }
 
   public async login(data: LoginInput) {
@@ -84,7 +90,7 @@ class AuthService {
   }
 
   public async refreshToken(oldRefreshToken: string) {
-    let payload = verifyRefreshToken(oldRefreshToken);
+    const payload = verifyRefreshToken(oldRefreshToken);
 
     // Check if refresh token is in database
     const storedToken = await prisma.refreshToken.findUnique({
