@@ -9,7 +9,9 @@
     "start": "node dist/server.js",
     "lint": "eslint src --ext .ts",
     "lint:fix": "eslint src --ext .ts --fix",
-    "format": "prettier --write \"src/**/*.ts\""
+    "format": "prettier --write \"src/**/*.ts\"",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "keywords": [],
   "author": "",
@@ -47,12 +49,15 @@
     "@types/morgan": "^1.9.10",
     "@types/node": "^25.9.3",
     "@types/pg": "^8.20.0",
+    "@types/supertest": "^7.2.0",
     "eslint": "^10.5.0",
     "globals": "^17.6.0",
     "jiti": "^2.7.0",
     "prettier": "^3.8.4",
     "prisma": "^7.8.0",
+    "supertest": "^7.2.2",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.61.1"
+    "typescript-eslint": "^8.61.1",
+    "vitest": "^4.1.9"
   }
 }
