@@ -8,7 +8,9 @@ const register = asyncHandler(async (req, res) => {
 
   setRefreshTokenCookie(res, result.refreshToken);
 
-  ApiResponse.created(res, result.user, "User registered successfully");
+  const response = { user: result.user, accessToken: result.accessToken };
+
+  ApiResponse.created(res, response, "User registered successfully");
 });
 
 const login = asyncHandler(async (req, res) => {
@@ -16,7 +18,9 @@ const login = asyncHandler(async (req, res) => {
 
   setRefreshTokenCookie(res, result.refreshToken);
 
-  ApiResponse.success(res, result.user, "User logged in successfully");
+  const response = { user: result.user, accessToken: result.accessToken };
+
+  ApiResponse.success(res, response, "User logged in successfully");
 });
 
 const logout = asyncHandler(async (req, res) => {

@@ -1,28 +1,25 @@
 import { LoginInput, SignupInput } from "../schemas/auth.schema";
-import axios from "axios";
-import { AuthResponse } from "../types/auth";
+import { AuthResponse, RefreshTokenResponse } from "../types/auth";
+import { api } from "@/lib/api";
 
 export const authApi = {
   login: async (data: LoginInput): Promise<AuthResponse> => {
-    const response = await axios.post<AuthResponse>(
-      "http://localhost:8000/api/v1/auth/login",
-      data,
-    );
+    const response = await api.post<AuthResponse>("auth/login", data);
     return response.data;
   },
   register: async (data: SignupInput): Promise<AuthResponse> => {
     const { email, password } = data;
-    const response = await axios.post<AuthResponse>(
-      "http://localhost:8000/api/v1/auth/register",
-      {
-        email,
-        password,
-      },
-    );
+    const response = await api.post<AuthResponse>("auth/register", {
+      email,
+      password,
+    });
     return response.data;
   },
   logout: async () => {
-    const response = await axios.post("http://localhost:8000/api/v1/auth/logout");
+    await api.post("auth/logout");
+  },
+  refreshToken: async (): Promise<RefreshTokenResponse> => {
+    const response = await api.post<RefreshTokenResponse>("auth/refresh");
     return response.data;
   },
 };

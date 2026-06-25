@@ -21,7 +21,8 @@ const NAV = [
 const Header = () => {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
-  const { user, isAuthenticated } = useAuthStore();
+  const user = useAuthStore((state) => state.user);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const { mutate: logout, isPending } = useLogout();
 
   return (
