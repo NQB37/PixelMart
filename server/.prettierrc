@@ -2,5 +2,5 @@
   "semi": true,
   "singleQuote": true,
   "trailingComma": "all",
-  "plugins": ["./node_modules/prettier-plugin-prisma"]
+  "plugins": ["./node_modules/prettier-plugin-prisma/lib/plugin.js"]
 }

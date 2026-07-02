@@ -14,19 +14,19 @@ datasource db {
 
 // ============ CORE AUTH ============
 model User {
-  id         String   @id @default(uuid())
-  email      String   @unique
-  password   String? 
-  provider   UserProvider @default(CREDENTIALS)
-  isActive   Boolean  @default(true)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id        String       @id @default(uuid())
+  email     String       @unique
+  password  String?
+  provider  UserProvider @default(CREDENTIALS)
+  isActive  Boolean      @default(true)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
 
-  profile Profile?
+  profile        Profile?
   refreshTokens  RefreshToken[]
-  roles UserRoles[]
-  addresses Address[]
-  shop Shop?
+  roles          UserRoles[]
+  addresses      Address[]
+  shop           Shop?
   deliveryPerson DeliveryPerson?
 
   @@index([email])
@@ -34,17 +34,17 @@ model User {
 }
 
 model Profile {
-  id        String   @id @default(uuid())
-  userId    String   @unique 
-  fullName  String
-  avatarUrl String?
+  id          String    @id @default(uuid())
+  userId      String    @unique
+  fullName    String
+  avatarUrl   String?
   phoneNumber String?
   dateOfBirth DateTime?
-  gender Gender?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gender      Gender?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("profiles")
 }
@@ -76,15 +76,15 @@ enum UserProvider {
 
 // ============ RBAC ============
 model Role {
-  id        String   @id @default(uuid())
-  name ROLE @unique
+  id          String   @id @default(uuid())
+  name        ROLE     @unique
   description String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  userRoles  UserRoles[]
+  userRoles       UserRoles[]
   rolePermissions RolePermissions[]
-   
+
   @@index([name])
   @@map("roles")
 }
@@ -102,15 +102,15 @@ model UserRoles {
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
-  
+
   @@id([userId, roleId])
   @@index([roleId])
   @@map("user_roles")
 }
 
 model Permission {
-  id         String @id @default(uuid())
-  name        String @unique
+  id          String   @id @default(uuid())
+  name        String   @unique
   description String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -122,31 +122,30 @@ model Permission {
 }
 
 model RolePermissions {
-  roleId String
+  roleId       String
   permissionId String
 
-  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
   permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
 
   @@id([roleId, permissionId])
   @@map("role_permissions")
 }
 
-
 // ============ ADDRESS (Customer + Shop) ============
 model Address {
-  id          String  @id @default(uuid())
-  ownerId     String
-  ownerType   AddressOwnerType 
+  id            String           @id @default(uuid())
+  ownerId       String
+  ownerType     AddressOwnerType
   recipientName String
-  phone String
-  street String
-  wardID String
-  provinceId String
-  isDefault Boolean @default(false)
-  label       AddressLabel
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  phone         String
+  street        String
+  wardID        String
+  provinceId    String
+  isDefault     Boolean          @default(false)
+  label         AddressLabel
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
 
   user User @relation(fields: [ownerId], references: [id], onDelete: Cascade)
 
@@ -168,19 +167,19 @@ enum AddressLabel {
 }
 
 // ============ SHOP ============
-model Shop{
-  id String @id @default(uuid())
-  ownerId String @unique
-  shopName String
-  logoUrl String?
-  rating Float @default(0)
+model Shop {
+  id             String         @id @default(uuid())
+  ownerId        String         @unique
+  shopName       String
+  logoUrl        String?
+  rating         Float          @default(0)
   approvalStatus ApprovalStatus @default(PENDING)
   rejectedReason String?
-  status ShopStatus @default(ACTIVE)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  deletedAt DateTime?
-  
+  status         ShopStatus     @default(ACTIVE)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  deletedAt      DateTime?
+
   user User @relation(fields: [ownerId], references: [id], onDelete: Cascade)
 
   @@index([ownerId])
@@ -201,17 +200,17 @@ enum ShopStatus {
 
 // ============ DELIVERY ============
 model DeliveryPerson {
-  id String @id @default(uuid())
-  userId String @unique
-  vehicleType VehicleType
+  id                  String                 @id @default(uuid())
+  userId              String                 @unique
+  vehicleType         VehicleType
   vehicleLicensePlate String
-  vehicleColor String
-  approvalStatus ApprovalStatus @default(PENDING)
-  rejectedReason String?
-  activityStatus DeliveryActivityStatus @default(OFFLINE)
-  status ShopStatus @default(ACTIVE)
-  
-user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vehicleColor        String
+  approvalStatus      ApprovalStatus         @default(PENDING)
+  rejectedReason      String?
+  activityStatus      DeliveryActivityStatus @default(OFFLINE)
+  status              ShopStatus             @default(ACTIVE)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("delivery_persons")
 }
