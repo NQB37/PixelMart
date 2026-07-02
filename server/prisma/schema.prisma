@@ -12,25 +12,53 @@ datasource db {
   provider = "postgresql"
 }
 
+// ============ CORE AUTH ============
 model User {
   id         String   @id @default(uuid())
   email      String   @unique
-  password   String
+  password   String? 
   provider   UserProvider @default(CREDENTIALS)
   isActive   Boolean  @default(true)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
+  profile Profile?
   refreshTokens  RefreshToken[]
+  roles UserRoles[]
+  addresses Address[]
+  shop Shop?
+  deliveryPerson DeliveryPerson?
 
   @@index([email])
   @@map("users")
 }
 
+model Profile {
+  id        String   @id @default(uuid())
+  userId    String   @unique 
+  fullName  String
+  avatarUrl String?
+  phoneNumber String?
+  dateOfBirth DateTime?
+  gender Gender?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("profiles")
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
 model RefreshToken {
   id        String   @id @default(cuid())
-  token     String   @unique
   userId    String
+  token     String   @unique
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   expiresAt DateTime
 
@@ -46,9 +74,157 @@ enum UserProvider {
   GOOGLE
 }
 
+// ============ RBAC ============
+model Role {
+  id        String   @id @default(uuid())
+  name ROLE @unique
+  description String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userRoles  UserRoles[]
+  rolePermissions RolePermissions[]
+   
+  @@index([name])
+  @@map("roles")
+}
+
 enum ROLE {
   CUSTOMER
   SELLER
   ADMIN
   DELIVERY_PERSON
+}
+
+model UserRoles {
+  userId String
+  roleId String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  
+  @@id([userId, roleId])
+  @@index([roleId])
+  @@map("user_roles")
+}
+
+model Permission {
+  id         String @id @default(uuid())
+  name        String @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  rolePermissions RolePermissions[]
+
+  @@index([name])
+  @@map("permissions")
+}
+
+model RolePermissions {
+  roleId String
+  permissionId String
+
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+
+// ============ ADDRESS (Customer + Shop) ============
+model Address {
+  id          String  @id @default(uuid())
+  ownerId     String
+  ownerType   AddressOwnerType 
+  recipientName String
+  phone String
+  street String
+  wardID String
+  provinceId String
+  isDefault Boolean @default(false)
+  label       AddressLabel
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  @@index([ownerId, ownerType])
+  @@map("addresses")
+}
+
+enum AddressOwnerType {
+  USER
+  SHOP
+}
+
+enum AddressLabel {
+  HOME
+  OFFICE
+  PICKUP
+  BUSINESS
+  OTHER
+}
+
+// ============ SHOP ============
+model Shop{
+  id String @id @default(uuid())
+  ownerId String @unique
+  shopName String
+  logoUrl String?
+  rating Float @default(0)
+  approvalStatus ApprovalStatus @default(PENDING)
+  rejectedReason String?
+  status ShopStatus @default(ACTIVE)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+  
+  user User @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  @@index([ownerId])
+  @@map("shops")
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum ShopStatus {
+  ACTIVE
+  SUSPENDED
+  INACTIVE
+}
+
+// ============ DELIVERY ============
+model DeliveryPerson {
+  id String @id @default(uuid())
+  userId String @unique
+  vehicleType VehicleType
+  vehicleLicensePlate String
+  vehicleColor String
+  approvalStatus ApprovalStatus @default(PENDING)
+  rejectedReason String?
+  activityStatus DeliveryActivityStatus @default(OFFLINE)
+  status ShopStatus @default(ACTIVE)
+  
+user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("delivery_persons")
+}
+
+enum VehicleType {
+  CAR
+  MOTORBIKE
+  BICYCLE
+  TRUCK
+}
+
+enum DeliveryActivityStatus {
+  ONLINE
+  OFFLINE
+  BUSY
 }
