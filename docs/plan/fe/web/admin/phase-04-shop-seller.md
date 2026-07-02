@@ -13,8 +13,8 @@
 - Thư mục làm việc: `web/admin-web/`
 - API Endpoints:
   - Lấy danh sách shop: `GET /api/v1/admin/shops?page=1&limit=10&status=PENDING`
-  - Cập nhật trạng thái shop: `PATCH /api/v1/admin/shops/:id/status` (Body: `{ status: 'APPROVED' | 'REJECTED' | 'SUSPENDED', reason?: string }`)
-- Các trạng thái hợp lệ của Shop: `PENDING` (chờ duyệt), `APPROVED` (đang hoạt động), `REJECTED` (bị từ chối), `SUSPENDED` (tạm dừng hoạt động).
+  - Cập nhật trạng thái shop: `PATCH /api/v1/admin/shops/:id/status` (Body phê duyệt: `{ approvalStatus: 'APPROVED' | 'REJECTED', rejectedReason?: string }`; Body vận hành: `{ status: 'ACTIVE' | 'SUSPENDED' }`)
+- Trạng thái phê duyệt (`approvalStatus`): `PENDING` (chờ duyệt), `APPROVED` (đã duyệt), `REJECTED` (bị từ chối). Trạng thái vận hành (`status`): `ACTIVE` (đang hoạt động), `SUSPENDED` (tạm dừng), `INACTIVE` (ngừng hoạt động).
 - Không sử dụng code placeholder hay các ghi chú TBD/TODO trong code triển khai chính thức.
 
 ---
@@ -50,8 +50,8 @@ vi.mock('../services/api', () => ({
 }));
 
 const mockShopsData = [
-  { id: 'shop-1', name: 'Tech Store', ownerName: 'Nguyen Van A', ownerEmail: 'owner1@test.com', status: 'PENDING', createdAt: '2026-06-24T12:00:00Z' },
-  { id: 'shop-2', name: 'Fashion Hub', ownerName: 'Tran Thi B', ownerEmail: 'owner2@test.com', status: 'APPROVED', createdAt: '2026-06-23T12:00:00Z' }
+  { id: 'shop-1', shopName: 'Tech Store', ownerName: 'Nguyen Van A', ownerEmail: 'owner1@test.com', rating: 0, approvalStatus: 'PENDING', status: 'ACTIVE', createdAt: '2026-06-24T12:00:00Z' },
+  { id: 'shop-2', shopName: 'Fashion Hub', ownerName: 'Tran Thi B', ownerEmail: 'owner2@test.com', rating: 4.5, approvalStatus: 'APPROVED', status: 'ACTIVE', createdAt: '2026-06-23T12:00:00Z' }
 ];
 
 describe('Shops Management Page', () => {
@@ -77,7 +77,7 @@ describe('Shops Management Page', () => {
 
     // Should fetch with pending status query parameter
     expect(api.get).toHaveBeenCalledWith('/api/v1/admin/shops', {
-      params: expect.objectContaining({ status: 'PENDING' })
+      params: expect.objectContaining({ approvalStatus: 'PENDING' })
     });
   });
 });
@@ -98,10 +98,14 @@ import { AlertCircle, CheckCircle2, XCircle, Ban, RefreshCw } from 'lucide-react
 
 export interface Shop {
   id: string;
-  name: string;
+  shopName: string;
+  logoUrl?: string;
+  rating: number;
   ownerName: string;
   ownerEmail: string;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'SUSPENDED';
+  approvalStatus: 'PENDING' | 'APPROVED' | 'REJECTED';
+  status: 'ACTIVE' | 'SUSPENDED' | 'INACTIVE';
+  rejectedReason?: string;
   createdAt: string;
 }
 
@@ -111,13 +115,15 @@ export default function Shops() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchShops = async (status: string) => {
+  const fetchShops = async (filter: string) => {
     setLoading(true);
     setError(null);
     try {
       const params: any = { page: 1, limit: 10 };
-      if (status !== 'ALL') {
-        params.status = status;
+      if (filter === 'SUSPENDED') {
+        params.status = 'SUSPENDED';
+      } else if (filter !== 'ALL') {
+        params.approvalStatus = filter;
       }
       const response = await api.get('/api/v1/admin/shops', { params });
       setShops(response.data.shops || []);
@@ -132,17 +138,17 @@ export default function Shops() {
     fetchShops(statusFilter);
   }, [statusFilter]);
 
-  const renderStatusBadge = (status: Shop['status']) => {
-    switch (status) {
-      case 'PENDING':
-        return <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/10 px-2.5 py-0.5 text-xs font-medium text-amber-400 border border-amber-500/20"><AlertCircle className="h-3 w-3" /> Pending</span>;
-      case 'APPROVED':
-        return <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-medium text-emerald-400 border border-emerald-500/20"><CheckCircle2 className="h-3 w-3" /> Approved</span>;
-      case 'SUSPENDED':
-        return <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-500/10 px-2.5 py-0.5 text-xs font-medium text-rose-400 border border-rose-500/20"><Ban className="h-3 w-3" /> Suspended</span>;
-      case 'REJECTED':
-        return <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-500/10 px-2.5 py-0.5 text-xs font-medium text-slate-400 border border-slate-500/20"><XCircle className="h-3 w-3" /> Rejected</span>;
+  const renderStatusBadge = (shop: Shop) => {
+    if (shop.approvalStatus === 'PENDING') {
+      return <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/10 px-2.5 py-0.5 text-xs font-medium text-amber-400 border border-amber-500/20"><AlertCircle className="h-3 w-3" /> Pending</span>;
     }
+    if (shop.approvalStatus === 'REJECTED') {
+      return <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-500/10 px-2.5 py-0.5 text-xs font-medium text-slate-400 border border-slate-500/20"><XCircle className="h-3 w-3" /> Rejected</span>;
+    }
+    if (shop.status === 'SUSPENDED') {
+      return <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-500/10 px-2.5 py-0.5 text-xs font-medium text-rose-400 border border-rose-500/20"><Ban className="h-3 w-3" /> Suspended</span>;
+    }
+    return <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-medium text-emerald-400 border border-emerald-500/20"><CheckCircle2 className="h-3 w-3" /> Approved</span>;
   };
 
   return (
@@ -200,7 +206,7 @@ export default function Shops() {
                   shops.map((shop) => (
                     <tr key={shop.id} className="hover:bg-slate-900/30 transition">
                       <td className="p-4">
-                        <div className="font-semibold text-white">{shop.name}</div>
+                        <div className="font-semibold text-white">{shop.shopName}</div>
                         <div className="text-xs text-slate-500">ID: {shop.id}</div>
                       </td>
                       <td className="p-4">
@@ -208,7 +214,7 @@ export default function Shops() {
                         <div className="text-xs text-slate-500">{shop.ownerEmail}</div>
                       </td>
                       <td className="p-4">{new Date(shop.createdAt).toLocaleDateString()}</td>
-                      <td className="p-4">{renderStatusBadge(shop.status)}</td>
+                      <td className="p-4">{renderStatusBadge(shop)}</td>
                       <td className="p-4 text-right" data-testid={`actions-${shop.id}`}>
                         {/* Placeholder for Task 4.2 Action Buttons */}
                         <div className="text-slate-500 text-xs">Awaiting action logic</div>
@@ -279,7 +285,7 @@ it('approves a shop and rejects a shop with a reason through modal', async () =>
   });
 
   expect(api.patch).toHaveBeenCalledWith('/api/v1/admin/shops/shop-1/status', {
-    status: 'APPROVED'
+    approvalStatus: 'APPROVED'
   });
 
   // Find reject button for PENDING shop (shop-1)
@@ -298,8 +304,8 @@ it('approves a shop and rejects a shop with a reason through modal', async () =>
   });
 
   expect(api.patch).toHaveBeenCalledWith('/api/v1/admin/shops/shop-1/status', {
-    status: 'REJECTED',
-    reason: 'Incomplete business documents'
+    approvalStatus: 'REJECTED',
+    rejectedReason: 'Incomplete business documents'
   });
 });
 ```
@@ -399,10 +405,14 @@ import { AlertCircle, CheckCircle2, XCircle, Ban, RefreshCw, Check, X, ShieldAle
 
 export interface Shop {
   id: string;
-  name: string;
+  shopName: string;
+  logoUrl?: string;
+  rating: number;
   ownerName: string;
   ownerEmail: string;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'SUSPENDED';
+  approvalStatus: 'PENDING' | 'APPROVED' | 'REJECTED';
+  status: 'ACTIVE' | 'SUSPENDED' | 'INACTIVE';
+  rejectedReason?: string;
   createdAt: string;
 }
 
@@ -417,13 +427,15 @@ export default function Shops() {
   const [selectedShopId, setSelectedShopId] = useState<string | null>(null);
   const [modalActionType, setModalActionType] = useState<'REJECTED' | 'SUSPENDED'>('REJECTED');
 
-  const fetchShops = async (status: string) => {
+  const fetchShops = async (filter: string) => {
     setLoading(true);
     setError(null);
     try {
       const params: any = { page: 1, limit: 10 };
-      if (status !== 'ALL') {
-        params.status = status;
+      if (filter === 'SUSPENDED') {
+        params.status = 'SUSPENDED';
+      } else if (filter !== 'ALL') {
+        params.approvalStatus = filter;
       }
       const response = await api.get('/api/v1/admin/shops', { params });
       setShops(response.data.shops || []);
@@ -438,10 +450,13 @@ export default function Shops() {
     fetchShops(statusFilter);
   }, [statusFilter]);
 
-  const handleUpdateStatus = async (id: string, newStatus: Shop['status'], reason?: string) => {
+  const handleUpdateShop = async (
+    id: string,
+    payload: { approvalStatus?: Shop['approvalStatus']; status?: Shop['status']; rejectedReason?: string }
+  ) => {
     try {
-      await api.patch(`/api/v1/admin/shops/${id}/status`, { status: newStatus, reason });
-      setShops((prev) => prev.map((s) => (s.id === id ? { ...s, status: newStatus } : s)));
+      await api.patch(`/api/v1/admin/shops/${id}/status`, payload);
+      setShops((prev) => prev.map((s) => (s.id === id ? { ...s, ...payload } : s)));
       setIsModalOpen(false);
       setSelectedShopId(null);
     } catch (err: any) {
@@ -455,17 +470,17 @@ export default function Shops() {
     setIsModalOpen(true);
   };
 
-  const renderStatusBadge = (status: Shop['status']) => {
-    switch (status) {
-      case 'PENDING':
-        return <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/10 px-2.5 py-0.5 text-xs font-medium text-amber-400 border border-amber-500/20"><AlertCircle className="h-3 w-3" /> Pending</span>;
-      case 'APPROVED':
-        return <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-medium text-emerald-400 border border-emerald-500/20"><CheckCircle2 className="h-3 w-3" /> Approved</span>;
-      case 'SUSPENDED':
-        return <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-500/10 px-2.5 py-0.5 text-xs font-medium text-rose-400 border border-rose-500/20"><Ban className="h-3 w-3" /> Suspended</span>;
-      case 'REJECTED':
-        return <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-500/10 px-2.5 py-0.5 text-xs font-medium text-slate-400 border border-slate-500/20"><XCircle className="h-3 w-3" /> Rejected</span>;
+  const renderStatusBadge = (shop: Shop) => {
+    if (shop.approvalStatus === 'PENDING') {
+      return <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/10 px-2.5 py-0.5 text-xs font-medium text-amber-400 border border-amber-500/20"><AlertCircle className="h-3 w-3" /> Pending</span>;
     }
+    if (shop.approvalStatus === 'REJECTED') {
+      return <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-500/10 px-2.5 py-0.5 text-xs font-medium text-slate-400 border border-slate-500/20"><XCircle className="h-3 w-3" /> Rejected</span>;
+    }
+    if (shop.status === 'SUSPENDED') {
+      return <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-500/10 px-2.5 py-0.5 text-xs font-medium text-rose-400 border border-rose-500/20"><Ban className="h-3 w-3" /> Suspended</span>;
+    }
+    return <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-medium text-emerald-400 border border-emerald-500/20"><CheckCircle2 className="h-3 w-3" /> Approved</span>;
   };
 
   return (
@@ -523,7 +538,7 @@ export default function Shops() {
                   shops.map((shop) => (
                     <tr key={shop.id} className="hover:bg-slate-900/30 transition">
                       <td className="p-4">
-                        <div className="font-semibold text-white">{shop.name}</div>
+                        <div className="font-semibold text-white">{shop.shopName}</div>
                         <div className="text-xs text-slate-500">ID: {shop.id}</div>
                       </td>
                       <td className="p-4">
@@ -531,31 +546,31 @@ export default function Shops() {
                         <div className="text-xs text-slate-500">{shop.ownerEmail}</div>
                       </td>
                       <td className="p-4">{new Date(shop.createdAt).toLocaleDateString()}</td>
-                      <td className="p-4">{renderStatusBadge(shop.status)}</td>
+                      <td className="p-4">{renderStatusBadge(shop)}</td>
                       <td className="p-4 text-right" data-testid={`actions-${shop.id}`}>
                         <div className="flex justify-end gap-2">
-                          {shop.status === 'PENDING' && (
+                          {shop.approvalStatus === 'PENDING' && (
                             <>
                               <button
-                                onClick={() => handleUpdateStatus(shop.id, 'APPROVED')}
-                                aria-label={`Approve ${shop.name}`}
+                                onClick={() => handleUpdateShop(shop.id, { approvalStatus: 'APPROVED' })}
+                                aria-label={`Approve ${shop.shopName}`}
                                 className="inline-flex items-center gap-1 rounded bg-emerald-500/10 border border-emerald-500/20 px-2 py-1 text-xs font-medium text-emerald-400 hover:bg-emerald-500/20 transition"
                               >
                                 <Check className="h-3.5 w-3.5" /> Approve
                               </button>
                               <button
                                 onClick={() => openReasonModal(shop.id, 'REJECTED')}
-                                aria-label={`Reject ${shop.name}`}
+                                aria-label={`Reject ${shop.shopName}`}
                                 className="inline-flex items-center gap-1 rounded bg-rose-500/10 border border-rose-500/20 px-2 py-1 text-xs font-medium text-rose-400 hover:bg-rose-500/20 transition"
                               >
                                 <X className="h-3.5 w-3.5" /> Reject
                               </button>
                             </>
                           )}
-                          {shop.status === 'APPROVED' && (
+                          {shop.approvalStatus === 'APPROVED' && shop.status === 'ACTIVE' && (
                             <button
                               onClick={() => openReasonModal(shop.id, 'SUSPENDED')}
-                              aria-label={`Suspend ${shop.name}`}
+                              aria-label={`Suspend ${shop.shopName}`}
                               className="inline-flex items-center gap-1 rounded bg-rose-500/10 border border-rose-500/20 px-2 py-1 text-xs font-medium text-rose-400 hover:bg-rose-500/20 transition"
                             >
                               <ShieldAlert className="h-3.5 w-3.5" /> Suspend
@@ -563,8 +578,8 @@ export default function Shops() {
                           )}
                           {shop.status === 'SUSPENDED' && (
                             <button
-                              onClick={() => handleUpdateStatus(shop.id, 'APPROVED')}
-                              aria-label={`Re-approve ${shop.name}`}
+                              onClick={() => handleUpdateShop(shop.id, { status: 'ACTIVE' })}
+                              aria-label={`Re-approve ${shop.shopName}`}
                               className="inline-flex items-center gap-1 rounded bg-teal-500/10 border border-teal-500/20 px-2 py-1 text-xs font-medium text-teal-400 hover:bg-teal-500/20 transition"
                             >
                               <Check className="h-3.5 w-3.5" /> Reactivate
@@ -585,8 +600,11 @@ export default function Shops() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onConfirm={(reason) => {
-          if (selectedShopId) {
-            handleUpdateStatus(selectedShopId, modalActionType, reason);
+          if (!selectedShopId) return;
+          if (modalActionType === 'REJECTED') {
+            handleUpdateShop(selectedShopId, { approvalStatus: 'REJECTED', rejectedReason: reason });
+          } else {
+            handleUpdateShop(selectedShopId, { status: 'SUSPENDED' });
           }
         }}
         title="Provide Action Reason"
@@ -615,9 +633,9 @@ git commit -m "feat(admin): support shop approval actions with custom rejection 
 
 ### Checklist cuối phase
 - [ ] Bảng Shops tải dữ liệu thành công từ API có kèm theo trạng thái lọc.
-- [ ] Bấm nút Approve gửi đúng request PATCH với body `{ status: 'APPROVED' }`.
+- [ ] Bấm nút Approve gửi đúng request PATCH với body `{ approvalStatus: 'APPROVED' }`.
 - [ ] Bấm nút Reject hoặc Suspend mở ra popup nhập lý do, không thể submit nếu để trống text area.
-- [ ] Nhập lý do và submit gửi đúng dữ liệu trạng thái tương ứng cùng trường `reason` lên Backend.
+- [ ] Nhập lý do và submit gửi đúng dữ liệu: Reject gửi `{ approvalStatus: 'REJECTED', rejectedReason }`, Suspend gửi `{ status: 'SUSPENDED' }` lên Backend.
 
 ### ⚠️ Lỗi Fresher hay mắc
 1. **Quên reset state của Modal:** Không xóa lý do cũ sau khi đóng modal hoặc thay đổi shop được chọn, dẫn đến shop sau kế thừa lý do bị reject của shop trước.

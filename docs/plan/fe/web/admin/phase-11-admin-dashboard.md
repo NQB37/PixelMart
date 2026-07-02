@@ -294,8 +294,8 @@ vi.mock('../services/api', () => ({
 }));
 
 const mockUsers = [
-  { id: 'u-1', fullName: 'Nguyen Van Guest', email: 'guest@test.com', role: 'USER', isActive: true },
-  { id: 'u-2', fullName: 'Luu Manh X', email: 'blockme@test.com', role: 'USER', isActive: false }
+  { id: 'u-1', email: 'guest@test.com', profile: { fullName: 'Nguyen Van Guest' }, roles: ['CUSTOMER'], isActive: true },
+  { id: 'u-2', email: 'blockme@test.com', profile: { fullName: 'Luu Manh X' }, roles: ['CUSTOMER'], isActive: false }
 ];
 
 describe('Users Management Component', () => {
@@ -343,11 +343,13 @@ import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import { UserCheck, UserX, RefreshCw } from 'lucide-react';
 
+type Role = 'CUSTOMER' | 'SELLER' | 'ADMIN' | 'DELIVERY_PERSON';
+
 interface User {
   id: string;
-  fullName: string;
   email: string;
-  role: 'ADMIN' | 'SELLER' | 'USER';
+  profile: { fullName: string };
+  roles: Role[];
   isActive: boolean;
 }
 
@@ -420,11 +422,11 @@ export default function Users() {
                 ) : (
                   users.map((user) => (
                     <tr key={user.id} className="hover:bg-slate-900/30 transition">
-                      <td className="p-4 font-semibold text-white">{user.fullName}</td>
+                      <td className="p-4 font-semibold text-white">{user.profile.fullName}</td>
                       <td className="p-4">{user.email}</td>
                       <td className="p-4">
                         <span className="text-xs uppercase px-2.5 py-0.5 rounded border border-slate-700 bg-slate-800 text-slate-300">
-                          {user.role}
+                          {user.roles.join(', ')}
                         </span>
                       </td>
                       <td className="p-4">
@@ -442,7 +444,7 @@ export default function Users() {
                         {user.isActive ? (
                           <button
                             onClick={() => handleToggleBlock(user.id, user.isActive)}
-                            aria-label={`Block ${user.fullName}`}
+                            aria-label={`Block ${user.profile.fullName}`}
                             className="inline-flex items-center gap-1 text-xs text-rose-400 font-medium bg-rose-500/10 border border-rose-500/20 px-3 py-1.5 rounded hover:bg-rose-500/20 transition"
                           >
                             <UserX className="h-3.5 w-3.5" /> Block
@@ -450,7 +452,7 @@ export default function Users() {
                         ) : (
                           <button
                             onClick={() => handleToggleBlock(user.id, user.isActive)}
-                            aria-label={`Unblock ${user.fullName}`}
+                            aria-label={`Unblock ${user.profile.fullName}`}
                             className="inline-flex items-center gap-1 text-xs text-emerald-400 font-medium bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded hover:bg-emerald-500/20 transition"
                           >
                             <UserCheck className="h-3.5 w-3.5" /> Unblock

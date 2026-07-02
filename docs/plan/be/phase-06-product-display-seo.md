@@ -49,7 +49,7 @@ async getPublicProducts(query: ProductQuery) {
   const where: Prisma.ProductWhereInput = {
     isActive: true,
     deletedAt: null,
-    shop: { status: 'ACTIVE', isActive: true }, // Chỉ lấy SP từ shop active
+    shop: { status: 'ACTIVE', approvalStatus: 'APPROVED' }, // Chỉ lấy SP từ shop active & đã được duyệt
     ...(categoryId && { categoryId }),
     ...(search && {
       OR: [
@@ -81,7 +81,7 @@ async getPublicProducts(query: ProductQuery) {
           select: { url: true, alt: true },
         },
         shop: {
-          select: { name: true, slug: true },
+          select: { id: true, shopName: true },
         },
         category: {
           select: { name: true, slug: true },
@@ -120,7 +120,7 @@ async getProductBySlug(slug: string) {
       category: { include: { parent: true } },
       shop: {
         select: {
-          id: true, name: true, slug: true, logo: true,
+          id: true, shopName: true, logoUrl: true,
           rating: true, createdAt: true,
           _count: { select: { products: true } },
         },
@@ -172,7 +172,7 @@ async getRelatedProducts(productId: string, limit = 8) {
     select: {
       id: true, name: true, slug: true, price: true, comparePrice: true,
       images: { where: { isPrimary: true }, take: 1 },
-      shop: { select: { name: true, slug: true } },
+      shop: { select: { id: true, shopName: true } },
     },
     take: limit,
     orderBy: { soldCount: 'desc' },
@@ -182,7 +182,7 @@ async getRelatedProducts(productId: string, limit = 8) {
 
 #### ⚠️ Lỗi fresher hay mắc:
 
-- **Không filter theo shop status:** Sản phẩm từ shop bị suspended vẫn hiện → user mua hàng nhưng shop bị ban → đơn hàng treo. Luôn join + filter `shop.status = ACTIVE`.
+- **Không filter theo shop status:** Sản phẩm từ shop bị suspended vẫn hiện → user mua hàng nhưng shop bị ban → đơn hàng treo. Luôn join + filter `shop.status = ACTIVE` và `shop.approvalStatus = APPROVED`.
 - **Trả toàn bộ data không cần thiết:** Public API không cần trả `createdAt`, `updatedAt`, `ownerId`... Dùng `select` chỉ lấy field cần hiển thị → response nhỏ hơn, nhanh hơn.
 - **OFFSET pagination cho dataset lớn:** `OFFSET 10000` → DB phải scan 10000 rows rồi skip. Rất chậm. Cho MVP thì OK, sau nên dùng Cursor-based pagination.
 
@@ -191,7 +191,7 @@ async getRelatedProducts(productId: string, limit = 8) {
 ## 🏁 Checklist Cuối Phase 6
 
 - [ ] `GET /api/v1/products` — API lấy danh sách sản phẩm public hoạt động, hỗ trợ phân trang, tìm kiếm, lọc theo khoảng giá, lọc theo danh mục
-- [ ] Lọc sản phẩm public chỉ trả về sản phẩm của shop hoạt động (`shop.status = ACTIVE` và `shop.isActive = true`)
+- [ ] Lọc sản phẩm public chỉ trả về sản phẩm của shop hoạt động (`shop.status = ACTIVE` và `shop.approvalStatus = APPROVED`)
 - [ ] `GET /api/v1/products/:slug` — API lấy chi tiết sản phẩm hoạt động, trả về thông tin sản phẩm và shop liên quan
 - [ ] Thêm các Database Index cần thiết (`slug`, `price`, `categoryId`, `createdAt`)
 - [ ] Commit: "feat: API public products with advanced search, filtering, and indexing"

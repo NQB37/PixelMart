@@ -12,7 +12,7 @@
 
 - Thư mục làm việc: `web/admin-web/`
 - Endpoint API Backend cho login: `/api/v1/auth/login` (POST, nhận `email` và `password`, trả về JWT token và thông tin user).
-- Quyền truy cập: Chỉ cho phép người dùng có `role: 'ADMIN'` đi qua route bảo vệ. Các role khác (như `USER` hoặc `SELLER`) sẽ bị chặn và hiển thị thông báo Access Denied.
+- Quyền truy cập: Chỉ cho phép người dùng có vai trò `ADMIN` (trong mảng `roles`) đi qua route bảo vệ. Các role khác (như `CUSTOMER` hoặc `SELLER`) sẽ bị chặn và hiển thị thông báo Access Denied.
 - Không sử dụng code placeholder hay các ghi chú TBD/TODO trong code triển khai chính thức.
 
 ---
@@ -29,7 +29,7 @@
 **Interfaces:**
 - Consumes: `/api/v1/auth/login` (Backend endpoint)
 - Produces: `useAuth` hook cung cấp:
-  - `user`: `{ id: string; email: string; fullName: string; role: 'ADMIN' | 'SELLER' | 'USER' } | null`
+  - `user`: `{ id: string; email: string; profile: { fullName: string }; roles: ('CUSTOMER' | 'SELLER' | 'ADMIN' | 'DELIVERY_PERSON')[] } | null`
   - `isAuthenticated`: `boolean`
   - `login`: `(email: string, password: string) => Promise<void>`
   - `logout`: `() => void`
@@ -63,7 +63,7 @@ function TestComponent() {
   const { user, isAuthenticated, login, logout } = useAuth();
   return (
     <div>
-      <div data-testid="user">{user ? user.fullName : 'Guest'}</div>
+      <div data-testid="user">{user ? user.profile.fullName : 'Guest'}</div>
       <div data-testid="auth-state">{isAuthenticated ? 'LoggedIn' : 'LoggedOut'}</div>
       <button onClick={() => login('admin@pixelmart.com', 'password')} aria-label="login-btn">Login</button>
       <button onClick={logout} aria-label="logout-btn">Logout</button>
@@ -77,7 +77,7 @@ describe('AuthContext & Provider', () => {
     vi.mocked(mockAxiosInstance.post).mockResolvedValueOnce({
       data: {
         accessToken: 'mock-access-token',
-        user: { id: '1', email: 'admin@pixelmart.com', fullName: 'Admin User', role: 'ADMIN' }
+        user: { id: '1', email: 'admin@pixelmart.com', profile: { fullName: 'Admin User' }, roles: ['ADMIN'] }
       }
     });
 
@@ -140,11 +140,13 @@ export default api;
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import api from '../services/api';
 
+type Role = 'CUSTOMER' | 'SELLER' | 'ADMIN' | 'DELIVERY_PERSON';
+
 interface User {
   id: string;
   email: string;
-  fullName: string;
-  role: 'ADMIN' | 'SELLER' | 'USER';
+  profile: { fullName: string };
+  roles: Role[];
 }
 
 interface AuthContextType {
@@ -174,7 +176,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const response = await api.post('/api/v1/auth/login', { email, password });
     const { accessToken, user: userData } = response.data;
     
-    if (userData.role !== 'ADMIN') {
+    if (!userData.roles.includes('ADMIN')) {
       throw new Error('Access denied: Unauthorized role');
     }
 
@@ -465,7 +467,7 @@ describe('ProtectedRoute', () => {
 
   it('renders content when authenticated user is ADMIN', () => {
     vi.mocked(useAuth).mockReturnValue({
-      user: { id: '1', email: 'admin@pixelmart.com', fullName: 'Big Admin', role: 'ADMIN' },
+      user: { id: '1', email: 'admin@pixelmart.com', profile: { fullName: 'Big Admin' }, roles: ['ADMIN'] },
       isAuthenticated: true,
       isLoading: false,
       login: vi.fn(),
@@ -521,7 +523,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
     return <Navigate to="/admin/login" replace />;
   }
 
-  if (user.role !== 'ADMIN') {
+  if (!user.roles.includes('ADMIN')) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-slate-950 text-slate-100 font-sans">
         <h1 className="text-4xl font-extrabold text-rose-500">403 - Forbidden</h1>
@@ -622,7 +624,7 @@ git commit -m "feat(admin): secure admin routes via ProtectedRoute and role matc
 ### Checklist cuối phase
 - [ ] Truy cập `/admin` khi chưa đăng nhập sẽ chuyển hướng ngay lập tức đến `/admin/login`.
 - [ ] Nhập thông tin đăng nhập đúng vai trò `ADMIN` chuyển hướng thành công đến `/admin`.
-- [ ] Nhập thông tin đăng nhập với tài khoản có `role: 'USER'` hiển thị màn hình 403 Forbidden thay vì truy cập Dashboard.
+- [ ] Nhập thông tin đăng nhập với tài khoản có role `CUSTOMER` (không có `ADMIN` trong `roles`) hiển thị màn hình 403 Forbidden thay vì truy cập Dashboard.
 - [ ] JWT token được lưu đúng trong `localStorage` và gửi kèm trong header `Authorization` của các request Axios tiếp theo.
 
 ### ⚠️ Lỗi Fresher hay mắc

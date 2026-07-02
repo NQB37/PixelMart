@@ -35,63 +35,83 @@ Order → OrderItem → Product        User → Order → OrderItem
 #### Danh sách bảng cần thiết (Phase MVP):
 
 ```
-CORE ENTITIES:
-1. User              — Người dùng (buyer + seller + admin)
-2. Shop              — Cửa hàng (thuộc về 1 seller)
-3. Category          — Danh mục sản phẩm (admin quản lý)
-4. Product           — Sản phẩm (thuộc về 1 shop)
-5. ProductImage      — Ảnh sản phẩm (tách bảng riêng)
+CORE AUTH & RBAC (đã migrate):
+1. User              — Tài khoản (email/password hoặc OAuth). KHÔNG chứa role.
+2. Profile           — Thông tin cá nhân (fullName, avatarUrl, phone...) — tách 1-1 khỏi User
+3. RefreshToken      — JWT refresh tokens
+4. Role              — Vai trò: CUSTOMER / SELLER / ADMIN / DELIVERY_PERSON
+5. UserRoles         — Bảng nối User ↔ Role (nhiều-nhiều)
+6. Permission        — Quyền hạn chi tiết
+7. RolePermissions   — Bảng nối Role ↔ Permission
 
-COMMERCE:
-6. Cart              — Giỏ hàng (thuộc về 1 user)
-7. CartItem          — Item trong giỏ
-8. Order             — Đơn hàng
-9. OrderItem         — Item trong đơn (snapshot giá)
+ACTORS & ADDRESS (đã migrate):
+8. Shop              — Cửa hàng (1 seller = 1 shop); approvalStatus + status tách riêng
+9. DeliveryPerson    — Người giao hàng (role DELIVERY_PERSON)
+10. Address          — Địa chỉ POLYMORPHIC (ownerType USER | SHOP), 1 chủ nhiều địa chỉ
 
-FEATURES:
-10. Review           — Đánh giá sản phẩm
-11. Wishlist         — Danh sách yêu thích
-12. Coupon           — Mã giảm giá (shop hoặc platform)
-13. Address          — Địa chỉ giao hàng (1 user nhiều địa chỉ)
-
-SYSTEM:
-14. RefreshToken     — JWT refresh tokens
+COMMERCE & FEATURES (PLANNED — migrate dần ở phase 5–10):
+11. Category         — Danh mục sản phẩm (admin quản lý)
+12. Product          — Sản phẩm (thuộc về 1 shop)
+13. ProductImage     — Ảnh sản phẩm (tách bảng riêng)
+14. Cart / CartItem  — Giỏ hàng (thuộc về 1 user)
+15. Order / OrderItem — Đơn hàng (OrderItem snapshot giá)
+16. Review           — Đánh giá sản phẩm
+17. Wishlist         — Danh sách yêu thích
+18. Coupon           — Mã giảm giá (shop hoặc platform)
 ```
 
 #### ERD Diagram (Text-based):
 
 ```
+┌──────────────┐  1-1    ┌──────────────┐
+│     User     │────────→│   Profile    │  fullName/avatar/phone nằm ở đây
+├──────────────┤         ├──────────────┤
+│ id ◄──uuid   │         │ id           │
+│ email ◄──UQ  │         │ userId ◄──UQ │
+│ password?    │←nullable│ fullName     │
+│ provider(EN) │←OAuth   │ avatarUrl    │
+│ isActive     │         │ phoneNumber  │
+│ createdAt    │         │ dateOfBirth  │
+│ updatedAt    │         │ gender (ENUM)│
+└──────┬───────┘         └──────────────┘
+       │  RBAC (nhiều-nhiều, KHÔNG có cột role trên User)
+       │   User ─< UserRoles >─ Role ─< RolePermissions >─ Permission
+       │           Role.name ∈ {CUSTOMER, SELLER, ADMIN, DELIVERY_PERSON}
+       │
+       ├──────────────→ Shop (1 User = 0..1 Shop)
+       │                ┌──────────────┐
+       │                │    Shop      │
+       │                ├──────────────┤
+       │                │ id           │
+       │                │ ownerId ◄─UQ │
+       │                │ shopName     │
+       │                │ logoUrl      │
+       │                │ rating(Float)│ ← Computed average
+       │                │ approvalStat │ ← PENDING/APPROVED/REJECTED
+       │                │ rejectedRsn  │
+       │                │ status (ENUM)│ ← ACTIVE/SUSPENDED/INACTIVE
+       │                │ deletedAt    │ ← soft delete
+       │                └──────────────┘
+       │
+       ├──────────────→ DeliveryPerson (1 User = 0..1)
+       │                │ vehicleType/Plate/Color, approvalStatus,
+       │                │ activityStatus(ONLINE/OFFLINE/BUSY), status
+       │
+       │ has many
+       ▼
 ┌──────────────┐         ┌──────────────┐
-│     User     │────────→│    Shop      │  1 User = 0..1 Shop
-├──────────────┤  owns   ├──────────────┤
-│ id           │         │ id           │
-│ email ◄──UQ  │         │ name         │
-│ password     │         │ slug ◄──UQ   │
-│ fullName     │         │ description  │
-│ phone        │         │ logo         │
-│ avatar       │         │ banner       │
-│ role (ENUM)  │         │ ownerId (FK) │
-│ isActive     │         │ status(ENUM) │ ← PENDING/ACTIVE/SUSPENDED
-│ createdAt    │         │ rating       │ ← Computed average
-│ updatedAt    │         │ isActive     │
-│ deletedAt    │         │ createdAt    │
-└──────┬───────┘         │ updatedAt    │
-       │                 └──────┬───────┘
-       │ has many                │ has many
-       ▼                         ▼
-┌──────────────┐         ┌──────────────┐
-│   Address    │         │   Product    │
+│   Address    │         │   Product    │  (PLANNED)
 ├──────────────┤         ├──────────────┤
 │ id           │         │ id           │
-│ userId (FK)  │         │ name         │
-│ fullName     │         │ slug ◄──UQ   │
-│ phone        │         │ description  │
-│ province     │         │ price ◄DECIMAL│
-│ district     │         │ comparePrice │
-│ ward         │         │ sku ◄──UQ    │
-│ detail       │         │ stock        │
-│ isDefault    │         │ shopId (FK)  │ ← Thuộc về Shop!
-│ createdAt    │         │ categoryId   │
+│ ownerId (FK) │←USER    │ name         │
+│ ownerType(EN)│  hoặc   │ slug ◄──UQ   │
+│ recipientName│  SHOP   │ description  │
+│ phone        │         │ price ◄DECIMAL│
+│ street       │         │ comparePrice │
+│ wardID       │         │ sku ◄──UQ    │
+│ provinceId   │←no dist │ stock        │
+│ label (ENUM) │         │ shopId (FK)  │ ← Thuộc về Shop!
+│ isDefault    │         │ categoryId   │
 └──────────────┘         │ isActive     │
                          │ isFeatured   │
 ┌──────────────┐         │ soldCount    │
@@ -184,8 +204,12 @@ SYSTEM:
 | **ProductImage tách bảng**      | Thay vì lưu JSON array trong Product. Dễ query, dễ sort, dễ set ảnh primary                                                    |
 | **Coupon có `shopId` nullable** | `shopId = null` → coupon của platform (admin tạo). `shopId = 'xxx'` → coupon của shop                                          |
 | **Review yêu cầu `orderId`**    | Chỉ cho phép review khi đã mua hàng. Tránh fake review                                                                         |
-| **Address tách bảng**           | 1 user có nhiều địa chỉ giao hàng. `isDefault` đánh dấu địa chỉ mặc định                                                       |
-| **Shop.status**                 | Admin phải approve shop trước khi seller bán hàng (PENDING → ACTIVE)                                                           |
+| **RBAC thay cho `role` enum**   | KHÔNG lưu `role` trực tiếp trên User. Dùng `UserRoles` (User ↔ Role) + `RolePermissions` (Role ↔ Permission). 1 user có thể có nhiều vai trò. Enum `ROLE`: `CUSTOMER / SELLER / ADMIN / DELIVERY_PERSON` |
+| **Tách `Profile` khỏi `User`**  | `User` chỉ giữ dữ liệu xác thực (email, password?, provider). `fullName`, `avatarUrl`, `phoneNumber`, `dateOfBirth`, `gender` nằm ở `Profile` (quan hệ 1-1) |
+| **`User.provider`**             | `CREDENTIALS` (email/password) hoặc `GOOGLE` (OAuth). Vì vậy `password` là **nullable** |
+| **Address polymorphic**         | 1 bảng `Address` dùng chung cho cả User và Shop qua `ownerId` + `ownerType` (USER \| SHOP). `label` phân loại (HOME/OFFICE/PICKUP/BUSINESS/OTHER). Chỉ có `provinceId` + `wardID` (không tách `district`) |
+| **Shop: 2 trạng thái tách biệt** | `approvalStatus` (PENDING → APPROVED/REJECTED, kèm `rejectedReason`) là bước admin duyệt; `status` (ACTIVE/SUSPENDED/INACTIVE) là trạng thái vận hành. Có `deletedAt` để soft delete |
+| **DeliveryPerson**              | Người giao hàng (role `DELIVERY_PERSON`) là 1 model riêng, cũng dùng `approvalStatus` + `status`, thêm `activityStatus` (ONLINE/OFFLINE/BUSY) |
 
 #### ⚠️ Lỗi fresher thường mắc:
 
@@ -234,16 +258,66 @@ datasource db {
 
 // ==================== ENUMS ====================
 
-enum Role {
-  USER
-  SELLER
-  ADMIN
+// Xác thực bằng email/password hay OAuth (Google)
+enum UserProvider {
+  CREDENTIALS
+  GOOGLE
 }
 
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+// RBAC: tên vai trò. KHÔNG lưu role trực tiếp trên User —
+// user ↔ role là quan hệ nhiều-nhiều qua bảng UserRoles.
+enum ROLE {
+  CUSTOMER
+  SELLER
+  ADMIN
+  DELIVERY_PERSON
+}
+
+// Địa chỉ dùng chung cho cả User và Shop (polymorphic)
+enum AddressOwnerType {
+  USER
+  SHOP
+}
+
+enum AddressLabel {
+  HOME
+  OFFICE
+  PICKUP
+  BUSINESS
+  OTHER
+}
+
+// Trạng thái duyệt (dùng cho Shop và DeliveryPerson)
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+// Trạng thái hoạt động (dùng cho Shop và DeliveryPerson)
 enum ShopStatus {
-  PENDING    // Chờ admin approve
-  ACTIVE     // Đang hoạt động
-  SUSPENDED  // Bị khóa
+  ACTIVE
+  SUSPENDED
+  INACTIVE
+}
+
+enum VehicleType {
+  CAR
+  MOTORBIKE
+  BICYCLE
+  TRUCK
+}
+
+enum DeliveryActivityStatus {
+  ONLINE
+  OFFLINE
+  BUSY
 }
 
 enum OrderStatus {
@@ -276,79 +350,178 @@ enum CouponType {
 
 // ==================== MODELS ====================
 
+// ---------- CORE AUTH (đã migrate) ----------
+
 model User {
-  id        String    @id @default(cuid())
-  email     String    @unique
-  password  String
-  fullName  String
-  phone     String?
-  avatar    String?
-  role      Role      @default(USER)
-  isActive  Boolean   @default(true)
+  id        String       @id @default(uuid())
+  email     String       @unique
+  password  String?      // nullable: user OAuth (Google) không có password
+  provider  UserProvider @default(CREDENTIALS)
+  isActive  Boolean      @default(true)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
 
-  // Relations
-  shop           Shop?
-  addresses      Address[]
-  orders         Order[]
-  reviews        Review[]
-  wishlistItems  Wishlist[]
-  cart           Cart?
+  // Thông tin cá nhân tách sang Profile (1-1), KHÔNG nằm trên User
+  profile        Profile?
   refreshTokens  RefreshToken[]
-
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
+  roles          UserRoles[]      // RBAC: user có nhiều vai trò
+  addresses      Address[]
+  shop           Shop?
+  deliveryPerson DeliveryPerson?
 
   @@index([email])
   @@map("users")
 }
 
-model Shop {
-  id          String     @id @default(cuid())
-  name        String
-  slug        String     @unique
-  description String?
-  logo        String?
-  banner      String?
-  ownerId     String     @unique  // 1 user = 1 shop
-  owner       User       @relation(fields: [ownerId], references: [id])
-  status      ShopStatus @default(PENDING)
-  rating      Decimal    @default(0) @db.Decimal(2, 1) // 0.0 - 5.0
-  isActive    Boolean    @default(true)
+model Profile {
+  id          String    @id @default(uuid())
+  userId      String    @unique
+  fullName    String
+  avatarUrl   String?
+  phoneNumber String?
+  dateOfBirth DateTime?
+  gender      Gender?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
-  // Relations
-  products Product[]
-  orders   Order[]
-  coupons  Coupon[]
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@map("profiles")
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 
-  @@index([slug])
+  @@index([userId])
+  @@index([token])
+  @@map("refresh_tokens")
+}
+
+// ---------- RBAC (đã migrate) ----------
+
+model Role {
+  id          String   @id @default(uuid())
+  name        ROLE     @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  userRoles       UserRoles[]
+  rolePermissions RolePermissions[]
+
+  @@index([name])
+  @@map("roles")
+}
+
+model UserRoles {
+  userId String
+  roleId String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+  @@index([roleId])
+  @@map("user_roles")
+}
+
+model Permission {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  rolePermissions RolePermissions[]
+
+  @@index([name])
+  @@map("permissions")
+}
+
+model RolePermissions {
+  roleId       String
+  permissionId String
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+// ---------- ADDRESS — polymorphic cho cả User và Shop (đã migrate) ----------
+
+model Address {
+  id            String           @id @default(uuid())
+  ownerId       String           // ID của User HOẶC Shop
+  ownerType     AddressOwnerType // USER | SHOP
+  recipientName String
+  phone         String
+  street        String           // Số nhà, tên đường
+  wardID        String           // Mã phường/xã
+  provinceId    String           // Mã tỉnh/thành (KHÔNG tách district riêng)
+  isDefault     Boolean          @default(false)
+  label         AddressLabel
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  user User @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  @@index([ownerId, ownerType])
+  @@map("addresses")
+}
+
+// ---------- SHOP (đã migrate) ----------
+
+model Shop {
+  id             String         @id @default(uuid())
+  ownerId        String         @unique // 1 user = 1 shop
+  shopName       String
+  logoUrl        String?
+  rating         Float          @default(0) // 0.0 - 5.0 (giá trị trung bình)
+  approvalStatus ApprovalStatus @default(PENDING) // admin duyệt shop
+  rejectedReason String?
+  status         ShopStatus     @default(ACTIVE)  // trạng thái vận hành
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  deletedAt      DateTime?      // soft delete
+
+  user User @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  // Quan hệ tới các model thương mại (products/orders/coupons) sẽ được
+  // bổ sung khi các model đó được migrate ở các phase sau.
+
   @@index([ownerId])
   @@map("shops")
 }
 
-model Address {
-  id        String  @id @default(cuid())
-  userId    String
-  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  fullName  String
-  phone     String
-  province  String
-  district  String
-  ward      String
-  detail    String  // Số nhà, tên đường
-  isDefault Boolean @default(false)
+// ---------- DELIVERY (đã migrate) ----------
 
-  orders Order[]
+model DeliveryPerson {
+  id                  String                 @id @default(uuid())
+  userId              String                 @unique
+  vehicleType         VehicleType
+  vehicleLicensePlate String
+  vehicleColor        String
+  approvalStatus      ApprovalStatus         @default(PENDING)
+  rejectedReason      String?
+  activityStatus      DeliveryActivityStatus @default(OFFLINE)
+  status              ShopStatus             @default(ACTIVE)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([userId])
-  @@map("addresses")
+  @@map("delivery_persons")
 }
+
+// ==================== MODELS THƯƠNG MẠI (PLANNED — chưa migrate) ====================
+// Các model dưới đây là thiết kế mục tiêu, sẽ được đưa vào schema + migrate dần ở
+// các phase 5–10. Khi migrate, nhớ bổ sung back-relation tương ứng vào các model
+// core ở trên (ví dụ: Shop.products, Shop.orders, Shop.coupons, User.orders, ...).
 
 model Category {
   id          String     @id @default(cuid())
@@ -563,21 +736,10 @@ model Coupon {
   @@index([shopId])
   @@map("coupons")
 }
-
-model RefreshToken {
-  id        String   @id @default(cuid())
-  token     String   @unique
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  expiresAt DateTime
-
-  createdAt DateTime @default(now())
-
-  @@index([userId])
-  @@index([token])
-  @@map("refresh_tokens")
-}
 ```
+
+> [!NOTE]
+> `RefreshToken` đã nằm trong nhóm **CORE AUTH** ở trên (không lặp lại ở đây).
 
 #### ⚠️ Lỗi fresher hay mắc:
 

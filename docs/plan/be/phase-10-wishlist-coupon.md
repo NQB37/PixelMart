@@ -106,8 +106,8 @@ async function main() {
   console.log("🌱 Seeding database for Phase 10...");
 
   // 1. Lấy shop đã có
-  const shop = await prisma.shop.findUnique({
-    where: { slug: "tech-store" },
+  const shop = await prisma.shop.findFirst({
+    where: { shopName: "Tech Store Official" },
   });
 
   if (!shop) {
@@ -220,7 +220,7 @@ class WishlistService {
               stock: true,
               isActive: true,
               images: { where: { isPrimary: true }, take: 1 },
-              shop: { select: { name: true, slug: true } },
+              shop: { select: { shopName: true } },
             },
           },
         },

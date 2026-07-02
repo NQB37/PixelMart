@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Xây dựng trang thiết lập thông tin cửa hàng (Shop Settings) cho phép chủ shop (Seller) cập nhật tên, mô tả, logo, và hình ảnh banner của cửa hàng thông qua gọi API cập nhật thông tin.
+**Goal:** Xây dựng trang thiết lập thông tin cửa hàng (Shop Settings) cho phép chủ shop (Seller) cập nhật tên cửa hàng (`shopName`) và logo (`logoUrl`) của cửa hàng thông qua gọi API cập nhật thông tin.
 
 **Architecture:** Sử dụng form quản lý state trong React để điều khiển các trường nhập liệu, tích hợp các input upload file để xử lý ảnh (chuyển đổi thành base64 hoặc lưu trữ URL tạm thời trước khi upload), gửi request HTTP PUT tới backend API thông qua Axios Client để cập nhật dữ liệu.
 
@@ -29,7 +29,7 @@
 
 **Interfaces:**
 - Consumes: `AuthContext` để lấy thông tin đăng nhập cửa hàng.
-- Produces: Giao diện form điều chỉnh thông tin shop bao gồm: Tên shop, mô tả, logo, banner kèm theo nút Lưu.
+- Produces: Giao diện form điều chỉnh thông tin shop bao gồm: Tên shop (`shopName`) và logo (`logoUrl`) kèm theo nút Lưu.
 
 - [ ] **Step 1: Write the failing test**
 Create: `web/seller-web/src/__tests__/shopSettings.test.tsx`
@@ -44,7 +44,6 @@ describe('ShopSettings Component', () => {
     render(<ShopSettings />);
 
     expect(screen.getByLabelText('Tên cửa hàng')).toBeInTheDocument();
-    expect(screen.getByLabelText('Mô tả cửa hàng')).toBeInTheDocument();
 
     const nameInput = screen.getByLabelText('Tên cửa hàng') as HTMLInputElement;
     fireEvent.change(nameInput, { target: { value: 'Tech Zone New' } });
@@ -65,20 +64,14 @@ import { Store, Image as ImageIcon, Save, CheckCircle } from 'lucide-react';
 import { api } from '../utils/api';
 
 export interface ShopData {
-  name: string;
-  slug: string;
-  description: string;
-  logo: string;
-  banner: string;
+  shopName: string;
+  logoUrl: string;
 }
 
 export default function ShopSettings() {
   const [shop, setShop] = useState<ShopData>({
-    name: 'Cửa hàng mặc định',
-    slug: 'default-shop',
-    description: 'Chưa có mô tả cửa hàng.',
-    logo: 'https://images.unsplash.com/photo-1572021335469-31706a17aaef?w=150',
-    banner: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800',
+    shopName: 'Cửa hàng mặc định',
+    logoUrl: 'https://images.unsplash.com/photo-1572021335469-31706a17aaef?w=150',
   });
   const [saving, setSaving] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
@@ -120,14 +113,14 @@ export default function ShopSettings() {
     }
   };
 
-  const handleImageChange = (type: 'logo' | 'banner', e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
         setShop((prev) => ({
           ...prev,
-          [type]: reader.result as string,
+          logoUrl: reader.result as string,
         }));
       };
       reader.readAsDataURL(file);
@@ -155,33 +148,12 @@ export default function ShopSettings() {
       )}
 
       <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        {/* Banner Section */}
-        <div className="h-48 w-full bg-slate-100 relative group overflow-hidden">
-          <img
-            src={shop.banner}
-            alt="Shop Banner"
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-            <label className="cursor-pointer bg-white/90 text-slate-800 px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 shadow hover:bg-white transition">
-              <ImageIcon className="h-4 w-4" />
-              <span>Thay ảnh bìa</span>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => handleImageChange('banner', e)}
-                className="hidden"
-              />
-            </label>
-          </div>
-        </div>
-
         {/* Form Container */}
-        <div className="p-6 relative">
+        <div className="p-6">
           {/* Logo Section */}
-          <div className="absolute -top-12 left-6 h-24 w-24 rounded-xl border-4 border-white bg-white shadow-md overflow-hidden relative group">
+          <div className="relative group h-24 w-24 rounded-xl border border-slate-200 bg-white shadow-md overflow-hidden mb-6">
             <img
-              src={shop.logo}
+              src={shop.logoUrl}
               alt="Shop Logo"
               className="w-full h-full object-cover"
             />
@@ -191,14 +163,14 @@ export default function ShopSettings() {
                 <input
                   type="file"
                   accept="image/*"
-                  onChange={(e) => handleImageChange('logo', e)}
+                  onChange={handleLogoChange}
                   className="hidden"
                 />
               </label>
             </div>
           </div>
 
-          <div className="pt-16 grid grid-cols-1 gap-6">
+          <div className="grid grid-cols-1 gap-6">
             <div>
               <label htmlFor="shop-name" className="block text-sm font-semibold text-slate-700 mb-1">
                 Tên cửa hàng
@@ -206,37 +178,10 @@ export default function ShopSettings() {
               <input
                 id="shop-name"
                 type="text"
-                value={shop.name}
-                onChange={(e) => setShop((prev) => ({ ...prev, name: e.target.value }))}
+                value={shop.shopName}
+                onChange={(e) => setShop((prev) => ({ ...prev, shopName: e.target.value }))}
                 className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-800"
                 required
-              />
-            </div>
-
-            <div>
-              <label htmlFor="shop-slug" className="block text-sm font-semibold text-slate-700 mb-1">
-                Đường dẫn tĩnh (Slug)
-              </label>
-              <input
-                id="shop-slug"
-                type="text"
-                value={shop.slug}
-                onChange={(e) => setShop((prev) => ({ ...prev, slug: e.target.value.toLowerCase().replace(/\s+/g, '-') }))}
-                className="w-full px-4 py-2 border border-slate-200 rounded-lg bg-slate-50 text-slate-500 cursor-not-allowed"
-                disabled
-              />
-            </div>
-
-            <div>
-              <label htmlFor="shop-description" className="block text-sm font-semibold text-slate-700 mb-1">
-                Mô tả cửa hàng
-              </label>
-              <textarea
-                id="shop-description"
-                rows={4}
-                value={shop.description}
-                onChange={(e) => setShop((prev) => ({ ...prev, description: e.target.value }))}
-                className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-800"
               />
             </div>
           </div>
@@ -265,7 +210,7 @@ Expected: PASS 1/1 (shopSettings.test.tsx)
 - [ ] **Step 5: Commit**
 ```bash
 git add web/seller-web/src/pages/ShopSettings.tsx web/seller-web/src/__tests__/shopSettings.test.tsx
-git commit -m "feat(seller-web): add ShopSettings component with banner and logo upload preview state"
+git commit -m "feat(seller-web): add ShopSettings component with logo upload preview state"
 ```
 
 ---
@@ -429,13 +374,13 @@ git commit -m "feat(seller-web): add ShopSettings routing and link in Sidebar na
 
 ### 📋 Phase Complete Checklist
 1. Có giao diện thiết lập shop riêng tại đường dẫn `/settings`.
-2. Có thể chọn ảnh từ máy khách và xem trước ngay lập tức ảnh Logo và ảnh Banner.
-3. Form tự động ngăn thay đổi slug của shop (khóa input slug) để bảo đảm URL SEO ổn định.
+2. Có thể chọn ảnh từ máy khách và xem trước ngay lập tức ảnh Logo (`logoUrl`).
+3. Form ràng buộc trường Tên cửa hàng (`shopName`) là bắt buộc trước khi lưu.
 4. Trạng thái Loading và các thông báo Alert thành công/thất bại hiển thị mượt mà.
 5. Sự kiện lưu dữ liệu thực thi cuộc gọi HTTP PUT gửi body đầy đủ dữ liệu lên endpoint `/shops/me`.
 
 ### ⚠️ Common Fresher Errors
-- **Error:** Đọc file hình ảnh Logo/Banner trực tiếp qua đường dẫn cục bộ máy khách (`C:\fakepath\...`) dẫn đến vỡ hình ảnh (broken image) khi render.
+- **Error:** Đọc file hình ảnh Logo trực tiếp qua đường dẫn cục bộ máy khách (`C:\fakepath\...`) dẫn đến vỡ hình ảnh (broken image) khi render.
   - *Fix:* Phải sử dụng `FileReader` đọc file bằng phương thức `readAsDataURL` để xuất ra chuỗi base64 hiển thị ảnh preview tạm thời.
 - **Error:** Người bán bấm thay đổi Tên shop nhưng lại để trống ô hoặc nhập sai định dạng khiến submit không thành công nhưng giao diện không báo rõ lý do.
   - *Fix:* Luôn kiểm tra ràng buộc form (`required` hoặc custom regex validate) trước khi gửi request.

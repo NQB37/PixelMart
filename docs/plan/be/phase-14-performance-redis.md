@@ -125,7 +125,7 @@ export const CACHE_KEYS = {
   CATEGORIES: "categories:tree",
   FEATURED_PRODUCTS: "products:featured",
   PRODUCT_DETAIL: (slug: string) => `product:${slug}`,
-  SHOP_DETAIL: (slug: string) => `shop:${slug}`,
+  SHOP_DETAIL: (id: string) => `shop:${id}`,
   PRODUCT_LIST: (query: string) => `products:list:${query}`,
 };
 

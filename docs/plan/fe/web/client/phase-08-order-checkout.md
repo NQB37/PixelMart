@@ -82,8 +82,10 @@ import { api } from '@pixelmart/shared-web';
 
 const checkoutSchema = z.object({
   recipientName: z.string().min(1, 'Họ tên người nhận là bắt buộc'),
-  recipientPhone: z.string().regex(/^\d{10,11}$/, 'Số điện thoại giao hàng là bắt buộc'),
-  address: z.string().min(5, 'Địa chỉ giao hàng tối thiểu 5 ký tự'),
+  phone: z.string().regex(/^\d{10,11}$/, 'Số điện thoại giao hàng là bắt buộc'),
+  street: z.string().min(5, 'Địa chỉ giao hàng tối thiểu 5 ký tự'),
+  provinceId: z.string().min(1, 'Vui lòng chọn Tỉnh/Thành phố'),
+  wardID: z.string().min(1, 'Vui lòng chọn Phường/Xã'),
   paymentMethod: z.enum(['COD', 'VNPAY', 'STRIPE']),
 });
 
@@ -138,24 +140,44 @@ export default function CheckoutForm() {
           {errors.recipientName && <p className="mt-1 text-xs text-red-500">{errors.recipientName.message}</p>}
         </div>
         <div>
-          <label htmlFor="recipientPhone" className="block text-sm font-medium text-gray-700">Số điện thoại</label>
+          <label htmlFor="phone" className="block text-sm font-medium text-gray-700">Số điện thoại</label>
           <input
-            id="recipientPhone"
+            id="phone"
             type="text"
-            {...register('recipientPhone')}
+            {...register('phone')}
             className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-brand-primary focus:outline-none"
           />
-          {errors.recipientPhone && <p className="mt-1 text-xs text-red-500">{errors.recipientPhone.message}</p>}
+          {errors.phone && <p className="mt-1 text-xs text-red-500">{errors.phone.message}</p>}
         </div>
         <div>
-          <label htmlFor="address" className="block text-sm font-medium text-gray-700">Địa chỉ cụ thể</label>
+          <label htmlFor="provinceId" className="block text-sm font-medium text-gray-700">Tỉnh/Thành phố</label>
           <input
-            id="address"
+            id="provinceId"
             type="text"
-            {...register('address')}
+            {...register('provinceId')}
             className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-brand-primary focus:outline-none"
           />
-          {errors.address && <p className="mt-1 text-xs text-red-500">{errors.address.message}</p>}
+          {errors.provinceId && <p className="mt-1 text-xs text-red-500">{errors.provinceId.message}</p>}
+        </div>
+        <div>
+          <label htmlFor="wardID" className="block text-sm font-medium text-gray-700">Phường/Xã</label>
+          <input
+            id="wardID"
+            type="text"
+            {...register('wardID')}
+            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-brand-primary focus:outline-none"
+          />
+          {errors.wardID && <p className="mt-1 text-xs text-red-500">{errors.wardID.message}</p>}
+        </div>
+        <div>
+          <label htmlFor="street" className="block text-sm font-medium text-gray-700">Địa chỉ cụ thể (số nhà, tên đường)</label>
+          <input
+            id="street"
+            type="text"
+            {...register('street')}
+            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-brand-primary focus:outline-none"
+          />
+          {errors.street && <p className="mt-1 text-xs text-red-500">{errors.street.message}</p>}
         </div>
       </div>
 

@@ -113,7 +113,7 @@ npx prisma migrate dev --name add_products
 Cập nhật file `prisma/seed.ts` để seed thêm categories và products:
 
 ```typescript
-import { PrismaClient, Role, ShopStatus } from "@prisma/client";
+import { PrismaClient, ROLE, ShopStatus } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
@@ -129,17 +129,16 @@ async function main() {
     create: {
       email: "seller1@pixelmart.com",
       password: hashedPassword,
-      fullName: "Nguyễn Văn Seller",
-      role: Role.SELLER,
+      profile: { create: { fullName: "Nguyễn Văn Seller" } },
+      roles: { create: { role: { connect: { name: ROLE.SELLER } } } },
     },
   });
 
   const shop = await prisma.shop.upsert({
-    where: { slug: "tech-store" },
+    where: { ownerId: seller.id },
     update: {},
     create: {
-      name: "Tech Store Official",
-      slug: "tech-store",
+      shopName: "Tech Store Official",
       ownerId: seller.id,
       status: ShopStatus.ACTIVE,
     },
@@ -513,9 +512,8 @@ class ProductService {
         shop: {
           select: {
             id: true,
-            name: true,
-            slug: true,
-            logo: true,
+            shopName: true,
+            logoUrl: true,
             rating: true,
           },
         },

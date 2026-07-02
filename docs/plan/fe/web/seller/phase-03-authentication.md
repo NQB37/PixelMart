@@ -45,7 +45,7 @@ const TestComponent = () => {
   if (!auth) return <div>No Auth Context</div>;
   return (
     <div>
-      <span data-testid="user-role">{auth.user?.role || 'GUEST'}</span>
+      <span data-testid="user-role">{auth.user?.roles.join(',') || 'GUEST'}</span>
       <button onClick={() => auth.login('seller@test.com', 'pass123')} data-testid="login-btn">Login</button>
       <button onClick={auth.logout} data-testid="logout-btn">Logout</button>
     </div>
@@ -89,11 +89,13 @@ Create: `web/seller-web/src/context/AuthContext.tsx`
 ```typescript
 import React, { createContext, useState, useEffect } from 'react';
 
+export type Role = 'CUSTOMER' | 'SELLER' | 'ADMIN' | 'DELIVERY_PERSON';
+
 export interface User {
   id: string;
   email: string;
-  fullName: string;
-  role: 'USER' | 'SELLER' | 'ADMIN';
+  profile: { fullName: string };
+  roles: Role[];
 }
 
 interface AuthContextType {
@@ -128,8 +130,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const mockUser: User = {
         id: 'usr-1',
         email,
-        fullName: 'Nguyễn Văn Seller',
-        role: 'SELLER',
+        profile: { fullName: 'Nguyễn Văn Seller' },
+        roles: ['SELLER'],
       };
       setUser(mockUser);
       localStorage.setItem('seller_user', JSON.stringify(mockUser));
@@ -399,7 +401,7 @@ import { AuthContext } from '../../context/AuthContext';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  allowedRoles?: ('USER' | 'SELLER' | 'ADMIN')[];
+  allowedRoles?: ('CUSTOMER' | 'SELLER' | 'ADMIN' | 'DELIVERY_PERSON')[];
 }
 
 export default function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
@@ -421,7 +423,7 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
     return <Navigate to="/login" replace />;
   }
 
-  if (allowedRoles && !allowedRoles.includes(user.role)) {
+  if (allowedRoles && !user.roles.some((r) => allowedRoles.includes(r))) {
     return <Navigate to="/403" replace />;
   }
 
@@ -497,7 +499,7 @@ git commit -m "feat(seller-web): protect seller endpoints using ProtectedRoute a
 ### 📋 Phase Complete Checklist
 1. Màn hình đăng nhập `/login` có đầy đủ các thẻ input, xử lý lỗi đăng nhập sai tài khoản.
 2. Route guard `ProtectedRoute` tự động chuyển hướng người dùng chưa đăng nhập về `/login`.
-3. Người dùng đăng nhập có role `USER` bị từ chối truy cập và chuyển hướng về trang `/403`.
+3. Người dùng đăng nhập chỉ có role `CUSTOMER` bị từ chối truy cập và chuyển hướng về trang `/403`.
 4. Người dùng có role `SELLER` hoặc `ADMIN` được phép truy cập vào các dashboard quản lý bình thường.
 5. Thông tin user được lưu vết ở LocalStorage để phục hồi trạng thái khi refresh trình duyệt.
 

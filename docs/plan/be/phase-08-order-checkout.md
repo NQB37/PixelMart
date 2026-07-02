@@ -45,23 +45,22 @@ enum PaymentMethod {
 }
 
 model Address {
-  id        String  @id @default(cuid())
-  userId    String
-  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  fullName  String
-  phone     String
-  province  String
-  district  String
-  ward      String
-  detail    String  // Số nhà, tên đường
-  isDefault Boolean @default(false)
+  id            String           @id @default(uuid())
+  ownerId       String
+  ownerType     AddressOwnerType // USER | SHOP (địa chỉ polymorphic)
+  recipientName String
+  phone         String
+  street        String           // Số nhà, tên đường
+  wardID        String
+  provinceId    String
+  isDefault     Boolean          @default(false)
+  label         AddressLabel     // HOME | OFFICE | PICKUP | BUSINESS | OTHER
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
 
-  orders Order[]
+  user User @relation(fields: [ownerId], references: [id], onDelete: Cascade)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([userId])
+  @@index([ownerId, ownerType])
   @@map("addresses")
 }
 
@@ -133,7 +132,7 @@ npx prisma migrate dev --name add_orders
 Cập nhật file `prisma/seed.ts` để tạo một địa chỉ mặc định cho Buyer:
 
 ```typescript
-import { PrismaClient, Role, ShopStatus } from "@prisma/client";
+import { PrismaClient, ROLE, ShopStatus } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
@@ -149,8 +148,8 @@ async function main() {
     create: {
       email: "buyer1@pixelmart.com",
       password: hashedPassword,
-      fullName: "Trần Thị Buyer",
-      role: Role.USER,
+      profile: { create: { fullName: "Trần Thị Buyer" } },
+      roles: { create: { role: { connect: { name: ROLE.CUSTOMER } } } },
     },
   });
 
@@ -160,13 +159,14 @@ async function main() {
     update: {},
     create: {
       id: "default-addr-buyer1",
-      userId: buyer.id,
-      fullName: "Trần Thị Buyer",
+      ownerId: buyer.id,
+      ownerType: "USER",
+      recipientName: "Trần Thị Buyer",
       phone: "0901234567",
-      province: "Hồ Chí Minh",
-      district: "Quận 1",
-      ward: "Phường Bến Nghé",
-      detail: "123 Nguyễn Huệ",
+      provinceId: "Hồ Chí Minh",
+      wardID: "Phường Bến Nghé",
+      street: "123 Nguyễn Huệ",
+      label: "HOME",
       isDefault: true,
     },
   });
@@ -257,7 +257,7 @@ class OrderService {
 
     // 2. Validate address
     const address = await prisma.address.findFirst({
-      where: { id: input.addressId, userId },
+      where: { id: input.addressId, ownerId: userId, ownerType: "USER" },
     });
     if (!address) throw ApiError.notFound("Địa chỉ giao hàng không hợp lệ");
 
@@ -269,7 +269,7 @@ class OrderService {
           include: {
             product: {
               include: {
-                shop: { select: { id: true, name: true, status: true } },
+                shop: { select: { id: true, shopName: true, status: true } },
                 images: { where: { isPrimary: true }, take: 1 },
               },
             },
@@ -294,7 +294,7 @@ class OrderService {
       }
       if (product.shop.status !== "ACTIVE") {
         throw ApiError.badRequest(
-          `Shop "${product.shop.name}" đã ngừng hoạt động`,
+          `Shop "${product.shop.shopName}" đã ngừng hoạt động`,
         );
       }
       if (product.stock < item.quantity) {
@@ -385,7 +385,7 @@ class OrderService {
             },
             include: {
               items: true,
-              shop: { select: { name: true } },
+              shop: { select: { shopName: true } },
             },
           });
 
@@ -420,7 +420,7 @@ class OrderService {
         where,
         include: {
           items: true,
-          shop: { select: { name: true, slug: true, logo: true } },
+          shop: { select: { shopName: true, logoUrl: true } },
         },
         skip,
         take: limit,
@@ -440,7 +440,7 @@ class OrderService {
       where: { id: orderId, userId },
       include: {
         items: true,
-        shop: { select: { name: true, slug: true, logo: true } },
+        shop: { select: { shopName: true, logoUrl: true } },
         address: true,
         coupon: true,
       },
@@ -491,7 +491,7 @@ class OrderService {
         where,
         include: {
           items: true,
-          user: { select: { fullName: true, email: true } },
+          user: { select: { email: true, profile: { select: { fullName: true } } } },
           address: true,
         },
         skip,

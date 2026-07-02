@@ -64,12 +64,7 @@ describe('Shop Registration Wizard', () => {
     render(<RegisterShopWizard />);
     
     const nameInput = screen.getByLabelText('Tên cửa hàng');
-    const slugInput = screen.getByLabelText('Đường dẫn Shop (slug)');
-    const descInput = screen.getByLabelText('Mô tả');
-    
     fireEvent.change(nameInput, { target: { value: 'My Awesome Shop' } });
-    fireEvent.change(slugInput, { target: { value: 'my-awesome-shop' } });
-    fireEvent.change(descInput, { target: { value: 'This is a cool shop description' } });
 
     const nextBtn = screen.getByRole('button', { name: 'Tiếp tục' });
     fireEvent.click(nextBtn);
@@ -103,11 +98,12 @@ import { useRouter } from 'next/navigation';
 import { api } from '@pixelmart/shared-web';
 
 const shopSchema = z.object({
-  name: z.string().min(1, 'Tên cửa hàng là bắt buộc'),
-  slug: z.string().min(1, 'Đường dẫn Shop (slug) là bắt buộc').regex(/^[a-z0-9-]+$/, 'Slug chỉ bao gồm chữ thường, số, dấu gạch ngang'),
-  description: z.string().min(10, 'Mô tả shop tối thiểu 10 ký tự'),
+  shopName: z.string().min(1, 'Tên cửa hàng là bắt buộc'),
+  recipientName: z.string().min(1, 'Tên người lấy hàng là bắt buộc'),
   phone: z.string().regex(/^\d{10,11}$/, 'Số điện thoại gồm 10-11 chữ số'),
-  address: z.string().min(5, 'Địa chỉ lấy hàng phải từ 5 ký tự trở lên'),
+  street: z.string().min(5, 'Địa chỉ lấy hàng phải từ 5 ký tự trở lên'),
+  provinceId: z.string().min(1, 'Vui lòng chọn Tỉnh/Thành phố'),
+  wardID: z.string().min(1, 'Vui lòng chọn Phường/Xã'),
   bankName: z.string().min(1, 'Tên ngân hàng là bắt buộc'),
   bankAccount: z.string().min(5, 'Số tài khoản không hợp lệ'),
   bankOwner: z.string().min(1, 'Tên chủ tài khoản là bắt buộc'),
@@ -126,9 +122,9 @@ export default function RegisterShopWizard() {
   const nextStep = async () => {
     let fieldsToValidate: Array<keyof ShopFormValues> = [];
     if (step === 1) {
-      fieldsToValidate = ['name', 'slug', 'description'];
+      fieldsToValidate = ['shopName'];
     } else if (step === 2) {
-      fieldsToValidate = ['phone', 'address'];
+      fieldsToValidate = ['recipientName', 'phone', 'street', 'provinceId', 'wardID'];
     }
 
     const isValid = await trigger(fieldsToValidate);
@@ -171,34 +167,14 @@ export default function RegisterShopWizard() {
           <div className="space-y-4">
             <h3 className="text-lg font-bold text-brand-dark">Bước 1: Thông tin cửa hàng</h3>
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700">Tên cửa hàng</label>
+              <label htmlFor="shopName" className="block text-sm font-medium text-gray-700">Tên cửa hàng</label>
               <input
-                id="name"
+                id="shopName"
                 type="text"
-                {...register('name')}
+                {...register('shopName')}
                 className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-brand-primary focus:outline-none"
               />
-              {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name.message}</p>}
-            </div>
-            <div>
-              <label htmlFor="slug" className="block text-sm font-medium text-gray-700">Đường dẫn Shop (slug)</label>
-              <input
-                id="slug"
-                type="text"
-                {...register('slug')}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-brand-primary focus:outline-none"
-              />
-              {errors.slug && <p className="mt-1 text-xs text-red-500">{errors.slug.message}</p>}
-            </div>
-            <div>
-              <label htmlFor="description" className="block text-sm font-medium text-gray-700">Mô tả</label>
-              <textarea
-                id="description"
-                {...register('description')}
-                rows={3}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-brand-primary focus:outline-none"
-              />
-              {errors.description && <p className="mt-1 text-xs text-red-500">{errors.description.message}</p>}
+              {errors.shopName && <p className="mt-1 text-xs text-red-500">{errors.shopName.message}</p>}
             </div>
             <div className="flex justify-end">
               <button type="button" onClick={nextStep} className="rounded-md bg-brand-primary px-4 py-2 text-white font-semibold hover:bg-emerald-600">
@@ -211,6 +187,17 @@ export default function RegisterShopWizard() {
         {step === 2 && (
           <div className="space-y-4">
             <h3 className="text-lg font-bold text-brand-dark">Bước 2: Địa chỉ lấy hàng</h3>
+            {/* Địa chỉ lấy hàng là địa chỉ đa hình của shop (ownerType = SHOP, label = PICKUP) */}
+            <div>
+              <label htmlFor="recipientName" className="block text-sm font-medium text-gray-700">Người lấy hàng</label>
+              <input
+                id="recipientName"
+                type="text"
+                {...register('recipientName')}
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-brand-primary focus:outline-none"
+              />
+              {errors.recipientName && <p className="mt-1 text-xs text-red-500">{errors.recipientName.message}</p>}
+            </div>
             <div>
               <label htmlFor="phone" className="block text-sm font-medium text-gray-700">Số điện thoại lấy hàng</label>
               <input
@@ -222,14 +209,34 @@ export default function RegisterShopWizard() {
               {errors.phone && <p className="mt-1 text-xs text-red-500">{errors.phone.message}</p>}
             </div>
             <div>
-              <label htmlFor="address" className="block text-sm font-medium text-gray-700">Địa chỉ cụ thể</label>
+              <label htmlFor="provinceId" className="block text-sm font-medium text-gray-700">Tỉnh/Thành phố</label>
               <input
-                id="address"
+                id="provinceId"
                 type="text"
-                {...register('address')}
+                {...register('provinceId')}
                 className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-brand-primary focus:outline-none"
               />
-              {errors.address && <p className="mt-1 text-xs text-red-500">{errors.address.message}</p>}
+              {errors.provinceId && <p className="mt-1 text-xs text-red-500">{errors.provinceId.message}</p>}
+            </div>
+            <div>
+              <label htmlFor="wardID" className="block text-sm font-medium text-gray-700">Phường/Xã</label>
+              <input
+                id="wardID"
+                type="text"
+                {...register('wardID')}
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-brand-primary focus:outline-none"
+              />
+              {errors.wardID && <p className="mt-1 text-xs text-red-500">{errors.wardID.message}</p>}
+            </div>
+            <div>
+              <label htmlFor="street" className="block text-sm font-medium text-gray-700">Địa chỉ cụ thể (số nhà, tên đường)</label>
+              <input
+                id="street"
+                type="text"
+                {...register('street')}
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-brand-primary focus:outline-none"
+              />
+              {errors.street && <p className="mt-1 text-xs text-red-500">{errors.street.message}</p>}
             </div>
             <div className="flex justify-between">
               <button type="button" onClick={prevStep} className="rounded-md border border-gray-300 px-4 py-2 font-semibold hover:bg-gray-100">
@@ -333,7 +340,7 @@ git commit -m "feat(client-web): implement multi-step Shop Registration wizard U
 
 ### Lỗi Fresher Thường Gặp
 1. **Lỗi State Mất Dữ Liệu Khi Thay Đổi Steps**: Khởi tạo lại `useForm` ở mỗi bước thay vì quản lý tập trung ở parent layout. Hãy đảm bảo state được giữ xuyên suốt từ Step 1 đến Step 3.
-2. **Thiếu Slug Format Validation**: Cho phép user nhập ký tự đặc biệt, viết hoa hay dấu cách trong Slug. Slug bắt buộc phải được validate regex `/^[a-z0-9-]+$/` để tránh lỗi HTTP routing sau này.
+2. **Nhầm cấu trúc địa chỉ lấy hàng**: Địa chỉ lấy hàng của shop là địa chỉ đa hình (`ownerType = SHOP`, `label = PICKUP`) gồm `recipientName`, `phone`, `street`, `provinceId`, `wardID` — KHÔNG có trường `district`. Đừng gộp thành một chuỗi địa chỉ tự do và đừng thêm các field `slug`/`description` (Shop không còn các trường này).
 3. **Mất nút 'Quay lại'**: Không cho phép user sửa đổi thông tin ở bước trước, làm giảm trải nghiệm người dùng nghiêm trọng. Luôn cung cấp button `prevStep()` thích hợp.
 
 ### Checklist Cuối Phase

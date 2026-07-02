@@ -47,7 +47,7 @@ describe('Auth Store (Zustand)', () => {
   });
 
   it('should set auth state on setAuth', () => {
-    const mockUser = { id: 'u1', name: 'John Doe', email: 'john@example.com' };
+    const mockUser = { id: 'u1', email: 'john@example.com', provider: 'CREDENTIALS', isActive: true, roles: ['CUSTOMER'], profile: { fullName: 'John Doe' } };
     const mockToken = 'mock-jwt-token';
     
     useAuthStore.getState().setAuth(mockUser, mockToken);
@@ -60,7 +60,7 @@ describe('Auth Store (Zustand)', () => {
 
   it('should clear state on clearAuth', () => {
     useAuthStore.setState({
-      user: { id: 'u1', name: 'John', email: 'john@example.com' },
+      user: { id: 'u1', email: 'john@example.com', provider: 'CREDENTIALS', isActive: true, roles: ['CUSTOMER'], profile: { fullName: 'John' } },
       token: 'jwt',
       isAuthenticated: true
     });
@@ -96,11 +96,21 @@ Create: `web/client-web/stores/authStore.ts`
 ```typescript
 import { create } from 'zustand';
 
+export interface UserProfile {
+  fullName: string;
+  avatarUrl?: string;
+  phoneNumber?: string;
+  dateOfBirth?: string;
+  gender?: 'MALE' | 'FEMALE' | 'OTHER';
+}
+
 export interface User {
   id: string;
-  name: string;
   email: string;
-  role?: string;
+  provider: 'CREDENTIALS' | 'GOOGLE';
+  isActive: boolean;
+  roles: ('CUSTOMER' | 'SELLER' | 'ADMIN' | 'DELIVERY_PERSON')[];
+  profile?: UserProfile;
 }
 
 interface AuthState {

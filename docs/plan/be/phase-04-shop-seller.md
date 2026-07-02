@@ -1,14 +1,14 @@
 # 🏪 PHASE 4: Shop & Seller Module
 
-> **Prerequisite:** Phase 3 hoàn thành (Auth + role USER, ADMIN).
+> **Prerequisite:** Phase 3 hoàn thành (Auth + RBAC: role CUSTOMER, ADMIN).
 
 ---
 
 ## 🎯 MVP Của Phase Này
 
-- User đăng ký trở thành Seller → role chuyển từ USER → SELLER
-- Seller tạo được Shop với thông tin cơ bản (name, slug, description, logo)
-- Admin approve/reject/suspend shop
+- User đăng ký trở thành Seller → được gán thêm role `SELLER` (qua bảng `UserRoles`)
+- Seller tạo được Shop với thông tin cơ bản (shopName, logoUrl)
+- Admin duyệt (`approvalStatus`: APPROVED/REJECTED) và khóa/mở (`status`: ACTIVE/SUSPENDED) shop
 - Middleware `isShopOwner` đảm bảo seller chỉ quản lý shop của mình
 - API CRUD Shop profile
 
@@ -16,49 +16,49 @@
 
 ## 🗄️ Database Changes (MVP)
 
-Trong phase này, chúng ta thêm role `SELLER` vào hệ thống và tạo bảng cửa hàng (`Shop`) thuộc về người dùng.
+Trong phase này, chúng ta dùng role `SELLER` đã có sẵn trong RBAC (enum `ROLE`) và tạo bảng cửa hàng (`Shop`) thuộc về người dùng.
 
 ### 1. Cập nhật `prisma/schema.prisma`:
 
 ```prisma
-// Cập nhật enum Role có thêm SELLER
-enum Role {
-  USER
-  SELLER
-  ADMIN
+// enum ROLE đã có sẵn từ Phase 3 (RBAC): CUSTOMER, SELLER, ADMIN, DELIVERY_PERSON
+// Seller = user được gán thêm role SELLER qua bảng UserRoles (không có cột role trên User).
+
+// Admin duyệt shop (tách khỏi trạng thái vận hành)
+enum ApprovalStatus {
+  PENDING    // Chờ admin duyệt
+  APPROVED   // Đã duyệt
+  REJECTED   // Bị từ chối
 }
 
+// Trạng thái vận hành của shop
 enum ShopStatus {
-  PENDING    // Chờ admin approve
   ACTIVE     // Đang hoạt động
-  SUSPENDED  // Bị khóa
+  SUSPENDED  // Bị tạm khóa
+  INACTIVE   // Ngừng hoạt động
 }
 
 // Cập nhật model User để liên kết với Shop
 model User {
-  // ... các trường cũ giữ nguyên
-  role      Role      @default(USER)
-
+  // ... các trường cũ giữ nguyên (role lấy qua quan hệ roles UserRoles[])
   shop      Shop?     // Thêm quan hệ 1-1 với Shop
 }
 
 model Shop {
-  id          String     @id @default(cuid())
-  name        String
-  slug        String     @unique
-  description String?
-  logo        String?
-  banner      String?
-  ownerId     String     @unique  // 1 user = 1 shop
-  owner       User       @relation(fields: [ownerId], references: [id])
-  status      ShopStatus @default(PENDING)
-  rating      Decimal    @default(0) @db.Decimal(2, 1) // 0.0 - 5.0
-  isActive    Boolean    @default(true)
+  id             String         @id @default(uuid())
+  ownerId        String         @unique  // 1 user = 1 shop
+  shopName       String
+  logoUrl        String?
+  rating         Float          @default(0) // 0.0 - 5.0
+  approvalStatus ApprovalStatus @default(PENDING) // admin duyệt
+  rejectedReason String?
+  status         ShopStatus     @default(ACTIVE)  // trạng thái vận hành
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  deletedAt      DateTime?       // soft delete
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  user User @relation(fields: [ownerId], references: [id], onDelete: Cascade)
 
-  @@index([slug])
   @@index([ownerId])
   @@map("shops")
 }
@@ -75,7 +75,7 @@ npx prisma migrate dev --name add_shop
 Cập nhật file `prisma/seed.ts` để seed thêm tài khoản Seller và Shop:
 
 ```typescript
-import { PrismaClient, Role, ShopStatus } from "@prisma/client";
+import { PrismaClient, ROLE, ShopStatus, ApprovalStatus } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
@@ -84,27 +84,35 @@ async function main() {
   console.log("🌱 Seeding database for Phase 4...");
   const hashedPassword = await bcrypt.hash("Password@123", 12);
 
-  // 1. Seed Seller
+  // Role SELLER đã được seed ở Phase 3 (RBAC)
+  const sellerRole = await prisma.role.findUniqueOrThrow({
+    where: { name: ROLE.SELLER },
+  });
+
+  // 1. Seed Seller — thông tin cá nhân nằm ở Profile, role gán qua UserRoles
   const seller = await prisma.user.upsert({
     where: { email: "seller1@pixelmart.com" },
     update: {},
     create: {
       email: "seller1@pixelmart.com",
       password: hashedPassword,
-      fullName: "Nguyễn Văn Seller",
-      role: Role.SELLER,
+      profile: {
+        create: { fullName: "Nguyễn Văn Seller" },
+      },
+      roles: {
+        create: { roleId: sellerRole.id },
+      },
     },
   });
 
   // 2. Seed Shop cho Seller này
   await prisma.shop.upsert({
-    where: { slug: "tech-store" },
+    where: { ownerId: seller.id },
     update: {},
     create: {
-      name: "Tech Store Official",
-      slug: "tech-store",
-      description: "Chuyên cung cấp các sản phẩm công nghệ chính hãng",
+      shopName: "Tech Store Official",
       ownerId: seller.id,
+      approvalStatus: ApprovalStatus.APPROVED,
       status: ShopStatus.ACTIVE,
     },
   });
@@ -140,24 +148,28 @@ npx prisma db seed
 import { z } from "zod";
 
 export const createShopSchema = z.object({
-  name: z.string().min(3, "Tên shop tối thiểu 3 ký tự").max(100).trim(),
-  description: z.string().max(1000).optional(),
+  shopName: z.string().min(3, "Tên shop tối thiểu 3 ký tự").max(100).trim(),
 });
 
 export const updateShopSchema = z.object({
-  name: z.string().min(3).max(100).trim().optional(),
-  description: z.string().max(1000).optional(),
-  logo: z.string().url().optional(),
-  banner: z.string().url().optional(),
+  shopName: z.string().min(3).max(100).trim().optional(),
+  logoUrl: z.string().url().optional(),
 });
 
+// Admin duyệt shop: PENDING → APPROVED/REJECTED
+export const reviewShopSchema = z.object({
+  approvalStatus: z.enum(["APPROVED", "REJECTED"]),
+  rejectedReason: z.string().optional(), // Bắt buộc khi REJECTED
+});
+
+// Admin đổi trạng thái vận hành
 export const updateShopStatusSchema = z.object({
-  status: z.enum(["ACTIVE", "SUSPENDED"]),
-  reason: z.string().optional(), // Lý do suspend
+  status: z.enum(["ACTIVE", "SUSPENDED", "INACTIVE"]),
 });
 
 export type CreateShopInput = z.infer<typeof createShopSchema>;
 export type UpdateShopInput = z.infer<typeof updateShopSchema>;
+export type ReviewShopInput = z.infer<typeof reviewShopSchema>;
 ```
 
 ---
@@ -169,13 +181,12 @@ export type UpdateShopInput = z.infer<typeof updateShopSchema>;
 ```typescript
 import { prisma } from "@/lib/prisma";
 import { ApiError } from "@/utils/ApiError";
-import { generateSlug } from "@/utils/generateSlug";
-import { CreateShopInput, UpdateShopInput } from "./shop.validation";
-import { Role, ShopStatus } from "@prisma/client";
+import { CreateShopInput, UpdateShopInput, ReviewShopInput } from "./shop.validation";
+import { ROLE, ShopStatus, ApprovalStatus } from "@prisma/client";
 
 class ShopService {
   /**
-   * User đăng ký mở shop → role chuyển thành SELLER
+   * User đăng ký mở shop → được gán thêm role SELLER (RBAC)
    */
   async createShop(userId: string, data: CreateShopInput) {
     // 1. Check user đã có shop chưa
@@ -188,31 +199,26 @@ class ShopService {
       );
     }
 
-    // 2. Tạo slug từ tên shop
-    let slug = generateSlug(data.name);
+    // 2. Lấy role SELLER (đã seed ở Phase 3)
+    const sellerRole = await prisma.role.findUniqueOrThrow({
+      where: { name: ROLE.SELLER },
+    });
 
-    // 3. Check slug trùng → thêm random suffix
-    const slugExists = await prisma.shop.findUnique({ where: { slug } });
-    if (slugExists) {
-      slug = `${slug}-${Date.now().toString(36)}`;
-    }
-
-    // 4. Dùng transaction: tạo shop + cập nhật role user
+    // 3. Dùng transaction: tạo shop + gán role SELLER cho user
     const shop = await prisma.$transaction(async (tx) => {
-      // Tạo shop
+      // Tạo shop (approvalStatus mặc định PENDING → chờ admin duyệt)
       const newShop = await tx.shop.create({
         data: {
           ...data,
-          slug,
           ownerId: userId,
-          status: ShopStatus.PENDING, // Chờ admin approve
         },
       });
 
-      // Cập nhật role user → SELLER
-      await tx.user.update({
-        where: { id: userId },
-        data: { role: Role.SELLER },
+      // Gán role SELLER cho user (bỏ qua nếu đã có)
+      await tx.userRoles.upsert({
+        where: { userId_roleId: { userId, roleId: sellerRole.id } },
+        update: {},
+        create: { userId, roleId: sellerRole.id },
       });
 
       return newShop;
@@ -241,12 +247,20 @@ class ShopService {
     return shop;
   }
 
-  async getShopBySlug(slug: string) {
-    const shop = await prisma.shop.findUnique({
-      where: { slug, status: ShopStatus.ACTIVE },
+  async getShopById(id: string) {
+    const shop = await prisma.shop.findFirst({
+      where: {
+        id,
+        status: ShopStatus.ACTIVE,
+        approvalStatus: ApprovalStatus.APPROVED,
+        deletedAt: null,
+      },
       include: {
-        owner: {
-          select: { fullName: true, avatar: true, createdAt: true },
+        user: {
+          select: {
+            createdAt: true,
+            profile: { select: { fullName: true, avatarUrl: true } },
+          },
         },
         _count: {
           select: { products: true },
@@ -284,7 +298,12 @@ class ShopService {
       prisma.shop.findMany({
         where,
         include: {
-          owner: { select: { fullName: true, email: true } },
+          user: {
+            select: {
+              email: true,
+              profile: { select: { fullName: true } },
+            },
+          },
           _count: { select: { products: true, orders: true } },
         },
         skip,
@@ -305,6 +324,26 @@ class ShopService {
     };
   }
 
+  // Duyệt / từ chối shop (approvalStatus — tách khỏi trạng thái vận hành)
+  async reviewShop(shopId: string, data: ReviewShopInput) {
+    const shop = await prisma.shop.findUnique({ where: { id: shopId } });
+    if (!shop) {
+      throw ApiError.notFound("Shop không tồn tại");
+    }
+
+    return prisma.shop.update({
+      where: { id: shopId },
+      data: {
+        approvalStatus: data.approvalStatus,
+        rejectedReason:
+          data.approvalStatus === ApprovalStatus.REJECTED
+            ? data.rejectedReason
+            : null,
+      },
+    });
+  }
+
+  // Khóa / mở shop (status vận hành)
   async updateShopStatus(shopId: string, status: ShopStatus) {
     const shop = await prisma.shop.findUnique({ where: { id: shopId } });
     if (!shop) {
@@ -313,7 +352,7 @@ class ShopService {
 
     return prisma.shop.update({
       where: { id: shopId },
-      data: { status, isActive: status === ShopStatus.ACTIVE },
+      data: { status },
     });
   }
 }
@@ -338,12 +377,13 @@ export const generateSlug = (text: string): string => {
 ```
 
 > **Tại sao dùng Transaction khi tạo shop?**
-> Hai thao tác phải thành công CÙNG LÚC: (1) tạo shop, (2) đổi role thành SELLER. Nếu tạo shop thành công nhưng đổi role thất bại → user không có quyền seller nhưng có shop ảo. Transaction đảm bảo: hoặc cả hai thành công, hoặc rollback cả hai.
+> Hai thao tác phải thành công CÙNG LÚC: (1) tạo shop, (2) gán role SELLER cho user (bản ghi trong `UserRoles`). Nếu tạo shop thành công nhưng gán role thất bại → user không có quyền seller nhưng có shop ảo. Transaction đảm bảo: hoặc cả hai thành công, hoặc rollback cả hai.
+
+> **Lưu ý:** `generateSlug` ở trên dùng cho `Product`/`Category` (các model có `slug`) ở phase sau. `Shop` **không** có slug — trang shop định danh bằng `id`.
 
 #### ⚠️ Lỗi fresher hay mắc:
 
-- **Không handle slug tiếng Việt:** "Cửa hàng Phát Đạt" phải thành `cua-hang-phat-dat`, không phải lỗi encoding.
-- **Cho phép seller tự approve shop:** Shop mới phải ở trạng thái PENDING cho admin review. Nếu ai cũng tự ACTIVE thì không kiểm soát được quality.
+- **Cho phép seller tự duyệt shop:** Shop mới phải ở `approvalStatus = PENDING` cho admin review. Nếu ai cũng tự APPROVED thì không kiểm soát được quality.
 - **Không verify shop ownership:** Seller A sửa shop B bằng cách đổi shopId trong request → phải luôn check `shop.ownerId === req.user.id`.
 
 ---
@@ -389,9 +429,9 @@ export const updateMyShop = asyncHandler(
 
 // === PUBLIC ROUTES ===
 
-export const getShopBySlug = asyncHandler(
+export const getShopById = asyncHandler(
   async (req: Request, res: Response) => {
-    const shop = await shopService.getShopBySlug(req.params.slug);
+    const shop = await shopService.getShopById(req.params.id);
     ApiResponse.success(res, shop);
   },
 );
@@ -406,6 +446,15 @@ export const getAllShops = asyncHandler(async (req: Request, res: Response) => {
   ApiResponse.success(res, result);
 });
 
+export const reviewShop = asyncHandler(async (req: Request, res: Response) => {
+  const shop = await shopService.reviewShop(req.params.id, req.body);
+  ApiResponse.success(
+    res,
+    shop,
+    `Shop đã được ${req.body.approvalStatus === "APPROVED" ? "phê duyệt" : "từ chối"}`,
+  );
+});
+
 export const updateShopStatus = asyncHandler(
   async (req: Request, res: Response) => {
     const shop = await shopService.updateShopStatus(
@@ -415,7 +464,7 @@ export const updateShopStatus = asyncHandler(
     ApiResponse.success(
       res,
       shop,
-      `Shop đã được ${req.body.status === "ACTIVE" ? "phê duyệt" : "tạm khóa"}`,
+      `Shop đã được ${req.body.status === "ACTIVE" ? "mở lại" : "tạm khóa"}`,
     );
   },
 );
@@ -432,13 +481,14 @@ import { validate } from "@/middlewares/validate.middleware";
 import {
   createShopSchema,
   updateShopSchema,
+  reviewShopSchema,
   updateShopStatusSchema,
 } from "./shop.validation";
 
 const router = Router();
 
 // Public
-router.get("/:slug", shopController.getShopBySlug);
+router.get("/:id", shopController.getShopById);
 
 // Seller (đã đăng nhập)
 router.post(
@@ -467,6 +517,13 @@ router.get(
   isAuthenticated,
   authorize("ADMIN"),
   shopController.getAllShops,
+);
+router.patch(
+  "/:id/review",
+  isAuthenticated,
+  authorize("ADMIN"),
+  validate(reviewShopSchema),
+  shopController.reviewShop,
 );
 router.patch(
   "/:id/status",
@@ -514,7 +571,7 @@ export const isShopOwner = async (
       throw ApiError.notFound("Bạn chưa có shop. Vui lòng đăng ký mở shop.");
     }
 
-    if (shop.status !== "ACTIVE") {
+    if (shop.approvalStatus !== "APPROVED" || shop.status !== "ACTIVE") {
       throw ApiError.forbidden("Shop chưa được phê duyệt hoặc đã bị tạm khóa");
     }
 
@@ -533,15 +590,15 @@ export const isShopOwner = async (
 
 ## 🏁 Checklist Cuối Phase 4
 
-- [ ] `POST /api/v1/shops` — User tạo shop, role chuyển thành SELLER
+- [ ] `POST /api/v1/shops` — User tạo shop, được gán thêm role SELLER
 - [ ] `GET /api/v1/shops/me/dashboard` — Seller xem dashboard shop mình
 - [ ] `PUT /api/v1/shops/me` — Seller cập nhật thông tin shop
-- [ ] `GET /api/v1/shops/:slug` — Public xem trang shop
+- [ ] `GET /api/v1/shops/:id` — Public xem trang shop
 - [ ] `GET /api/v1/shops` — Admin xem danh sách tất cả shops
-- [ ] `PATCH /api/v1/shops/:id/status` — Admin approve/suspend shop
-- [ ] Slug tiếng Việt hoạt động đúng ("Phát Đạt" → "phat-dat")
-- [ ] Transaction đảm bảo tạo shop + đổi role atomic
-- [ ] Shop mới có status PENDING (không tự ACTIVE)
+- [ ] `PATCH /api/v1/shops/:id/review` — Admin approve/reject shop (approvalStatus)
+- [ ] `PATCH /api/v1/shops/:id/status` — Admin suspend/mở lại shop (status)
+- [ ] Transaction đảm bảo tạo shop + gán role SELLER atomic
+- [ ] Shop mới có approvalStatus PENDING (chờ duyệt)
 - [ ] Commit: "feat: shop/seller module with admin approval flow"
 
 ---

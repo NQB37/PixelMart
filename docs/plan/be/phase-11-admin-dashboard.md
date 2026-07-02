@@ -45,7 +45,7 @@ class AdminService {
         where: { paymentStatus: "PAID" },
         _sum: { totalAmount: true },
       }),
-      prisma.shop.count({ where: { status: "PENDING" } }),
+      prisma.shop.count({ where: { approvalStatus: "PENDING" } }),
       prisma.order.count({
         where: {
           createdAt: { gte: new Date(new Date().setHours(0, 0, 0, 0)) },
@@ -108,7 +108,7 @@ class AdminService {
         price: true,
         soldCount: true,
         images: { where: { isPrimary: true }, take: 1 },
-        shop: { select: { name: true } },
+        shop: { select: { shopName: true } },
       },
       orderBy: { soldCount: "desc" },
       take: limit,
@@ -120,9 +120,8 @@ class AdminService {
       where: { status: "ACTIVE" },
       select: {
         id: true,
-        name: true,
-        slug: true,
-        logo: true,
+        shopName: true,
+        logoUrl: true,
         rating: true,
         _count: { select: { products: true, orders: true } },
       },
@@ -137,7 +136,7 @@ class AdminService {
     const where: any = {};
     if (search) {
       where.OR = [
-        { fullName: { contains: search, mode: "insensitive" } },
+        { profile: { fullName: { contains: search, mode: "insensitive" } } },
         { email: { contains: search, mode: "insensitive" } },
       ];
     }
@@ -148,8 +147,8 @@ class AdminService {
         select: {
           id: true,
           email: true,
-          fullName: true,
-          role: true,
+          profile: { select: { fullName: true, avatarUrl: true } },
+          roles: { select: { role: { select: { name: true } } } },
           isActive: true,
           createdAt: true,
           _count: { select: { orders: true } },
@@ -168,9 +167,13 @@ class AdminService {
   }
 
   async toggleUserActive(userId: string) {
-    const user = await prisma.user.findUnique({ where: { id: userId } });
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: { roles: { include: { role: true } } },
+    });
     if (!user) throw new Error("User not found");
-    if (user.role === "ADMIN") throw new Error("Cannot ban admin");
+    if (user.roles.some((r) => r.role.name === "ADMIN"))
+      throw new Error("Cannot ban admin");
 
     return prisma.user.update({
       where: { id: userId },

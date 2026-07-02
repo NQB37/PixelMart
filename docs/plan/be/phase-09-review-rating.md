@@ -121,7 +121,7 @@ class ReviewService {
         images: data.images || [],
       },
       include: {
-        user: { select: { fullName: true, avatar: true } },
+        user: { select: { profile: { select: { fullName: true, avatarUrl: true } } } },
       },
     });
 
@@ -138,7 +138,7 @@ class ReviewService {
       prisma.review.findMany({
         where: { productId },
         include: {
-          user: { select: { fullName: true, avatar: true } },
+          user: { select: { profile: { select: { fullName: true, avatarUrl: true } } } },
         },
         skip,
         take: limit,

@@ -16,35 +16,113 @@
 
 ## 🗄️ Database Changes (MVP)
 
-Trong phase này, chúng ta cần tạo bảng người dùng (`User`) và quản lý phiên đăng nhập (`RefreshToken`).
+Trong phase này, chúng ta cần tạo bảng người dùng (`User`) và hồ sơ (`Profile`), hệ thống phân quyền RBAC (`Role`, `Permission`, `UserRoles`, `RolePermissions`) và quản lý phiên đăng nhập (`RefreshToken`).
 
 ### 1. Thêm Vào `prisma/schema.prisma`:
 
 ```prisma
-enum Role {
-  USER
+enum UserProvider {
+  CREDENTIALS
+  GOOGLE
+}
+
+// Tên enum là ROLE (viết hoa). User KHÔNG có cột role — quyền lấy qua RBAC.
+enum ROLE {
+  CUSTOMER
+  SELLER
   ADMIN
-  // SELLER sẽ được thêm vào ở Phase 4
+  DELIVERY_PERSON
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
 }
 
 model User {
-  id        String    @id @default(cuid())
-  email     String    @unique
-  password  String
-  fullName  String
-  phone     String?
-  avatar    String?
-  role      Role      @default(USER)
-  isActive  Boolean   @default(true)
+  id        String       @id @default(uuid())
+  email     String       @unique
+  password  String?      // nullable — user đăng nhập bằng OAuth (Google) không có password
+  provider  UserProvider @default(CREDENTIALS)
+  isActive  Boolean      @default(true)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
 
-  refreshTokens  RefreshToken[]
-
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
+  profile       Profile?
+  refreshTokens RefreshToken[]
+  roles         UserRoles[]
 
   @@index([email])
   @@map("users")
+}
+
+// Thông tin cá nhân tách khỏi User (quan hệ 1-1)
+model Profile {
+  id          String    @id @default(uuid())
+  userId      String    @unique
+  fullName    String
+  avatarUrl   String?
+  phoneNumber String?
+  dateOfBirth DateTime?
+  gender      Gender?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("profiles")
+}
+
+// ===== RBAC: User có NHIỀU role, mỗi role có nhiều permission =====
+model Role {
+  id          String   @id @default(uuid())
+  name        ROLE     @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  userRoles       UserRoles[]
+  rolePermissions RolePermissions[]
+
+  @@index([name])
+  @@map("roles")
+}
+
+model UserRoles {
+  userId String
+  roleId String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+  @@index([roleId])
+  @@map("user_roles")
+}
+
+model Permission {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  rolePermissions RolePermissions[]
+
+  @@index([name])
+  @@map("permissions")
+}
+
+model RolePermissions {
+  roleId       String
+  permissionId String
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@map("role_permissions")
 }
 
 model RefreshToken {
@@ -73,36 +151,55 @@ npx prisma migrate dev --name init_auth
 Hãy cập nhật hàm `main()` trong file `prisma/seed.ts` để tạo sẵn tài khoản Admin và Buyer làm test case:
 
 ```typescript
-import { PrismaClient, Role } from "@prisma/client";
+import { PrismaClient, ROLE } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
 async function main() {
   console.log("🌱 Seeding database for Phase 3...");
+
+  // 1. Seed 4 role của hệ thống RBAC
+  const roleNames: ROLE[] = ["CUSTOMER", "SELLER", "ADMIN", "DELIVERY_PERSON"];
+  for (const name of roleNames) {
+    await prisma.role.upsert({
+      where: { name },
+      update: {},
+      create: { name },
+    });
+  }
+  // (Permission + RolePermissions được seed tương tự rồi gán vào từng Role)
+
+  const adminRole = await prisma.role.findUniqueOrThrow({
+    where: { name: "ADMIN" },
+  });
+  const customerRole = await prisma.role.findUniqueOrThrow({
+    where: { name: "CUSTOMER" },
+  });
+
   const hashedPassword = await bcrypt.hash("Password@123", 12);
 
-  // Seed Admin
+  // 2. Seed Admin — tạo User + Profile + gán role qua UserRoles
   await prisma.user.upsert({
     where: { email: "admin@pixelmart.com" },
     update: {},
     create: {
       email: "admin@pixelmart.com",
       password: hashedPassword,
-      fullName: "Admin PixelMart",
-      role: Role.ADMIN,
+      profile: { create: { fullName: "Admin PixelMart" } },
+      roles: { create: { roleId: adminRole.id } },
     },
   });
 
-  // Seed Buyer
+  // 3. Seed Customer
   await prisma.user.upsert({
     where: { email: "buyer1@pixelmart.com" },
     update: {},
     create: {
       email: "buyer1@pixelmart.com",
       password: hashedPassword,
-      fullName: "Trần Thị Buyer",
-      role: Role.USER,
+      profile: { create: { fullName: "Trần Thị Buyer" } },
+      roles: { create: { roleId: customerRole.id } },
     },
   });
 
@@ -165,7 +262,8 @@ import { env } from "@/config/env";
 
 interface TokenPayload {
   userId: string;
-  role: string;
+  email: string;
+  jti: string; // token id — dùng cho rotation/revoke, nằm trong JWT (không lưu DB)
 }
 
 export const generateAccessToken = (payload: TokenPayload): string => {
@@ -241,7 +339,7 @@ export const clearTokenCookies = (res: Response) => {
 
 - **Lưu JWT ở LocalStorage:** Bất kỳ script nào (kể cả từ third-party ads) chạy trên page đều đọc được LocalStorage → đánh cắp token. HttpOnly Cookie = browser tự quản lý, JavaScript KHÔNG thể truy cập.
 - **Không set `sameSite`:** Trang web khác có thể tạo form submit về API của em kèm theo cookie → CSRF attack.
-- **JWT payload chứa password:** JWT chỉ encode Base64, KHÔNG encrypt. Ai cũng decode được. Chỉ lưu `userId` + `role`.
+- **JWT payload chứa password:** JWT chỉ encode Base64, KHÔNG encrypt. Ai cũng decode được. Chỉ lưu `userId`, `email`, `jti` (role lấy từ RBAC khi cần, không nhét thông tin nhạy cảm).
 
 ---
 
@@ -323,6 +421,7 @@ export const validate = (schema: AnyZodObject) => {
 #### `src/modules/auth/auth.service.ts`:
 
 ```typescript
+import { randomUUID } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { hashPassword, comparePassword } from "@/utils/hash";
 import {
@@ -346,31 +445,48 @@ class AuthService {
     // 2. Hash password
     const hashedPassword = await hashPassword(data.password);
 
-    // 3. Tạo user
+    // 3. Lấy role mặc định CUSTOMER (User KHÔNG có cột role — quyền qua RBAC)
+    const customerRole = await prisma.role.findUnique({
+      where: { name: "CUSTOMER" },
+    });
+    if (!customerRole) {
+      throw ApiError.internal("Chưa seed role CUSTOMER");
+    }
+
+    // 4. Tạo User + Profile + gán role CUSTOMER qua bảng UserRoles
     const user = await prisma.user.create({
       data: {
-        ...data,
+        email: data.email,
         password: hashedPassword,
+        profile: {
+          create: {
+            fullName: data.fullName,
+            phoneNumber: data.phone,
+          },
+        },
+        roles: {
+          create: { roleId: customerRole.id },
+        },
       },
       select: {
         id: true,
         email: true,
-        fullName: true,
-        role: true,
+        profile: { select: { fullName: true } },
         createdAt: true,
       },
     });
 
-    // 4. Tạo tokens
-    const tokens = await this.generateTokenPair(user.id, user.role);
+    // 5. Tạo tokens
+    const tokens = await this.generateTokenPair(user.id, user.email);
 
     return { user, ...tokens };
   }
 
   async login(data: LoginInput) {
-    // 1. Tìm user
+    // 1. Tìm user (kèm profile để lấy fullName/avatar)
     const user = await prisma.user.findUnique({
       where: { email: data.email },
+      include: { profile: true },
     });
     if (!user) {
       // Không nói "Email không tồn tại" → giúp attacker biết email nào đã đăng ký
@@ -382,22 +498,26 @@ class AuthService {
       throw ApiError.forbidden("Tài khoản đã bị khóa");
     }
 
-    // 3. So sánh password
+    // 3. User OAuth (provider GOOGLE) không có password → không login bằng mật khẩu
+    if (!user.password) {
+      throw ApiError.unauthorized("Tài khoản này đăng nhập bằng Google");
+    }
+
+    // 4. So sánh password
     const isPasswordValid = await comparePassword(data.password, user.password);
     if (!isPasswordValid) {
       throw ApiError.unauthorized("Email hoặc mật khẩu không đúng");
     }
 
-    // 4. Tạo tokens
-    const tokens = await this.generateTokenPair(user.id, user.role);
+    // 5. Tạo tokens
+    const tokens = await this.generateTokenPair(user.id, user.email);
 
     return {
       user: {
         id: user.id,
         email: user.email,
-        fullName: user.fullName,
-        role: user.role,
-        avatar: user.avatar,
+        fullName: user.profile?.fullName,
+        avatar: user.profile?.avatarUrl,
       },
       ...tokens,
     };
@@ -438,7 +558,7 @@ class AuthService {
       throw ApiError.unauthorized("Tài khoản không tồn tại hoặc đã bị khóa");
     }
 
-    return this.generateTokenPair(user.id, user.role);
+    return this.generateTokenPair(user.id, user.email);
   }
 
   async logout(refreshToken: string) {
@@ -457,8 +577,10 @@ class AuthService {
 
   // ===== PRIVATE =====
 
-  private async generateTokenPair(userId: string, role: string) {
-    const tokenPayload = { userId, role };
+  private async generateTokenPair(userId: string, email: string) {
+    // jti định danh token cho rotation/revoke — nằm trong JWT, không lưu cột riêng
+    const jti = randomUUID();
+    const tokenPayload = { userId, email, jti };
     const accessToken = generateAccessToken(tokenPayload);
     const refreshToken = generateRefreshToken(tokenPayload);
 
@@ -591,7 +713,7 @@ router.use("/auth", authRoutes);
 #### `src/types/express.d.ts` — Extend Express Request:
 
 ```typescript
-import { Role } from "@prisma/client";
+import { ROLE } from "@prisma/client";
 
 declare global {
   namespace Express {
@@ -600,8 +722,8 @@ declare global {
         id: string;
         email: string;
         fullName: string;
-        role: Role;
-        avatar: string | null;
+        avatarUrl: string | null;
+        roles: ROLE[]; // User có nhiều role (RBAC)
       };
     }
   }
@@ -634,16 +756,15 @@ export const isAuthenticated = async (
     // 2. Verify token
     const payload = verifyAccessToken(token);
 
-    // 3. Kiểm tra user còn tồn tại và active không
+    // 3. Kiểm tra user còn tồn tại và active không (kèm profile + roles)
     const user = await prisma.user.findUnique({
       where: { id: payload.userId },
       select: {
         id: true,
         email: true,
-        fullName: true,
-        role: true,
-        avatar: true,
         isActive: true,
+        profile: { select: { fullName: true, avatarUrl: true } },
+        roles: { select: { role: { select: { name: true } } } },
       },
     });
 
@@ -651,8 +772,14 @@ export const isAuthenticated = async (
       throw ApiError.unauthorized("Tài khoản không tồn tại hoặc đã bị khóa");
     }
 
-    // 4. Gắn user vào request
-    req.user = user;
+    // 4. Gắn user vào request (roles là mảng tên role lấy từ RBAC)
+    req.user = {
+      id: user.id,
+      email: user.email,
+      fullName: user.profile?.fullName ?? "",
+      avatarUrl: user.profile?.avatarUrl ?? null,
+      roles: user.roles.map((r) => r.role.name),
+    };
     next();
   } catch (error) {
     if (error instanceof ApiError) {
@@ -667,7 +794,7 @@ export const isAuthenticated = async (
 
 ```typescript
 import { Request, Response, NextFunction } from "express";
-import { Role } from "@prisma/client";
+import { ROLE } from "@prisma/client";
 import { ApiError } from "@/utils/ApiError";
 
 /**
@@ -678,16 +805,18 @@ import { ApiError } from "@/utils/ApiError";
  *   router.get('/admin', isAuthenticated, authorize('ADMIN'), adminController.dashboard)
  *   router.get('/seller', isAuthenticated, authorize('SELLER', 'ADMIN'), sellerController.dashboard)
  */
-export const authorize = (...allowedRoles: Role[]) => {
+export const authorize = (...allowedRoles: ROLE[]) => {
   return (req: Request, _res: Response, next: NextFunction) => {
     if (!req.user) {
       return next(ApiError.unauthorized("Vui lòng đăng nhập"));
     }
 
-    if (!allowedRoles.includes(req.user.role)) {
+    // User có thể có NHIỀU role → chỉ cần 1 role nằm trong danh sách cho phép
+    const isAllowed = req.user.roles.some((role) => allowedRoles.includes(role));
+    if (!isAllowed) {
       return next(
         ApiError.forbidden(
-          `Role "${req.user.role}" không có quyền truy cập tài nguyên này`,
+          `Roles "${req.user.roles.join(", ")}" không có quyền truy cập tài nguyên này`,
         ),
       );
     }
@@ -772,7 +901,7 @@ router.post(
 - [x] Login sai 5 lần → bị rate limit 15 phút
 - [x] User thường gọi API admin → 403 Forbidden
 - [x] Password trong DB là bcrypt hash
-- [x] JWT chỉ chứa `userId` + `role` (không có password hay thông tin nhạy cảm)
+- [x] JWT chỉ chứa `userId`, `email`, `jti` (không có password hay thông tin nhạy cảm)
 - [x] Commit: "feat: JWT authentication with role-based authorization"
 
 ---
