@@ -6,7 +6,6 @@ export interface UserInfo {
 export interface AuthResponse {
   user: UserInfo;
   accessToken: string;
-  refreshToken: string;
 }
 
 export interface RefreshTokenResponse {

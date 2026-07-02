@@ -2,6 +2,10 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
+if (!process.env.JWT_ACCESS_SECRET || !process.env.JWT_REFRESH_SECRET) {
+  throw new Error("Missing required JWT environment variables");
+}
+
 export const env = {
   nodeEnv: process.env.NODE_ENV || "development",
   port: Number(process.env.PORT || 8000),
