@@ -11,7 +11,6 @@ export const useLogin = () => {
   return useMutation({
     mutationFn: authApi.login,
     onSuccess: (data) => {
-      console.log(data);
       setAuth(data.user, data.accessToken);
       router.push("/");
     },

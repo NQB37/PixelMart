@@ -11,7 +11,6 @@ export const useRegister = () => {
   return useMutation({
     mutationFn: authApi.register,
     onSuccess: (data) => {
-      console.log(data);
       setAuth(data.user, data.accessToken);
       router.push("/");
     },
