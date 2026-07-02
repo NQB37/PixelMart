@@ -7,6 +7,7 @@ import {
   generateRefreshToken,
   verifyRefreshToken,
 } from "@/utils/jwt";
+import { env } from "@/config/env";
 
 class AuthService {
   public async register(data: RegisterInput) {
@@ -138,7 +139,9 @@ class AuthService {
       data: {
         token: refreshToken,
         userId,
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        expiresAt: new Date(
+          Date.now() + env.refreshTokenExpiresInDays * 24 * 60 * 60 * 1000,
+        ),
       },
     });
 

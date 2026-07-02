@@ -14,6 +14,5 @@ export const env = {
   jwtRefreshSecret: process.env.JWT_REFRESH_SECRET,
   accessTokenExpiresIn: process.env.ACCESS_TOKEN_EXPIRES_IN || "30m",
   refreshTokenExpiresIn: process.env.REFRESH_TOKEN_EXPIRES_IN || "14d",
-  refreshTokenExpiresInDays:
-    parseInt(process.env.REFRESH_TOKEN_EXPIRES_IN || "14d", 10) || 14,
+  refreshTokenExpiresInDays: Number(process.env.REFRESH_TOKEN_EXPIRES_IN) || 14,
 };
