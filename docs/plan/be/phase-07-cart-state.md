@@ -16,6 +16,7 @@
 Trong phase này, chúng ta tạo bảng giỏ hàng (`Cart`) và chi tiết giỏ hàng (`CartItem`) để đồng bộ giỏ hàng từ LocalStorage của Buyer lên cơ sở dữ liệu sau khi đăng nhập.
 
 ### 1. Thêm Vào `prisma/schema.prisma`:
+
 ```prisma
 model Cart {
   id     String @id @default(cuid())
@@ -48,10 +49,12 @@ model CartItem {
 ```
 
 Hãy nhớ cập nhật liên kết trong các model cũ:
+
 - Trong `User`: `cart Cart?`
 - Trong `Product`: `cartItems CartItem[]`
 
 ### 2. Chạy Migration:
+
 ```bash
 npx prisma migrate dev --name add_cart
 ```
@@ -66,9 +69,10 @@ npx prisma migrate dev --name add_cart
 ### Task 7.1: Cart API — Backend (3-4h)
 
 #### `src/modules/cart/cart.service.ts`:
+
 ```typescript
-import { prisma } from '@/lib/prisma';
-import { ApiError } from '@/utils/ApiError';
+import { prisma } from "@/lib/prisma";
+import { ApiError } from "@/utils/ApiError";
 
 class CartService {
   /**
@@ -82,10 +86,17 @@ class CartService {
           include: {
             product: {
               select: {
-                id: true, name: true, slug: true,
-                price: true, stock: true, isActive: true, deletedAt: true,
+                id: true,
+                name: true,
+                slug: true,
+                price: true,
+                stock: true,
+                isActive: true,
+                deletedAt: true,
                 images: { where: { isPrimary: true }, take: 1 },
-                shop: { select: { id: true, name: true, slug: true, status: true } },
+                shop: {
+                  select: { id: true, name: true, slug: true, status: true },
+                },
               },
             },
           },
@@ -107,14 +118,19 @@ class CartService {
 
     for (const item of cart.items) {
       const product = item.product as any;
-      if (!product.isActive || product.deletedAt || product.shop.status !== 'ACTIVE') {
-        invalidItems.push({ ...item, reason: 'Sản phẩm không còn bán' });
+      if (
+        !product.isActive ||
+        product.deletedAt ||
+        product.shop.status !== "ACTIVE"
+      ) {
+        invalidItems.push({ ...item, reason: "Sản phẩm không còn bán" });
       } else if (product.stock < item.quantity) {
         validItems.push({
           ...item,
-          warning: product.stock === 0
-            ? 'Hết hàng'
-            : `Chỉ còn ${product.stock} sản phẩm`,
+          warning:
+            product.stock === 0
+              ? "Hết hàng"
+              : `Chỉ còn ${product.stock} sản phẩm`,
           adjustedQuantity: product.stock,
         });
       } else {
@@ -136,10 +152,10 @@ class CartService {
     });
 
     if (!product || !product.isActive || product.deletedAt) {
-      throw ApiError.notFound('Sản phẩm không tồn tại');
+      throw ApiError.notFound("Sản phẩm không tồn tại");
     }
-    if (product.shop.status !== 'ACTIVE') {
-      throw ApiError.badRequest('Shop đã ngừng hoạt động');
+    if (product.shop.status !== "ACTIVE") {
+      throw ApiError.badRequest("Shop đã ngừng hoạt động");
     }
     if (product.stock < quantity) {
       throw ApiError.badRequest(`Chỉ còn ${product.stock} sản phẩm trong kho`);
@@ -177,9 +193,13 @@ class CartService {
     return cartItem;
   }
 
-  async updateItemQuantity(userId: string, productId: string, quantity: number) {
+  async updateItemQuantity(
+    userId: string,
+    productId: string,
+    quantity: number,
+  ) {
     const cart = await prisma.cart.findUnique({ where: { userId } });
-    if (!cart) throw ApiError.notFound('Giỏ hàng không tồn tại');
+    if (!cart) throw ApiError.notFound("Giỏ hàng không tồn tại");
 
     if (quantity < 1) {
       // Quantity = 0 → xóa khỏi giỏ
@@ -187,7 +207,9 @@ class CartService {
     }
 
     // Validate stock
-    const product = await prisma.product.findUnique({ where: { id: productId } });
+    const product = await prisma.product.findUnique({
+      where: { id: productId },
+    });
     if (product && quantity > product.stock) {
       throw ApiError.badRequest(`Chỉ còn ${product.stock} sản phẩm trong kho`);
     }
@@ -211,7 +233,10 @@ class CartService {
    * MERGE giỏ hàng guest (từ LocalStorage) vào DB
    * Gọi ngay sau khi login thành công
    */
-  async mergeCart(userId: string, guestItems: { productId: string; quantity: number }[]) {
+  async mergeCart(
+    userId: string,
+    guestItems: { productId: string; quantity: number }[],
+  ) {
     if (!guestItems.length) return;
 
     for (const guestItem of guestItems) {
@@ -238,6 +263,7 @@ export const cartService = new CartService();
 ```
 
 #### Cart Routes:
+
 ```typescript
 // POST   /api/v1/cart/items          — Thêm SP vào giỏ
 // GET    /api/v1/cart                — Lấy giỏ hàng
@@ -248,6 +274,7 @@ export const cartService = new CartService();
 ```
 
 #### ⚠️ Lỗi fresher hay mắc:
+
 - **Trust giá từ client khi merge cart:** Guest cart trong LocalStorage chứa `{ productId, price: 100 }`. User sửa thành `price: 1`. Backend PHẢI ignore price từ client, chỉ nhận `productId` + `quantity`.
 - **Không handle sản phẩm đã bị xóa:** Sau khi thêm vào giỏ, seller xóa sản phẩm → checkout crash. Cart GET endpoint phải filter + flag invalid items.
 - **Race condition khi update quantity:** 2 tabs cùng bấm "+" → quantity tăng 2 lần hoặc bị ghi đè. Dùng `{ increment: 1 }` thay vì `{ quantity: newValue }`.

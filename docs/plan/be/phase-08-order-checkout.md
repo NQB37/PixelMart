@@ -19,6 +19,7 @@
 Trong phase này, chúng ta tạo bảng quản lý địa chỉ giao hàng (`Address`), bảng đơn hàng (`Order`) và chi tiết đơn hàng (`OrderItem`).
 
 ### 1. Thêm Vào `prisma/schema.prisma`:
+
 ```prisma
 enum OrderStatus {
   PENDING
@@ -116,62 +117,66 @@ model OrderItem {
 ```
 
 Hãy nhớ cập nhật liên kết trong các model cũ:
+
 - Trong `User`: `addresses Address[]`, `orders Order[]`
 - Trong `Shop`: `orders Order[]`
 - Trong `Product`: `orderItems OrderItem[]`
 
 ### 2. Chạy Migration:
+
 ```bash
 npx prisma migrate dev --name add_orders
 ```
 
 ### 3. Viết Seed Data Cho `prisma/seed.ts`:
+
 Cập nhật file `prisma/seed.ts` để tạo một địa chỉ mặc định cho Buyer:
+
 ```typescript
-import { PrismaClient, Role, ShopStatus } from '@prisma/client';
-import bcrypt from 'bcryptjs';
+import { PrismaClient, Role, ShopStatus } from "@prisma/client";
+import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🌱 Seeding database for Phase 8...');
-  const hashedPassword = await bcrypt.hash('Password@123', 12);
+  console.log("🌱 Seeding database for Phase 8...");
+  const hashedPassword = await bcrypt.hash("Password@123", 12);
 
   // 1. Seed Buyer
   const buyer = await prisma.user.upsert({
-    where: { email: 'buyer1@pixelmart.com' },
+    where: { email: "buyer1@pixelmart.com" },
     update: {},
     create: {
-      email: 'buyer1@pixelmart.com',
+      email: "buyer1@pixelmart.com",
       password: hashedPassword,
-      fullName: 'Trần Thị Buyer',
+      fullName: "Trần Thị Buyer",
       role: Role.USER,
     },
   });
 
   // 2. Seed Address mặc định cho Buyer
   await prisma.address.upsert({
-    where: { id: 'default-addr-buyer1' },
+    where: { id: "default-addr-buyer1" },
     update: {},
     create: {
-      id: 'default-addr-buyer1',
+      id: "default-addr-buyer1",
       userId: buyer.id,
-      fullName: 'Trần Thị Buyer',
-      phone: '0901234567',
-      province: 'Hồ Chí Minh',
-      district: 'Quận 1',
-      ward: 'Phường Bến Nghé',
-      detail: '123 Nguyễn Huệ',
+      fullName: "Trần Thị Buyer",
+      phone: "0901234567",
+      province: "Hồ Chí Minh",
+      district: "Quận 1",
+      ward: "Phường Bến Nghé",
+      detail: "123 Nguyễn Huệ",
       isDefault: true,
     },
   });
 
-  console.log('✅ Seeding Phase 8 complete!');
+  console.log("✅ Seeding Phase 8 complete!");
 }
 
 main()
   .catch((e) => {
-    console.error('❌ Seed failed:', e);
+    console.error("❌ Seed failed:", e);
     process.exit(1);
   })
   .finally(async () => {
@@ -180,6 +185,7 @@ main()
 ```
 
 Chạy seed:
+
 ```bash
 npx prisma db seed
 ```
@@ -208,13 +214,13 @@ npx prisma db seed
 #### `src/modules/order/order.service.ts`:
 
 ```typescript
-import { prisma } from '@/lib/prisma';
-import { ApiError } from '@/utils/ApiError';
-import { Prisma } from '@prisma/client';
+import { prisma } from "@/lib/prisma";
+import { ApiError } from "@/utils/ApiError";
+import { Prisma } from "@prisma/client";
 
 interface CheckoutInput {
   addressId: string;
-  paymentMethod: 'COD' | 'BANK_TRANSFER';
+  paymentMethod: "COD" | "BANK_TRANSFER";
   couponCode?: string;
   note?: string;
   idempotencyKey: string; // Chống tạo đơn trùng
@@ -223,7 +229,7 @@ interface CheckoutInput {
 class OrderService {
   /**
    * CHECKOUT: Tạo đơn hàng từ giỏ hàng
-   * 
+   *
    * Flow:
    * 1. Validate idempotency key
    * 2. Lấy giỏ hàng + validate items
@@ -253,7 +259,7 @@ class OrderService {
     const address = await prisma.address.findFirst({
       where: { id: input.addressId, userId },
     });
-    if (!address) throw ApiError.notFound('Địa chỉ giao hàng không hợp lệ');
+    if (!address) throw ApiError.notFound("Địa chỉ giao hàng không hợp lệ");
 
     // 3. Lấy giỏ hàng
     const cart = await prisma.cart.findUnique({
@@ -273,25 +279,27 @@ class OrderService {
     });
 
     if (!cart || cart.items.length === 0) {
-      throw ApiError.badRequest('Giỏ hàng trống');
+      throw ApiError.badRequest("Giỏ hàng trống");
     }
 
     // 4. Validate & nhóm theo shop
     const shopGroups = new Map<string, typeof cart.items>();
-    
+
     for (const item of cart.items) {
       const product = item.product;
-      
+
       // Validate product
       if (!product.isActive || product.deletedAt) {
         throw ApiError.badRequest(`Sản phẩm "${product.name}" không còn bán`);
       }
-      if (product.shop.status !== 'ACTIVE') {
-        throw ApiError.badRequest(`Shop "${product.shop.name}" đã ngừng hoạt động`);
+      if (product.shop.status !== "ACTIVE") {
+        throw ApiError.badRequest(
+          `Shop "${product.shop.name}" đã ngừng hoạt động`,
+        );
       }
       if (product.stock < item.quantity) {
         throw ApiError.badRequest(
-          `Sản phẩm "${product.name}" chỉ còn ${product.stock} trong kho`
+          `Sản phẩm "${product.name}" chỉ còn ${product.stock} trong kho`,
         );
       }
 
@@ -303,23 +311,25 @@ class OrderService {
     }
 
     // 5. Tạo orders trong transaction
-    const orders = await prisma.$transaction(async (tx) => {
-      const createdOrders = [];
+    const orders = await prisma.$transaction(
+      async (tx) => {
+        const createdOrders = [];
 
-      for (const [shopId, items] of shopGroups) {
-        // Tính tổng tiền
-        let subtotal = new Prisma.Decimal(0);
-        const orderItems = [];
+        for (const [shopId, items] of shopGroups) {
+          // Tính tổng tiền
+          let subtotal = new Prisma.Decimal(0);
+          const orderItems = [];
 
-        for (const item of items) {
-          const product = item.product;
-          const itemSubtotal = new Prisma.Decimal(product.price.toString())
-            .mul(item.quantity);
-          subtotal = subtotal.add(itemSubtotal);
+          for (const item of items) {
+            const product = item.product;
+            const itemSubtotal = new Prisma.Decimal(
+              product.price.toString(),
+            ).mul(item.quantity);
+            subtotal = subtotal.add(itemSubtotal);
 
-          // === STOCK DEDUCTION với Pessimistic Lock ===
-          // Dùng raw SQL SELECT FOR UPDATE để lock row
-          const [updated] = await tx.$queryRaw<any[]>`
+            // === STOCK DEDUCTION với Pessimistic Lock ===
+            // Dùng raw SQL SELECT FOR UPDATE để lock row
+            const [updated] = await tx.$queryRaw<any[]>`
             UPDATE products 
             SET stock = stock - ${item.quantity},
                 "soldCount" = "soldCount" + ${item.quantity},
@@ -329,68 +339,71 @@ class OrderService {
             RETURNING id, stock
           `;
 
-          if (!updated) {
-            throw ApiError.badRequest(
-              `Sản phẩm "${product.name}" không đủ hàng trong kho`
-            );
+            if (!updated) {
+              throw ApiError.badRequest(
+                `Sản phẩm "${product.name}" không đủ hàng trong kho`,
+              );
+            }
+
+            orderItems.push({
+              productId: product.id,
+              productName: product.name, // SNAPSHOT
+              productPrice: product.price, // SNAPSHOT
+              productImage: product.images?.[0]?.url || null, // SNAPSHOT
+              quantity: item.quantity,
+              subtotal: itemSubtotal,
+            });
           }
 
-          orderItems.push({
-            productId: product.id,
-            productName: product.name,     // SNAPSHOT
-            productPrice: product.price,   // SNAPSHOT
-            productImage: product.images?.[0]?.url || null, // SNAPSHOT
-            quantity: item.quantity,
-            subtotal: itemSubtotal,
+          const shippingFee = new Prisma.Decimal(0); // MVP: free shipping
+          const discount = new Prisma.Decimal(0); // Coupon xử lý ở Phase 10
+          const totalAmount = subtotal.add(shippingFee).sub(discount);
+
+          // Generate order number: ORD-20260616-XXXX
+          const orderNumber = `ORD-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+
+          const order = await tx.order.create({
+            data: {
+              orderNumber,
+              userId,
+              shopId,
+              status: "PENDING",
+              subtotal,
+              shippingFee,
+              discount,
+              totalAmount,
+              addressId: input.addressId,
+              paymentMethod: input.paymentMethod,
+              paymentStatus:
+                input.paymentMethod === "COD" ? "PENDING" : "PENDING",
+              note: input.note
+                ? `${input.note} [IDKEY:${input.idempotencyKey}]`
+                : `[IDKEY:${input.idempotencyKey}]`,
+              items: {
+                create: orderItems,
+              },
+            },
+            include: {
+              items: true,
+              shop: { select: { name: true } },
+            },
           });
+
+          createdOrders.push(order);
         }
 
-        const shippingFee = new Prisma.Decimal(0); // MVP: free shipping
-        const discount = new Prisma.Decimal(0);     // Coupon xử lý ở Phase 10
-        const totalAmount = subtotal.add(shippingFee).sub(discount);
-
-        // Generate order number: ORD-20260616-XXXX
-        const orderNumber = `ORD-${new Date().toISOString().slice(0,10).replace(/-/g, '')}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
-
-        const order = await tx.order.create({
-          data: {
-            orderNumber,
-            userId,
-            shopId,
-            status: 'PENDING',
-            subtotal,
-            shippingFee,
-            discount,
-            totalAmount,
-            addressId: input.addressId,
-            paymentMethod: input.paymentMethod,
-            paymentStatus: input.paymentMethod === 'COD' ? 'PENDING' : 'PENDING',
-            note: input.note
-              ? `${input.note} [IDKEY:${input.idempotencyKey}]`
-              : `[IDKEY:${input.idempotencyKey}]`,
-            items: {
-              create: orderItems,
-            },
-          },
-          include: {
-            items: true,
-            shop: { select: { name: true } },
-          },
+        // Xóa items đã đặt khỏi giỏ hàng
+        await tx.cartItem.deleteMany({
+          where: { cartId: cart.id },
         });
 
-        createdOrders.push(order);
-      }
-
-      // Xóa items đã đặt khỏi giỏ hàng
-      await tx.cartItem.deleteMany({
-        where: { cartId: cart.id },
-      });
-
-      return createdOrders;
-    }, {
-      timeout: 10000,            // 10s timeout
-      isolationLevel: 'Serializable', // Highest isolation level
-    });
+        return createdOrders;
+      },
+      {
+        timeout: 10000, // 10s timeout
+        isolationLevel: "Serializable", // Highest isolation level
+      },
+    );
 
     return orders;
   }
@@ -411,12 +424,15 @@ class OrderService {
         },
         skip,
         take: limit,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
       }),
       prisma.order.count({ where }),
     ]);
 
-    return { orders, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+    return {
+      orders,
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    };
   }
 
   async getOrderDetail(orderId: string, userId: string) {
@@ -429,7 +445,7 @@ class OrderService {
         coupon: true,
       },
     });
-    if (!order) throw ApiError.notFound('Đơn hàng không tồn tại');
+    if (!order) throw ApiError.notFound("Đơn hàng không tồn tại");
     return order;
   }
 
@@ -439,9 +455,9 @@ class OrderService {
       include: { items: true },
     });
 
-    if (!order) throw ApiError.notFound('Đơn hàng không tồn tại');
-    if (order.status !== 'PENDING') {
-      throw ApiError.badRequest('Chỉ có thể hủy đơn hàng đang chờ xác nhận');
+    if (!order) throw ApiError.notFound("Đơn hàng không tồn tại");
+    if (order.status !== "PENDING") {
+      throw ApiError.badRequest("Chỉ có thể hủy đơn hàng đang chờ xác nhận");
     }
 
     // Hoàn lại stock
@@ -458,7 +474,7 @@ class OrderService {
 
       await tx.order.update({
         where: { id: orderId },
-        data: { status: 'CANCELLED' },
+        data: { status: "CANCELLED" },
       });
     });
   }
@@ -480,54 +496,63 @@ class OrderService {
         },
         skip,
         take: limit,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
       }),
       prisma.order.count({ where }),
     ]);
 
-    return { orders, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+    return {
+      orders,
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    };
   }
 
   async updateOrderStatus(orderId: string, shopId: string, newStatus: string) {
     const order = await prisma.order.findFirst({
       where: { id: orderId, shopId },
     });
-    if (!order) throw ApiError.notFound('Đơn hàng không tồn tại');
+    if (!order) throw ApiError.notFound("Đơn hàng không tồn tại");
 
     // Validate status transition
     const validTransitions: Record<string, string[]> = {
-      PENDING: ['CONFIRMED', 'CANCELLED'],
-      CONFIRMED: ['SHIPPING', 'CANCELLED'],
-      SHIPPING: ['DELIVERED'],
-      DELIVERED: [],  // Final state
-      CANCELLED: [],  // Final state
+      PENDING: ["CONFIRMED", "CANCELLED"],
+      CONFIRMED: ["SHIPPING", "CANCELLED"],
+      SHIPPING: ["DELIVERED"],
+      DELIVERED: [], // Final state
+      CANCELLED: [], // Final state
     };
 
     if (!validTransitions[order.status]?.includes(newStatus)) {
       throw ApiError.badRequest(
-        `Không thể chuyển từ "${order.status}" sang "${newStatus}"`
+        `Không thể chuyển từ "${order.status}" sang "${newStatus}"`,
       );
     }
 
     // Nếu seller cancel → hoàn stock
-    if (newStatus === 'CANCELLED' && order.status !== 'CANCELLED') {
+    if (newStatus === "CANCELLED" && order.status !== "CANCELLED") {
       const items = await prisma.orderItem.findMany({ where: { orderId } });
       await prisma.$transaction(async (tx) => {
         for (const item of items) {
           await tx.product.update({
             where: { id: item.productId },
-            data: { stock: { increment: item.quantity }, soldCount: { decrement: item.quantity } },
+            data: {
+              stock: { increment: item.quantity },
+              soldCount: { decrement: item.quantity },
+            },
           });
         }
-        await tx.order.update({ where: { id: orderId }, data: { status: newStatus } });
+        await tx.order.update({
+          where: { id: orderId },
+          data: { status: newStatus },
+        });
       });
       return;
     }
 
     // Nếu delivered + COD → payment = PAID
     const data: any = { status: newStatus };
-    if (newStatus === 'DELIVERED' && order.paymentMethod === 'COD') {
-      data.paymentStatus = 'PAID';
+    if (newStatus === "DELIVERED" && order.paymentMethod === "COD") {
+      data.paymentStatus = "PAID";
     }
 
     return prisma.order.update({ where: { id: orderId }, data });
@@ -540,10 +565,12 @@ export const orderService = new OrderService();
 #### ⚠️ Lỗi fresher hay mắc (CRITICAL):
 
 1. **Race condition khi trừ kho:**
+
    ```typescript
    // ❌ SAI — 2 users cùng mua SP cuối cùng (stock = 1)
    const product = await prisma.product.findUnique({ where: { id } });
-   if (product.stock >= quantity) {  // Cả 2 đều thấy stock = 1
+   if (product.stock >= quantity) {
+     // Cả 2 đều thấy stock = 1
      await prisma.product.update({
        where: { id },
        data: { stock: product.stock - quantity }, // Cả 2 đều set stock = 0
@@ -557,7 +584,7 @@ export const orderService = new OrderService();
      WHERE id = ${id} AND stock >= ${qty}
      RETURNING id
    `;
-   if (!result) throw ApiError.badRequest('Hết hàng');
+   if (!result) throw ApiError.badRequest("Hết hàng");
    ```
 
 2. **Không có idempotency key:** User bấm "Đặt hàng" → mạng chậm → bấm lại → tạo 2 đơn hàng giống nhau. Idempotency key từ client đảm bảo cùng 1 request chỉ xử lý 1 lần.

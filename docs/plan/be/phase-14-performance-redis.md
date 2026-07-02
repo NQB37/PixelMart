@@ -20,6 +20,7 @@
 Phase này **không tạo bảng mới** nào mà tập trung vào tối ưu hóa hiệu năng truy vấn thông qua việc bổ sung các **Chỉ mục kết hợp (Compound Indexes)** trong file `prisma/schema.prisma`.
 
 ### 1. Cập nhật model `Product` trong `prisma/schema.prisma` để thêm các Compound Indexes:
+
 ```prisma
 model Product {
   // ... các trường cũ giữ nguyên
@@ -33,6 +34,7 @@ model Product {
 ```
 
 ### 2. Chạy Migration:
+
 ```bash
 npx prisma migrate dev --name add_performance_indexes
 ```
@@ -54,22 +56,24 @@ npm install -D @types/ioredis
 ```
 
 #### `src/lib/redis.ts`:
-```typescript
-import Redis from 'ioredis';
-import { env } from '@/config/env';
 
-export const redis = new Redis(env.REDIS_URL || 'redis://localhost:6379', {
+```typescript
+import Redis from "ioredis";
+import { env } from "@/config/env";
+
+export const redis = new Redis(env.REDIS_URL || "redis://localhost:6379", {
   maxRetriesPerRequest: 3,
   retryStrategy: (times) => Math.min(times * 50, 2000),
 });
 
-redis.on('connect', () => console.log('✅ Redis connected'));
-redis.on('error', (err) => console.error('❌ Redis error:', err.message));
+redis.on("connect", () => console.log("✅ Redis connected"));
+redis.on("error", (err) => console.error("❌ Redis error:", err.message));
 ```
 
 #### `src/utils/cache.ts`:
+
 ```typescript
-import { redis } from '@/lib/redis';
+import { redis } from "@/lib/redis";
 
 const DEFAULT_TTL = 3600; // 1 giờ
 
@@ -79,7 +83,11 @@ export const cache = {
    * 1. Check cache → có thì trả luôn
    * 2. Không có → gọi fetcher → lưu cache → trả về
    */
-  async getOrSet<T>(key: string, fetcher: () => Promise<T>, ttl = DEFAULT_TTL): Promise<T> {
+  async getOrSet<T>(
+    key: string,
+    fetcher: () => Promise<T>,
+    ttl = DEFAULT_TTL,
+  ): Promise<T> {
     // 1. Check cache
     const cached = await redis.get(key);
     if (cached) {
@@ -96,7 +104,7 @@ export const cache = {
   },
 
   async del(pattern: string) {
-    if (pattern.includes('*')) {
+    if (pattern.includes("*")) {
       // Delete by pattern (e.g., "products:*")
       const keys = await redis.keys(pattern);
       if (keys.length > 0) {
@@ -114,19 +122,19 @@ export const cache = {
 
 // Cache key constants
 export const CACHE_KEYS = {
-  CATEGORIES: 'categories:tree',
-  FEATURED_PRODUCTS: 'products:featured',
+  CATEGORIES: "categories:tree",
+  FEATURED_PRODUCTS: "products:featured",
   PRODUCT_DETAIL: (slug: string) => `product:${slug}`,
   SHOP_DETAIL: (slug: string) => `shop:${slug}`,
   PRODUCT_LIST: (query: string) => `products:list:${query}`,
 };
 
 export const CACHE_TTL = {
-  CATEGORIES: 3600,        // 1 giờ (ít thay đổi)
-  FEATURED_PRODUCTS: 300,  // 5 phút
-  PRODUCT_DETAIL: 600,     // 10 phút
-  SHOP_DETAIL: 1800,       // 30 phút
-  PRODUCT_LIST: 120,       // 2 phút (thay đổi thường xuyên)
+  CATEGORIES: 3600, // 1 giờ (ít thay đổi)
+  FEATURED_PRODUCTS: 300, // 5 phút
+  PRODUCT_DETAIL: 600, // 10 phút
+  SHOP_DETAIL: 1800, // 30 phút
+  PRODUCT_LIST: 120, // 2 phút (thay đổi thường xuyên)
 };
 ```
 
@@ -165,29 +173,30 @@ async getCategoryTree() {
 // Trong CategoryService.updateCategory():
 async updateCategory(id: string, data: any) {
   const result = await prisma.category.update({ ... });
-  
+
   // Invalidate cache
   await cache.del(CACHE_KEYS.CATEGORIES);
-  
+
   return result;
 }
 
 // Trong ProductService.updateProduct():
 async updateProduct(id: string, shopId: string, data: any) {
   const product = await prisma.product.update({ ... });
-  
+
   // Invalidate caches
   await Promise.all([
     cache.del(CACHE_KEYS.PRODUCT_DETAIL(product.slug)),
     cache.del(CACHE_KEYS.FEATURED_PRODUCTS),
     cache.del('products:list:*'), // Invalidate all product list caches
   ]);
-  
+
   return product;
 }
 ```
 
 #### ⚠️ Lỗi fresher hay mắc:
+
 - **Cache mà quên invalidate:** Admin đổi giá sản phẩm nhưng user vẫn thấy giá cũ 10 phút → mua với giá sai → tranh cãi.
 - **Cache key collision:** `product:123` vs `product:iphone-15` — dùng format nhất quán. Recommend dùng slug/identifier, không dùng numeric id.
 - **Không set TTL:** Cache vĩnh viễn → Redis đầy RAM → crash. LUÔN set TTL.
@@ -197,6 +206,7 @@ async updateProduct(id: string, shopId: string, data: any) {
 ### Task 14.4: DB Index Optimization (2-3h)
 
 #### Phân tích slow queries:
+
 ```sql
 -- Bật logging slow queries trong PostgreSQL
 ALTER SYSTEM SET log_min_duration_statement = 100; -- Log queries > 100ms
@@ -204,15 +214,16 @@ SELECT pg_reload_conf();
 
 -- Phân tích 1 query cụ thể
 EXPLAIN ANALYZE
-SELECT * FROM products 
-WHERE "categoryId" = 'xxx' 
-  AND "isActive" = true 
+SELECT * FROM products
+WHERE "categoryId" = 'xxx'
+  AND "isActive" = true
   AND "deletedAt" IS NULL
 ORDER BY "createdAt" DESC
 LIMIT 20 OFFSET 0;
 ```
 
 #### Indexes cần check đã có:
+
 ```prisma
 // Compound indexes cho common queries:
 @@index([categoryId, isActive, deletedAt])  // Product listing by category
@@ -224,6 +235,7 @@ LIMIT 20 OFFSET 0;
 ```
 
 #### Khi nào KHÔNG nên đánh index:
+
 - Cột có ít unique values (boolean `isActive`: chỉ có true/false → index không hiệu quả)
 - Bảng nhỏ (<1000 rows) → full scan nhanh hơn index lookup
 - Cột hay UPDATE → index phải rebuild mỗi lần update
@@ -237,8 +249,8 @@ npm install rate-limit-redis
 ```
 
 ```typescript
-import RedisStore from 'rate-limit-redis';
-import { redis } from '@/lib/redis';
+import RedisStore from "rate-limit-redis";
+import { redis } from "@/lib/redis";
 
 export const loginRateLimiter = rateLimit({
   store: new RedisStore({

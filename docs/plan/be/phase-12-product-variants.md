@@ -20,6 +20,7 @@
 Trong phase này, chúng ta tạo thêm 4 bảng mới để lưu trữ các thuộc tính sản phẩm biến thể (như Size, Color) và các kết hợp biến thể cụ thể (ProductVariant).
 
 ### 1. Thêm Vào `prisma/schema.prisma`:
+
 ```prisma
 // Nhóm thuộc tính (Size, Color, Storage)
 model VariantAttribute {
@@ -80,16 +81,19 @@ model ProductVariantOption {
 ```
 
 Cập nhật các liên kết trong các model cũ:
+
 - Trong `Product`: `variants ProductVariant[]`, `variantAttributes VariantAttribute[]`
 - Trong `CartItem`: `variantId String?`, `variant ProductVariant? @relation(fields: [variantId], references: [id])`
 - Trong `OrderItem`: `variantSku String?`, `variantLabel String?` (Lưu snapshot dạng: "256GB / Natural Titanium")
 
 ### 2. Chạy Migration:
+
 ```bash
 npx prisma migrate dev --name add_product_variants
 ```
 
 #### Ví dụ cấu trúc dữ liệu lưu trong DB:
+
 ```
 Product: "iPhone 15 Pro Max"
 ├── VariantAttribute: "Storage"
@@ -120,6 +124,7 @@ Cập nhật schema.prisma và chạy lệnh migrate của Prisma để đồng 
 ### Task 12.2: Variant Service — Backend (4-5h)
 
 Key logic:
+
 - **Tạo variants:** Seller nhập attributes + values → hệ thống có thể auto-generate combinations hoặc seller chọn manual
 - **Lấy variant theo selection:** User chọn "256GB" + "Blue" → API trả về variant cụ thể (price, stock)
 - **Giá hiển thị trên listing:** Nếu product có variants, hiển thị "từ ₫29.990.000" (giá thấp nhất)

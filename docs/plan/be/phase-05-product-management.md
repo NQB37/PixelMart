@@ -19,6 +19,7 @@
 Trong phase này, chúng ta tạo danh mục (`Category`) và sản phẩm (`Product`) đi kèm hình ảnh sản phẩm (`ProductImage`).
 
 ### 1. Thêm Vào `prisma/schema.prisma`:
+
 ```prisma
 model Category {
   id          String     @id @default(cuid())
@@ -93,6 +94,7 @@ model ProductImage {
 ```
 
 Hãy nhớ cập nhật liên kết `products Product[]` trong model `Shop` cũ:
+
 ```prisma
 model Shop {
   // ... các trường cũ giữ nguyên
@@ -101,40 +103,43 @@ model Shop {
 ```
 
 ### 2. Chạy Migration:
+
 ```bash
 npx prisma migrate dev --name add_products
 ```
 
 ### 3. Viết Seed Data Cho `prisma/seed.ts`:
+
 Cập nhật file `prisma/seed.ts` để seed thêm categories và products:
+
 ```typescript
-import { PrismaClient, Role, ShopStatus } from '@prisma/client';
-import bcrypt from 'bcryptjs';
+import { PrismaClient, Role, ShopStatus } from "@prisma/client";
+import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🌱 Seeding database for Phase 5...');
-  const hashedPassword = await bcrypt.hash('Password@123', 12);
+  console.log("🌱 Seeding database for Phase 5...");
+  const hashedPassword = await bcrypt.hash("Password@123", 12);
 
   // 1. Seed Seller & Shop
   const seller = await prisma.user.upsert({
-    where: { email: 'seller1@pixelmart.com' },
+    where: { email: "seller1@pixelmart.com" },
     update: {},
     create: {
-      email: 'seller1@pixelmart.com',
+      email: "seller1@pixelmart.com",
       password: hashedPassword,
-      fullName: 'Nguyễn Văn Seller',
+      fullName: "Nguyễn Văn Seller",
       role: Role.SELLER,
     },
   });
 
   const shop = await prisma.shop.upsert({
-    where: { slug: 'tech-store' },
+    where: { slug: "tech-store" },
     update: {},
     create: {
-      name: 'Tech Store Official',
-      slug: 'tech-store',
+      name: "Tech Store Official",
+      slug: "tech-store",
       ownerId: seller.id,
       status: ShopStatus.ACTIVE,
     },
@@ -142,21 +147,21 @@ async function main() {
 
   // 2. Seed Categories
   const catElectronics = await prisma.category.upsert({
-    where: { slug: 'dien-tu' },
+    where: { slug: "dien-tu" },
     update: {},
     create: {
-      name: 'Điện tử',
-      slug: 'dien-tu',
+      name: "Điện tử",
+      slug: "dien-tu",
       sortOrder: 1,
     },
   });
 
   const catPhones = await prisma.category.upsert({
-    where: { slug: 'dien-thoai' },
+    where: { slug: "dien-thoai" },
     update: {},
     create: {
-      name: 'Điện thoại',
-      slug: 'dien-thoai',
+      name: "Điện thoại",
+      slug: "dien-thoai",
       parentId: catElectronics.id,
       sortOrder: 1,
     },
@@ -164,15 +169,15 @@ async function main() {
 
   // 3. Seed Products
   await prisma.product.upsert({
-    where: { slug: 'iphone-15-pro-max-256gb' },
+    where: { slug: "iphone-15-pro-max-256gb" },
     update: {},
     create: {
-      name: 'iPhone 15 Pro Max 256GB',
-      slug: 'iphone-15-pro-max-256gb',
-      description: 'Điện thoại Apple iPhone 15 Pro Max chính hãng VN/A',
+      name: "iPhone 15 Pro Max 256GB",
+      slug: "iphone-15-pro-max-256gb",
+      description: "Điện thoại Apple iPhone 15 Pro Max chính hãng VN/A",
       price: 29990000,
       comparePrice: 34990000,
-      sku: 'IP15PM-256-BK',
+      sku: "IP15PM-256-BK",
       stock: 50,
       shopId: shop.id,
       categoryId: catPhones.id,
@@ -180,12 +185,12 @@ async function main() {
     },
   });
 
-  console.log('✅ Seeding Phase 5 complete!');
+  console.log("✅ Seeding Phase 5 complete!");
 }
 
 main()
   .catch((e) => {
-    console.error('❌ Seed failed:', e);
+    console.error("❌ Seed failed:", e);
     process.exit(1);
   })
   .finally(async () => {
@@ -194,6 +199,7 @@ main()
 ```
 
 Chạy seed:
+
 ```bash
 npx prisma db seed
 ```
@@ -205,8 +211,9 @@ npx prisma db seed
 ### Task 5.1: Category CRUD — Admin Only (3-4h)
 
 #### `src/modules/category/category.validation.ts`:
+
 ```typescript
-import { z } from 'zod';
+import { z } from "zod";
 
 export const createCategorySchema = z.object({
   name: z.string().min(2).max(100).trim(),
@@ -220,10 +227,11 @@ export const updateCategorySchema = createCategorySchema.partial();
 ```
 
 #### `src/modules/category/category.service.ts`:
+
 ```typescript
-import { prisma } from '@/lib/prisma';
-import { ApiError } from '@/utils/ApiError';
-import { generateSlug } from '@/utils/generateSlug';
+import { prisma } from "@/lib/prisma";
+import { ApiError } from "@/utils/ApiError";
+import { generateSlug } from "@/utils/generateSlug";
 
 class CategoryService {
   /**
@@ -236,16 +244,16 @@ class CategoryService {
       include: {
         children: {
           where: { isActive: true },
-          orderBy: { sortOrder: 'asc' },
+          orderBy: { sortOrder: "asc" },
           include: {
             children: {
               where: { isActive: true },
-              orderBy: { sortOrder: 'asc' },
+              orderBy: { sortOrder: "asc" },
             },
           },
         },
       },
-      orderBy: { sortOrder: 'asc' },
+      orderBy: { sortOrder: "asc" },
     });
 
     return categories;
@@ -261,7 +269,7 @@ class CategoryService {
     });
 
     if (!category || !category.isActive) {
-      throw ApiError.notFound('Danh mục không tồn tại');
+      throw ApiError.notFound("Danh mục không tồn tại");
     }
 
     return category;
@@ -279,7 +287,7 @@ class CategoryService {
       const parent = await prisma.category.findUnique({
         where: { id: data.parentId },
       });
-      if (!parent) throw ApiError.notFound('Danh mục cha không tồn tại');
+      if (!parent) throw ApiError.notFound("Danh mục cha không tồn tại");
     }
 
     return prisma.category.create({
@@ -289,7 +297,7 @@ class CategoryService {
 
   async updateCategory(id: string, data: any) {
     const category = await prisma.category.findUnique({ where: { id } });
-    if (!category) throw ApiError.notFound('Danh mục không tồn tại');
+    if (!category) throw ApiError.notFound("Danh mục không tồn tại");
 
     // Nếu đổi tên → cập nhật slug
     if (data.name && data.name !== category.name) {
@@ -298,7 +306,7 @@ class CategoryService {
 
     // Không cho phép tạo circular reference
     if (data.parentId === id) {
-      throw ApiError.badRequest('Danh mục không thể là cha của chính nó');
+      throw ApiError.badRequest("Danh mục không thể là cha của chính nó");
     }
 
     return prisma.category.update({ where: { id }, data });
@@ -311,7 +319,7 @@ class CategoryService {
     });
     if (productCount > 0) {
       throw ApiError.conflict(
-        `Không thể xóa danh mục đang có ${productCount} sản phẩm. Hãy di chuyển sản phẩm sang danh mục khác trước.`
+        `Không thể xóa danh mục đang có ${productCount} sản phẩm. Hãy di chuyển sản phẩm sang danh mục khác trước.`,
       );
     }
 
@@ -327,6 +335,7 @@ export const categoryService = new CategoryService();
 ```
 
 #### ⚠️ Lỗi fresher hay mắc:
+
 - **Circular reference:** Category A là con của B, rồi B lại là con của A → infinite loop khi render tree. Phải check trước khi lưu.
 - **Xóa category có sản phẩm:** Sản phẩm mất category → hiện "Uncategorized" hoặc crash. Phải check trước khi xóa.
 - **Recursive query hiệu năng kém:** Nếu category tree sâu >3 levels, include nested sẽ chậm. Giới hạn depth hoặc dùng Materialized Path pattern.
@@ -336,27 +345,30 @@ export const categoryService = new CategoryService();
 ### Task 5.2: Product Service — Seller CRUD (4-5h)
 
 #### `src/modules/product/product.validation.ts`:
+
 ```typescript
-import { z } from 'zod';
+import { z } from "zod";
 
 export const createProductSchema = z.object({
-  name: z.string().min(3, 'Tên sản phẩm tối thiểu 3 ký tự').max(200).trim(),
+  name: z.string().min(3, "Tên sản phẩm tối thiểu 3 ký tự").max(200).trim(),
   description: z.string().max(5000).optional(),
-  price: z.number().positive('Giá phải lớn hơn 0'),
+  price: z.number().positive("Giá phải lớn hơn 0"),
   comparePrice: z.number().positive().optional().nullable(),
-  sku: z.string().min(1, 'SKU là bắt buộc').max(50).trim(),
-  stock: z.number().int().min(0, 'Số lượng tồn kho không âm').default(0),
-  categoryId: z.string().cuid('Category ID không hợp lệ'),
+  sku: z.string().min(1, "SKU là bắt buộc").max(50).trim(),
+  stock: z.number().int().min(0, "Số lượng tồn kho không âm").default(0),
+  categoryId: z.string().cuid("Category ID không hợp lệ"),
   isActive: z.boolean().default(true),
   isFeatured: z.boolean().default(false),
   images: z
-    .array(z.object({
-      url: z.string().url(),
-      alt: z.string().optional(),
-      isPrimary: z.boolean().default(false),
-    }))
-    .min(1, 'Cần ít nhất 1 ảnh sản phẩm')
-    .max(10, 'Tối đa 10 ảnh')
+    .array(
+      z.object({
+        url: z.string().url(),
+        alt: z.string().optional(),
+        isPrimary: z.boolean().default(false),
+      }),
+    )
+    .min(1, "Cần ít nhất 1 ảnh sản phẩm")
+    .max(10, "Tối đa 10 ảnh")
     .optional(),
 });
 
@@ -369,8 +381,10 @@ export const productQuerySchema = z.object({
   categoryId: z.string().optional(),
   minPrice: z.coerce.number().min(0).optional(),
   maxPrice: z.coerce.number().min(0).optional(),
-  sortBy: z.enum(['createdAt', 'price', 'soldCount', 'name']).default('createdAt'),
-  sortOrder: z.enum(['asc', 'desc']).default('desc'),
+  sortBy: z
+    .enum(["createdAt", "price", "soldCount", "name"])
+    .default("createdAt"),
+  sortOrder: z.enum(["asc", "desc"]).default("desc"),
   isActive: z.coerce.boolean().optional(),
 });
 
@@ -379,12 +393,13 @@ export type ProductQuery = z.infer<typeof productQuerySchema>;
 ```
 
 #### `src/modules/product/product.service.ts`:
+
 ```typescript
-import { prisma } from '@/lib/prisma';
-import { ApiError } from '@/utils/ApiError';
-import { generateSlug } from '@/utils/generateSlug';
-import { CreateProductInput, ProductQuery } from './product.validation';
-import { Prisma } from '@prisma/client';
+import { prisma } from "@/lib/prisma";
+import { ApiError } from "@/utils/ApiError";
+import { generateSlug } from "@/utils/generateSlug";
+import { CreateProductInput, ProductQuery } from "./product.validation";
+import { Prisma } from "@prisma/client";
 
 class ProductService {
   /**
@@ -396,7 +411,7 @@ class ProductService {
       where: { id: data.categoryId },
     });
     if (!category || !category.isActive) {
-      throw ApiError.notFound('Danh mục không tồn tại');
+      throw ApiError.notFound("Danh mục không tồn tại");
     }
 
     // 2. Check SKU trùng
@@ -435,7 +450,7 @@ class ProductService {
           : undefined,
       },
       include: {
-        images: { orderBy: { sortOrder: 'asc' } },
+        images: { orderBy: { sortOrder: "asc" } },
         category: { select: { name: true, slug: true } },
       },
     });
@@ -447,7 +462,8 @@ class ProductService {
    * Seller xem danh sách sản phẩm của shop mình
    */
   async getShopProducts(shopId: string, query: ProductQuery) {
-    const { page, limit, search, categoryId, sortBy, sortOrder, isActive } = query;
+    const { page, limit, search, categoryId, sortBy, sortOrder, isActive } =
+      query;
     const skip = (page - 1) * limit;
 
     const where: Prisma.ProductWhereInput = {
@@ -457,8 +473,8 @@ class ProductService {
       ...(isActive !== undefined && { isActive }),
       ...(search && {
         OR: [
-          { name: { contains: search, mode: 'insensitive' } },
-          { sku: { contains: search, mode: 'insensitive' } },
+          { name: { contains: search, mode: "insensitive" } },
+          { sku: { contains: search, mode: "insensitive" } },
         ],
       }),
     };
@@ -492,26 +508,36 @@ class ProductService {
     const product = await prisma.product.findUnique({
       where: { id, deletedAt: null },
       include: {
-        images: { orderBy: { sortOrder: 'asc' } },
+        images: { orderBy: { sortOrder: "asc" } },
         category: true,
         shop: {
-          select: { id: true, name: true, slug: true, logo: true, rating: true },
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            logo: true,
+            rating: true,
+          },
         },
       },
     });
 
-    if (!product) throw ApiError.notFound('Sản phẩm không tồn tại');
+    if (!product) throw ApiError.notFound("Sản phẩm không tồn tại");
     return product;
   }
 
   /**
    * Seller cập nhật sản phẩm
    */
-  async updateProduct(id: string, shopId: string, data: Partial<CreateProductInput>) {
+  async updateProduct(
+    id: string,
+    shopId: string,
+    data: Partial<CreateProductInput>,
+  ) {
     // Verify ownership
     const product = await prisma.product.findUnique({ where: { id } });
     if (!product || product.shopId !== shopId) {
-      throw ApiError.forbidden('Bạn không có quyền chỉnh sửa sản phẩm này');
+      throw ApiError.forbidden("Bạn không có quyền chỉnh sửa sản phẩm này");
     }
 
     const { images, ...productData } = data;
@@ -531,14 +557,15 @@ class ProductService {
       const skuExists = await prisma.product.findFirst({
         where: { sku: productData.sku, id: { not: id } },
       });
-      if (skuExists) throw ApiError.conflict(`SKU "${productData.sku}" đã tồn tại`);
+      if (skuExists)
+        throw ApiError.conflict(`SKU "${productData.sku}" đã tồn tại`);
     }
 
     return prisma.product.update({
       where: { id },
       data: productData,
       include: {
-        images: { orderBy: { sortOrder: 'asc' } },
+        images: { orderBy: { sortOrder: "asc" } },
         category: { select: { name: true } },
       },
     });
@@ -550,7 +577,7 @@ class ProductService {
   async deleteProduct(id: string, shopId: string) {
     const product = await prisma.product.findUnique({ where: { id } });
     if (!product || product.shopId !== shopId) {
-      throw ApiError.forbidden('Bạn không có quyền xóa sản phẩm này');
+      throw ApiError.forbidden("Bạn không có quyền xóa sản phẩm này");
     }
 
     return prisma.product.update({
@@ -569,10 +596,11 @@ export const productService = new ProductService();
 #### ⚠️ Lỗi fresher hay mắc trong Product Management:
 
 1. **Hard Delete sản phẩm:**
+
    ```typescript
    // ❌ SAI — OrderItem reference đến product sẽ bị lỗi
    await prisma.product.delete({ where: { id } });
-   
+
    // ✅ ĐÚNG — Soft Delete
    await prisma.product.update({
      where: { id },
@@ -581,10 +609,11 @@ export const productService = new ProductService();
    ```
 
 2. **Không check ownership:**
+
    ```typescript
    // ❌ SAI — Seller A có thể sửa sản phẩm của Seller B
    await prisma.product.update({ where: { id }, data });
-   
+
    // ✅ ĐÚNG — Luôn verify shopId
    const product = await prisma.product.findUnique({ where: { id } });
    if (product.shopId !== sellerShopId) throw ApiError.forbidden(...);
@@ -604,9 +633,10 @@ npm install -D @types/multer
 ```
 
 #### `src/config/cloudinary.ts`:
+
 ```typescript
-import { v2 as cloudinary } from 'cloudinary';
-import { env } from './env';
+import { v2 as cloudinary } from "cloudinary";
+import { env } from "./env";
 
 cloudinary.config({
   cloud_name: env.CLOUDINARY_CLOUD_NAME,
@@ -620,21 +650,22 @@ export { cloudinary };
 > Thêm env vars vào `env.ts` schema và `.env`.
 
 #### `src/modules/upload/upload.service.ts`:
+
 ```typescript
-import { cloudinary } from '@/config/cloudinary';
-import { ApiError } from '@/utils/ApiError';
+import { cloudinary } from "@/config/cloudinary";
+import { ApiError } from "@/utils/ApiError";
 
 class UploadService {
-  async uploadImage(file: Express.Multer.File, folder = 'products') {
+  async uploadImage(file: Express.Multer.File, folder = "products") {
     // Validate file
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
     if (!allowedTypes.includes(file.mimetype)) {
-      throw ApiError.badRequest('Chỉ chấp nhận file JPEG, PNG hoặc WebP');
+      throw ApiError.badRequest("Chỉ chấp nhận file JPEG, PNG hoặc WebP");
     }
 
     const maxSize = 2 * 1024 * 1024; // 2MB
     if (file.size > maxSize) {
-      throw ApiError.badRequest('Kích thước file tối đa 2MB');
+      throw ApiError.badRequest("Kích thước file tối đa 2MB");
     }
 
     // Upload lên Cloudinary
@@ -643,20 +674,20 @@ class UploadService {
         {
           folder: `pixelmart/${folder}`,
           transformation: [
-            { width: 800, height: 800, crop: 'limit' }, // Resize
-            { quality: 'auto:good' },                     // Auto quality
-            { format: 'webp' },                           // Convert to WebP
+            { width: 800, height: 800, crop: "limit" }, // Resize
+            { quality: "auto:good" }, // Auto quality
+            { format: "webp" }, // Convert to WebP
           ],
         },
         (error, result) => {
-          if (error) reject(ApiError.internal('Upload ảnh thất bại'));
+          if (error) reject(ApiError.internal("Upload ảnh thất bại"));
           resolve({
             url: result!.secure_url,
             publicId: result!.public_id,
             width: result!.width,
             height: result!.height,
           });
-        }
+        },
       );
       uploadStream.end(file.buffer);
     });
@@ -671,67 +702,78 @@ export const uploadService = new UploadService();
 ```
 
 #### `src/config/multer.ts`:
+
 ```typescript
-import multer from 'multer';
+import multer from "multer";
 
 export const upload = multer({
   storage: multer.memoryStorage(), // Lưu trong RAM tạm, không lưu ổ đĩa
   limits: {
     fileSize: 2 * 1024 * 1024, // 2MB
-    files: 10,                  // Tối đa 10 ảnh
+    files: 10, // Tối đa 10 ảnh
   },
 });
 ```
 
 #### `src/modules/upload/upload.routes.ts`:
+
 ```typescript
-import { Router } from 'express';
-import { upload } from '@/config/multer';
-import { isAuthenticated } from '@/middlewares/auth.middleware';
-import { authorize } from '@/middlewares/role.middleware';
-import { uploadService } from './upload.service';
-import { asyncHandler } from '@/utils/asyncHandler';
-import { ApiResponse } from '@/utils/ApiResponse';
+import { Router } from "express";
+import { upload } from "@/config/multer";
+import { isAuthenticated } from "@/middlewares/auth.middleware";
+import { authorize } from "@/middlewares/role.middleware";
+import { uploadService } from "./upload.service";
+import { asyncHandler } from "@/utils/asyncHandler";
+import { ApiResponse } from "@/utils/ApiResponse";
 
 const router = Router();
 
 // Upload single image
 router.post(
-  '/image',
+  "/image",
   isAuthenticated,
-  authorize('SELLER', 'ADMIN'),
-  upload.single('image'),
+  authorize("SELLER", "ADMIN"),
+  upload.single("image"),
   asyncHandler(async (req, res) => {
     if (!req.file) {
-      return res.status(400).json({ success: false, message: 'Vui lòng chọn file ảnh' });
+      return res
+        .status(400)
+        .json({ success: false, message: "Vui lòng chọn file ảnh" });
     }
     const result = await uploadService.uploadImage(req.file);
-    ApiResponse.created(res, result, 'Upload ảnh thành công');
-  })
+    ApiResponse.created(res, result, "Upload ảnh thành công");
+  }),
 );
 
 // Upload multiple images
 router.post(
-  '/images',
+  "/images",
   isAuthenticated,
-  authorize('SELLER', 'ADMIN'),
-  upload.array('images', 10),
+  authorize("SELLER", "ADMIN"),
+  upload.array("images", 10),
   asyncHandler(async (req, res) => {
     const files = req.files as Express.Multer.File[];
     if (!files || files.length === 0) {
-      return res.status(400).json({ success: false, message: 'Vui lòng chọn file ảnh' });
+      return res
+        .status(400)
+        .json({ success: false, message: "Vui lòng chọn file ảnh" });
     }
     const results = await Promise.all(
-      files.map((file) => uploadService.uploadImage(file))
+      files.map((file) => uploadService.uploadImage(file)),
     );
-    ApiResponse.created(res, results, `Upload ${results.length} ảnh thành công`);
-  })
+    ApiResponse.created(
+      res,
+      results,
+      `Upload ${results.length} ảnh thành công`,
+    );
+  }),
 );
 
 export const uploadRoutes = router;
 ```
 
 #### ⚠️ Lỗi fresher hay mắc:
+
 - **Lưu ảnh trên server local:** Deploy lên Heroku/Railway → ảnh biến mất vì filesystem ephemeral. Luôn dùng cloud storage.
 - **Không resize/compress ảnh:** User upload ảnh 10MB → page load chậm, tốn tiền bandwidth cloud. Auto resize + WebP conversion giảm 5-10x.
 - **Không validate file type:** User upload `.exe` đổi extension thành `.jpg` → security risk. Check `mimetype` chứ không chỉ extension.
@@ -741,55 +783,56 @@ export const uploadRoutes = router;
 ### Task 5.4: Product Controller & Routes (2-3h)
 
 #### `src/modules/product/product.routes.ts`:
+
 ```typescript
-import { Router } from 'express';
-import * as productController from './product.controller';
-import { isAuthenticated } from '@/middlewares/auth.middleware';
-import { authorize } from '@/middlewares/role.middleware';
-import { isShopOwner } from '@/middlewares/shopOwner.middleware';
-import { validate } from '@/middlewares/validate.middleware';
-import { createProductSchema, updateProductSchema } from './product.validation';
+import { Router } from "express";
+import * as productController from "./product.controller";
+import { isAuthenticated } from "@/middlewares/auth.middleware";
+import { authorize } from "@/middlewares/role.middleware";
+import { isShopOwner } from "@/middlewares/shopOwner.middleware";
+import { validate } from "@/middlewares/validate.middleware";
+import { createProductSchema, updateProductSchema } from "./product.validation";
 
 const router = Router();
 
 // === PUBLIC ===
 // (Sẽ chi tiết ở Phase 6 — Buyer side)
-router.get('/', productController.getPublicProducts);
-router.get('/:slug', productController.getProductBySlug);
+router.get("/", productController.getPublicProducts);
+router.get("/:slug", productController.getProductBySlug);
 
 // === SELLER (cần shop active) ===
 router.post(
-  '/',
+  "/",
   isAuthenticated,
-  authorize('SELLER'),
+  authorize("SELLER"),
   isShopOwner,
   validate(createProductSchema),
-  productController.createProduct
+  productController.createProduct,
 );
 
 router.get(
-  '/seller/my-products',
+  "/seller/my-products",
   isAuthenticated,
-  authorize('SELLER'),
+  authorize("SELLER"),
   isShopOwner,
-  productController.getMyProducts
+  productController.getMyProducts,
 );
 
 router.put(
-  '/:id',
+  "/:id",
   isAuthenticated,
-  authorize('SELLER'),
+  authorize("SELLER"),
   isShopOwner,
   validate(updateProductSchema),
-  productController.updateProduct
+  productController.updateProduct,
 );
 
 router.delete(
-  '/:id',
+  "/:id",
   isAuthenticated,
-  authorize('SELLER'),
+  authorize("SELLER"),
   isShopOwner,
-  productController.deleteProduct
+  productController.deleteProduct,
 );
 
 export const productRoutes = router;
@@ -814,9 +857,9 @@ export const productRoutes = router;
 
 ## 📚 Tài Liệu Nên Đọc
 
-| Chủ đề | Link |
-|---|---|
-| Cloudinary Node.js SDK | https://cloudinary.com/documentation/node_integration |
-| Multer Documentation | https://github.com/expressjs/multer |
-| Image Optimization Best Practices | https://web.dev/fast/#optimize-your-images |
-| Prisma Nested Writes | https://www.prisma.io/docs/concepts/components/prisma-client/relation-queries#nested-writes |
+| Chủ đề                            | Link                                                                                        |
+| --------------------------------- | ------------------------------------------------------------------------------------------- |
+| Cloudinary Node.js SDK            | https://cloudinary.com/documentation/node_integration                                       |
+| Multer Documentation              | https://github.com/expressjs/multer                                                         |
+| Image Optimization Best Practices | https://web.dev/fast/#optimize-your-images                                                  |
+| Prisma Nested Writes              | https://www.prisma.io/docs/concepts/components/prisma-client/relation-queries#nested-writes |

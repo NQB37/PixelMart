@@ -29,6 +29,7 @@ Phase này **không có bảng mới** nào được tạo. Tuy nhiên, về m�
 ### Task 15.1: Dockerize Backend (3-4h)
 
 #### `infra/docker/Dockerfile.server`:
+
 ```dockerfile
 # === STAGE 1: Build ===
 FROM node:20-alpine AS builder
@@ -81,6 +82,7 @@ CMD ["node", "dist/server.js"]
 > **Multi-stage build:** Stage 1 có devDependencies (~500MB), Stage 2 chỉ có production deps (~200MB). Image giảm ~60%.
 
 #### `infra/docker/Dockerfile.client-web`:
+
 ```dockerfile
 # === STAGE 1: Build ===
 FROM node:20-alpine AS builder
@@ -130,6 +132,7 @@ CMD ["node", "web/client-web/server.js"]
 > Cần thêm `output: 'standalone'` vào `next.config.ts` của `client-web` để sử dụng standalone output.
 
 #### `infra/docker/Dockerfile.seller-web`:
+
 ```dockerfile
 # === STAGE 1: Build ===
 FROM node:20-alpine AS builder
@@ -157,6 +160,7 @@ CMD ["nginx", "-g", "daemon off;"]
 ```
 
 #### `infra/docker/Dockerfile.admin-web`:
+
 ```dockerfile
 # === STAGE 1: Build ===
 FROM node:20-alpine AS builder
@@ -186,7 +190,8 @@ CMD ["nginx", "-g", "daemon off;"]
 ### Task 15.2: Docker Compose (2-3h)
 
 #### `docker-compose.yml` (Development):
-```yaml
+
+````yaml
 version: '3.8'
 
 services:
@@ -265,7 +270,7 @@ on:
 jobs:
   lint-and-test:
     runs-on: ubuntu-latest
-    
+
     services:
       postgres:
         image: postgres:16-alpine
@@ -283,7 +288,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      
+
       - uses: actions/setup-node@v4
          with:
           node-version: 20
@@ -327,46 +332,49 @@ jobs:
 ```bash
 cd server
 npm install -D jest ts-jest @types/jest supertest @types/supertest
-```
+````
 
 #### `server/jest.config.ts`:
+
 ```typescript
 export default {
-  preset: 'ts-jest',
-  testEnvironment: 'node',
-  roots: ['<rootDir>/src'],
-  testMatch: ['**/__tests__/**/*.test.ts', '**/*.test.ts'],
-  moduleNameMapper: { '^@/(.*)$': '<rootDir>/src/$1' },
-  setupFilesAfterSetup: ['<rootDir>/tests/setup.ts'],
+  preset: "ts-jest",
+  testEnvironment: "node",
+  roots: ["<rootDir>/src"],
+  testMatch: ["**/__tests__/**/*.test.ts", "**/*.test.ts"],
+  moduleNameMapper: { "^@/(.*)$": "<rootDir>/src/$1" },
+  setupFilesAfterSetup: ["<rootDir>/tests/setup.ts"],
 };
 ```
 
 #### Unit tests to write:
-| Module | Test file | What to test |
-|---|---|---|
-| Auth | `auth.service.test.ts` | hash password, verify token, register validation, login logic |
-| Product | `product.service.test.ts` | create product, slug generation, soft delete |
-| Cart | `cart.service.test.ts` | add item, update quantity, merge cart |
-| Order | `order.service.test.ts` | checkout flow, stock deduction, status transitions |
-| Coupon | `coupon.service.test.ts` | validate coupon, apply discount calculation |
+
+| Module  | Test file                 | What to test                                                  |
+| ------- | ------------------------- | ------------------------------------------------------------- |
+| Auth    | `auth.service.test.ts`    | hash password, verify token, register validation, login logic |
+| Product | `product.service.test.ts` | create product, slug generation, soft delete                  |
+| Cart    | `cart.service.test.ts`    | add item, update quantity, merge cart                         |
+| Order   | `order.service.test.ts`   | checkout flow, stock deduction, status transitions            |
+| Coupon  | `coupon.service.test.ts`  | validate coupon, apply discount calculation                   |
 
 #### Integration test example:
+
 ```typescript
 // tests/integration/checkout.test.ts
-describe('Checkout Flow', () => {
-  it('should create orders grouped by shop', async () => {
+describe("Checkout Flow", () => {
+  it("should create orders grouped by shop", async () => {
     // Setup: create user, 2 shops, products, add to cart
     // Act: POST /api/v1/orders
     // Assert: 2 orders created, stock deducted, cart cleared
   });
 
-  it('should prevent over-selling', async () => {
+  it("should prevent over-selling", async () => {
     // Setup: product with stock = 1
     // Act: 2 concurrent checkout requests
     // Assert: only 1 succeeds, other gets 400
   });
 
-  it('should apply coupon discount correctly', async () => {
+  it("should apply coupon discount correctly", async () => {
     // Setup: coupon 10% max 100k, order 500k
     // Act: checkout with coupon
     // Assert: discount = 50k (10% of 500k, capped at 100k → 50k)
@@ -377,6 +385,7 @@ describe('Checkout Flow', () => {
 ---
 
 ## ⚠️ Lỗi fresher hay mắc:
+
 - **Dockerfile không có `.dockerignore`:** Copy hàng GB `node_modules` vào build context.
 - **Test dùng production database:** Phải dùng DB riêng cho test (`pixelmart_test`). Test xóa/tạo data liên tục → production data bay.
 - **Chỉ viết happy path tests:** Cần test: invalid input, unauthorized access, concurrent requests, edge cases.

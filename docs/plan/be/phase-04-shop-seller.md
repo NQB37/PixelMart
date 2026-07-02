@@ -19,6 +19,7 @@
 Trong phase này, chúng ta thêm role `SELLER` vào hệ thống và tạo bảng cửa hàng (`Shop`) thuộc về người dùng.
 
 ### 1. Cập nhật `prisma/schema.prisma`:
+
 ```prisma
 // Cập nhật enum Role có thêm SELLER
 enum Role {
@@ -37,7 +38,7 @@ enum ShopStatus {
 model User {
   // ... các trường cũ giữ nguyên
   role      Role      @default(USER)
-  
+
   shop      Shop?     // Thêm quan hệ 1-1 với Shop
 }
 
@@ -64,53 +65,56 @@ model Shop {
 ```
 
 ### 2. Chạy Migration:
+
 ```bash
 npx prisma migrate dev --name add_shop
 ```
 
 ### 3. Viết Seed Data Cho `prisma/seed.ts`:
+
 Cập nhật file `prisma/seed.ts` để seed thêm tài khoản Seller và Shop:
+
 ```typescript
-import { PrismaClient, Role, ShopStatus } from '@prisma/client';
-import bcrypt from 'bcryptjs';
+import { PrismaClient, Role, ShopStatus } from "@prisma/client";
+import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🌱 Seeding database for Phase 4...');
-  const hashedPassword = await bcrypt.hash('Password@123', 12);
+  console.log("🌱 Seeding database for Phase 4...");
+  const hashedPassword = await bcrypt.hash("Password@123", 12);
 
   // 1. Seed Seller
   const seller = await prisma.user.upsert({
-    where: { email: 'seller1@pixelmart.com' },
+    where: { email: "seller1@pixelmart.com" },
     update: {},
     create: {
-      email: 'seller1@pixelmart.com',
+      email: "seller1@pixelmart.com",
       password: hashedPassword,
-      fullName: 'Nguyễn Văn Seller',
+      fullName: "Nguyễn Văn Seller",
       role: Role.SELLER,
     },
   });
 
   // 2. Seed Shop cho Seller này
   await prisma.shop.upsert({
-    where: { slug: 'tech-store' },
+    where: { slug: "tech-store" },
     update: {},
     create: {
-      name: 'Tech Store Official',
-      slug: 'tech-store',
-      description: 'Chuyên cung cấp các sản phẩm công nghệ chính hãng',
+      name: "Tech Store Official",
+      slug: "tech-store",
+      description: "Chuyên cung cấp các sản phẩm công nghệ chính hãng",
       ownerId: seller.id,
       status: ShopStatus.ACTIVE,
     },
   });
 
-  console.log('✅ Seeding Phase 4 complete!');
+  console.log("✅ Seeding Phase 4 complete!");
 }
 
 main()
   .catch((e) => {
-    console.error('❌ Seed failed:', e);
+    console.error("❌ Seed failed:", e);
     process.exit(1);
   })
   .finally(async () => {
@@ -119,6 +123,7 @@ main()
 ```
 
 Chạy lệnh seed:
+
 ```bash
 npx prisma db seed
 ```
@@ -130,11 +135,12 @@ npx prisma db seed
 ### Task 4.1: Shop Validation & Types (1h)
 
 #### `src/modules/shop/shop.validation.ts`:
+
 ```typescript
-import { z } from 'zod';
+import { z } from "zod";
 
 export const createShopSchema = z.object({
-  name: z.string().min(3, 'Tên shop tối thiểu 3 ký tự').max(100).trim(),
+  name: z.string().min(3, "Tên shop tối thiểu 3 ký tự").max(100).trim(),
   description: z.string().max(1000).optional(),
 });
 
@@ -146,7 +152,7 @@ export const updateShopSchema = z.object({
 });
 
 export const updateShopStatusSchema = z.object({
-  status: z.enum(['ACTIVE', 'SUSPENDED']),
+  status: z.enum(["ACTIVE", "SUSPENDED"]),
   reason: z.string().optional(), // Lý do suspend
 });
 
@@ -159,12 +165,13 @@ export type UpdateShopInput = z.infer<typeof updateShopSchema>;
 ### Task 4.2: Shop Service (3-4h)
 
 #### `src/modules/shop/shop.service.ts`:
+
 ```typescript
-import { prisma } from '@/lib/prisma';
-import { ApiError } from '@/utils/ApiError';
-import { generateSlug } from '@/utils/generateSlug';
-import { CreateShopInput, UpdateShopInput } from './shop.validation';
-import { Role, ShopStatus } from '@prisma/client';
+import { prisma } from "@/lib/prisma";
+import { ApiError } from "@/utils/ApiError";
+import { generateSlug } from "@/utils/generateSlug";
+import { CreateShopInput, UpdateShopInput } from "./shop.validation";
+import { Role, ShopStatus } from "@prisma/client";
 
 class ShopService {
   /**
@@ -176,7 +183,9 @@ class ShopService {
       where: { ownerId: userId },
     });
     if (existingShop) {
-      throw ApiError.conflict('Bạn đã có shop. Mỗi tài khoản chỉ được tạo 1 shop.');
+      throw ApiError.conflict(
+        "Bạn đã có shop. Mỗi tài khoản chỉ được tạo 1 shop.",
+      );
     }
 
     // 2. Tạo slug từ tên shop
@@ -226,7 +235,7 @@ class ShopService {
     });
 
     if (!shop) {
-      throw ApiError.notFound('Bạn chưa có shop. Vui lòng đăng ký mở shop.');
+      throw ApiError.notFound("Bạn chưa có shop. Vui lòng đăng ký mở shop.");
     }
 
     return shop;
@@ -246,7 +255,7 @@ class ShopService {
     });
 
     if (!shop) {
-      throw ApiError.notFound('Shop không tồn tại');
+      throw ApiError.notFound("Shop không tồn tại");
     }
 
     return shop;
@@ -256,7 +265,7 @@ class ShopService {
     // Verify ownership
     const shop = await prisma.shop.findUnique({ where: { id: shopId } });
     if (!shop || shop.ownerId !== ownerId) {
-      throw ApiError.forbidden('Bạn không có quyền chỉnh sửa shop này');
+      throw ApiError.forbidden("Bạn không có quyền chỉnh sửa shop này");
     }
 
     return prisma.shop.update({
@@ -280,7 +289,7 @@ class ShopService {
         },
         skip,
         take: limit,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
       }),
       prisma.shop.count({ where }),
     ]);
@@ -299,7 +308,7 @@ class ShopService {
   async updateShopStatus(shopId: string, status: ShopStatus) {
     const shop = await prisma.shop.findUnique({ where: { id: shopId } });
     if (!shop) {
-      throw ApiError.notFound('Shop không tồn tại');
+      throw ApiError.notFound("Shop không tồn tại");
     }
 
     return prisma.shop.update({
@@ -313,17 +322,18 @@ export const shopService = new ShopService();
 ```
 
 #### `src/utils/generateSlug.ts`:
+
 ```typescript
 export const generateSlug = (text: string): string => {
   return text
     .toLowerCase()
-    .normalize('NFD')                   // Tách dấu tiếng Việt
-    .replace(/[\u0300-\u036f]/g, '')    // Xóa dấu
-    .replace(/đ/g, 'd')                 // Xử lý chữ đ
-    .replace(/[^a-z0-9\s-]/g, '')       // Xóa ký tự đặc biệt
-    .replace(/\s+/g, '-')               // Thay space bằng -
-    .replace(/-+/g, '-')                // Xóa - trùng
-    .replace(/^-|-$/g, '');             // Xóa - đầu/cuối
+    .normalize("NFD") // Tách dấu tiếng Việt
+    .replace(/[\u0300-\u036f]/g, "") // Xóa dấu
+    .replace(/đ/g, "d") // Xử lý chữ đ
+    .replace(/[^a-z0-9\s-]/g, "") // Xóa ký tự đặc biệt
+    .replace(/\s+/g, "-") // Thay space bằng -
+    .replace(/-+/g, "-") // Xóa - trùng
+    .replace(/^-|-$/g, ""); // Xóa - đầu/cuối
 };
 ```
 
@@ -331,6 +341,7 @@ export const generateSlug = (text: string): string => {
 > Hai thao tác phải thành công CÙNG LÚC: (1) tạo shop, (2) đổi role thành SELLER. Nếu tạo shop thành công nhưng đổi role thất bại → user không có quyền seller nhưng có shop ảo. Transaction đảm bảo: hoặc cả hai thành công, hoặc rollback cả hai.
 
 #### ⚠️ Lỗi fresher hay mắc:
+
 - **Không handle slug tiếng Việt:** "Cửa hàng Phát Đạt" phải thành `cua-hang-phat-dat`, không phải lỗi encoding.
 - **Cho phép seller tự approve shop:** Shop mới phải ở trạng thái PENDING cho admin review. Nếu ai cũng tự ACTIVE thì không kiểm soát được quality.
 - **Không verify shop ownership:** Seller A sửa shop B bằng cách đổi shopId trong request → phải luôn check `shop.ownerId === req.user.id`.
@@ -340,18 +351,23 @@ export const generateSlug = (text: string): string => {
 ### Task 4.3: Shop Controller & Routes (2-3h)
 
 #### `src/modules/shop/shop.controller.ts`:
+
 ```typescript
-import { Request, Response } from 'express';
-import { asyncHandler } from '@/utils/asyncHandler';
-import { ApiResponse } from '@/utils/ApiResponse';
-import { shopService } from './shop.service';
-import { ShopStatus } from '@prisma/client';
+import { Request, Response } from "express";
+import { asyncHandler } from "@/utils/asyncHandler";
+import { ApiResponse } from "@/utils/ApiResponse";
+import { shopService } from "./shop.service";
+import { ShopStatus } from "@prisma/client";
 
 // === SELLER ROUTES ===
 
 export const createShop = asyncHandler(async (req: Request, res: Response) => {
   const shop = await shopService.createShop(req.user!.id, req.body);
-  ApiResponse.created(res, shop, 'Đăng ký shop thành công! Vui lòng chờ admin phê duyệt.');
+  ApiResponse.created(
+    res,
+    shop,
+    "Đăng ký shop thành công! Vui lòng chờ admin phê duyệt.",
+  );
 });
 
 export const getMyShop = asyncHandler(async (req: Request, res: Response) => {
@@ -359,18 +375,26 @@ export const getMyShop = asyncHandler(async (req: Request, res: Response) => {
   ApiResponse.success(res, shop);
 });
 
-export const updateMyShop = asyncHandler(async (req: Request, res: Response) => {
-  const shop = await shopService.getMyShop(req.user!.id);
-  const updatedShop = await shopService.updateShop(shop.id, req.user!.id, req.body);
-  ApiResponse.success(res, updatedShop, 'Cập nhật shop thành công');
-});
+export const updateMyShop = asyncHandler(
+  async (req: Request, res: Response) => {
+    const shop = await shopService.getMyShop(req.user!.id);
+    const updatedShop = await shopService.updateShop(
+      shop.id,
+      req.user!.id,
+      req.body,
+    );
+    ApiResponse.success(res, updatedShop, "Cập nhật shop thành công");
+  },
+);
 
 // === PUBLIC ROUTES ===
 
-export const getShopBySlug = asyncHandler(async (req: Request, res: Response) => {
-  const shop = await shopService.getShopBySlug(req.params.slug);
-  ApiResponse.success(res, shop);
-});
+export const getShopBySlug = asyncHandler(
+  async (req: Request, res: Response) => {
+    const shop = await shopService.getShopBySlug(req.params.slug);
+    ApiResponse.success(res, shop);
+  },
+);
 
 // === ADMIN ROUTES ===
 
@@ -382,34 +406,75 @@ export const getAllShops = asyncHandler(async (req: Request, res: Response) => {
   ApiResponse.success(res, result);
 });
 
-export const updateShopStatus = asyncHandler(async (req: Request, res: Response) => {
-  const shop = await shopService.updateShopStatus(req.params.id, req.body.status);
-  ApiResponse.success(res, shop, `Shop đã được ${req.body.status === 'ACTIVE' ? 'phê duyệt' : 'tạm khóa'}`);
-});
+export const updateShopStatus = asyncHandler(
+  async (req: Request, res: Response) => {
+    const shop = await shopService.updateShopStatus(
+      req.params.id,
+      req.body.status,
+    );
+    ApiResponse.success(
+      res,
+      shop,
+      `Shop đã được ${req.body.status === "ACTIVE" ? "phê duyệt" : "tạm khóa"}`,
+    );
+  },
+);
 ```
 
 #### `src/modules/shop/shop.routes.ts`:
+
 ```typescript
-import { Router } from 'express';
-import * as shopController from './shop.controller';
-import { isAuthenticated } from '@/middlewares/auth.middleware';
-import { authorize } from '@/middlewares/role.middleware';
-import { validate } from '@/middlewares/validate.middleware';
-import { createShopSchema, updateShopSchema, updateShopStatusSchema } from './shop.validation';
+import { Router } from "express";
+import * as shopController from "./shop.controller";
+import { isAuthenticated } from "@/middlewares/auth.middleware";
+import { authorize } from "@/middlewares/role.middleware";
+import { validate } from "@/middlewares/validate.middleware";
+import {
+  createShopSchema,
+  updateShopSchema,
+  updateShopStatusSchema,
+} from "./shop.validation";
 
 const router = Router();
 
 // Public
-router.get('/:slug', shopController.getShopBySlug);
+router.get("/:slug", shopController.getShopBySlug);
 
 // Seller (đã đăng nhập)
-router.post('/', isAuthenticated, validate(createShopSchema), shopController.createShop);
-router.get('/me/dashboard', isAuthenticated, authorize('SELLER', 'ADMIN'), shopController.getMyShop);
-router.put('/me', isAuthenticated, authorize('SELLER', 'ADMIN'), validate(updateShopSchema), shopController.updateMyShop);
+router.post(
+  "/",
+  isAuthenticated,
+  validate(createShopSchema),
+  shopController.createShop,
+);
+router.get(
+  "/me/dashboard",
+  isAuthenticated,
+  authorize("SELLER", "ADMIN"),
+  shopController.getMyShop,
+);
+router.put(
+  "/me",
+  isAuthenticated,
+  authorize("SELLER", "ADMIN"),
+  validate(updateShopSchema),
+  shopController.updateMyShop,
+);
 
 // Admin
-router.get('/', isAuthenticated, authorize('ADMIN'), shopController.getAllShops);
-router.patch('/:id/status', isAuthenticated, authorize('ADMIN'), validate(updateShopStatusSchema), shopController.updateShopStatus);
+router.get(
+  "/",
+  isAuthenticated,
+  authorize("ADMIN"),
+  shopController.getAllShops,
+);
+router.patch(
+  "/:id/status",
+  isAuthenticated,
+  authorize("ADMIN"),
+  validate(updateShopStatusSchema),
+  shopController.updateShopStatus,
+);
 
 export const shopRoutes = router;
 ```
@@ -419,25 +484,26 @@ export const shopRoutes = router;
 ### Task 4.4: Shop Owner Middleware (1h)
 
 #### `src/middlewares/shopOwner.middleware.ts`:
+
 ```typescript
-import { Request, Response, NextFunction } from 'express';
-import { prisma } from '@/lib/prisma';
-import { ApiError } from '@/utils/ApiError';
+import { Request, Response, NextFunction } from "express";
+import { prisma } from "@/lib/prisma";
+import { ApiError } from "@/utils/ApiError";
 
 /**
  * Middleware kiểm tra seller có sở hữu shop đang thao tác không.
  * Dùng cho các route cần shopId (vd: thêm/sửa product của shop).
- * 
+ *
  * Gắn shop vào req để controller dùng: req.shop
  */
 export const isShopOwner = async (
   req: Request,
   _res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     if (!req.user) {
-      throw ApiError.unauthorized('Vui lòng đăng nhập');
+      throw ApiError.unauthorized("Vui lòng đăng nhập");
     }
 
     const shop = await prisma.shop.findUnique({
@@ -445,11 +511,11 @@ export const isShopOwner = async (
     });
 
     if (!shop) {
-      throw ApiError.notFound('Bạn chưa có shop. Vui lòng đăng ký mở shop.');
+      throw ApiError.notFound("Bạn chưa có shop. Vui lòng đăng ký mở shop.");
     }
 
-    if (shop.status !== 'ACTIVE') {
-      throw ApiError.forbidden('Shop chưa được phê duyệt hoặc đã bị tạm khóa');
+    if (shop.status !== "ACTIVE") {
+      throw ApiError.forbidden("Shop chưa được phê duyệt hoặc đã bị tạm khóa");
     }
 
     // Gắn shop vào request để dùng ở controller
@@ -482,8 +548,8 @@ export const isShopOwner = async (
 
 ## 📚 Tài Liệu Nên Đọc
 
-| Chủ đề | Link |
-|---|---|
-| Prisma Transactions | https://www.prisma.io/docs/concepts/components/prisma-client/transactions |
-| URL Slug Best Practices | https://moz.com/learn/seo/url |
-| Marketplace Seller Onboarding | https://www.sharetribe.com/academy/how-to-build-a-marketplace/ |
+| Chủ đề                        | Link                                                                      |
+| ----------------------------- | ------------------------------------------------------------------------- |
+| Prisma Transactions           | https://www.prisma.io/docs/concepts/components/prisma-client/transactions |
+| URL Slug Best Practices       | https://moz.com/learn/seo/url                                             |
+| Marketplace Seller Onboarding | https://www.sharetribe.com/academy/how-to-build-a-marketplace/            |

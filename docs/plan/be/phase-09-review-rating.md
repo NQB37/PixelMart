@@ -17,6 +17,7 @@
 Trong phase này, chúng ta tạo bảng đánh giá sản phẩm (`Review`) liên kết giữa sản phẩm, người dùng và đơn hàng để đảm bảo tính xác thực của đánh giá.
 
 ### 1. Thêm Vào `prisma/schema.prisma`:
+
 ```prisma
 model Review {
   id        String  @id @default(cuid())
@@ -41,10 +42,12 @@ model Review {
 ```
 
 Hãy nhớ cập nhật liên kết trong các model cũ:
+
 - Trong `User`: `reviews Review[]`
 - Trong `Product`: `reviews Review[]`
 
 ### 2. Chạy Migration:
+
 ```bash
 npx prisma migrate dev --name add_reviews
 ```
@@ -59,19 +62,23 @@ npx prisma migrate dev --name add_reviews
 ### Task 9.1: Review Service (3-4h)
 
 #### `src/modules/review/review.service.ts`:
+
 ```typescript
-import { prisma } from '@/lib/prisma';
-import { ApiError } from '@/utils/ApiError';
-import { Prisma } from '@prisma/client';
+import { prisma } from "@/lib/prisma";
+import { ApiError } from "@/utils/ApiError";
+import { Prisma } from "@prisma/client";
 
 class ReviewService {
-  async createReview(userId: string, data: {
-    productId: string;
-    orderId: string;
-    rating: number;
-    comment?: string;
-    images?: string[];
-  }) {
+  async createReview(
+    userId: string,
+    data: {
+      productId: string;
+      orderId: string;
+      rating: number;
+      comment?: string;
+      images?: string[];
+    },
+  ) {
     // 1. Validate: user đã mua hàng và đơn đã delivered
     const orderItem = await prisma.orderItem.findFirst({
       where: {
@@ -79,13 +86,13 @@ class ReviewService {
         order: {
           id: data.orderId,
           userId,
-          status: 'DELIVERED',
+          status: "DELIVERED",
         },
       },
     });
     if (!orderItem) {
       throw ApiError.forbidden(
-        'Bạn chỉ có thể đánh giá sản phẩm đã mua và đã nhận hàng'
+        "Bạn chỉ có thể đánh giá sản phẩm đã mua và đã nhận hàng",
       );
     }
 
@@ -93,12 +100,14 @@ class ReviewService {
     const existing = await prisma.review.findUnique({
       where: {
         userId_productId_orderId: {
-          userId, productId: data.productId, orderId: data.orderId,
+          userId,
+          productId: data.productId,
+          orderId: data.orderId,
         },
       },
     });
     if (existing) {
-      throw ApiError.conflict('Bạn đã đánh giá sản phẩm này cho đơn hàng này');
+      throw ApiError.conflict("Bạn đã đánh giá sản phẩm này cho đơn hàng này");
     }
 
     // 3. Tạo review
@@ -133,7 +142,7 @@ class ReviewService {
         },
         skip,
         take: limit,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
       }),
       prisma.review.count({ where: { productId } }),
       this.getReviewStats(productId),
@@ -155,14 +164,20 @@ class ReviewService {
       }),
       // Phân bố rating: bao nhiêu 5 sao, 4 sao, ...
       prisma.review.groupBy({
-        by: ['rating'],
+        by: ["rating"],
         where: { productId },
         _count: { rating: true },
-        orderBy: { rating: 'desc' },
+        orderBy: { rating: "desc" },
       }),
     ]);
 
-    const ratingDistribution: Record<number, number> = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+    const ratingDistribution: Record<number, number> = {
+      5: 0,
+      4: 0,
+      3: 0,
+      2: 0,
+      1: 0,
+    };
     for (const d of distribution) {
       ratingDistribution[d.rating] = d._count.rating;
     }
@@ -197,6 +212,7 @@ export const reviewService = new ReviewService();
 ```
 
 #### ⚠️ Lỗi fresher hay mắc:
+
 - **Cho phép review mà không mua:** Ai cũng spam 5-sao cho shop mình, 1-sao cho đối thủ. Bắt buộc verify order + DELIVERED.
 - **Rating trung bình tính sai:** Dùng `AVG()` trên toàn bộ reviews là đúng. Nhưng fresher hay tính `(sum / count)` thủ công, quên xử lý khi count = 0 → chia cho 0.
 - **updateShopRating block response:** Tính toán aggregate trên hàng ngàn reviews tốn thời gian. Dùng async fire-and-forget hoặc scheduled job.
@@ -204,14 +220,18 @@ export const reviewService = new ReviewService();
 ### Task 9.2: Review Validation (1h)
 
 ```typescript
-import { z } from 'zod';
+import { z } from "zod";
 
 export const createReviewSchema = z.object({
   productId: z.string().cuid(),
   orderId: z.string().cuid(),
-  rating: z.number().int().min(1, 'Rating tối thiểu 1').max(5, 'Rating tối đa 5'),
-  comment: z.string().max(1000, 'Comment tối đa 1000 ký tự').optional(),
-  images: z.array(z.string().url()).max(5, 'Tối đa 5 ảnh').optional(),
+  rating: z
+    .number()
+    .int()
+    .min(1, "Rating tối thiểu 1")
+    .max(5, "Rating tối đa 5"),
+  comment: z.string().max(1000, "Comment tối đa 1000 ký tự").optional(),
+  images: z.array(z.string().url()).max(5, "Tối đa 5 ảnh").optional(),
 });
 ```
 

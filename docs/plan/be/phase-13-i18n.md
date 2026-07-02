@@ -25,11 +25,13 @@ npm install i18next
 ```
 
 Backend nhận locale từ:
+
 1. Header `Accept-Language` (auto từ browser)
 2. Query param `?lang=en`
 3. Cookie `locale`
 
 Error messages trả về đúng ngôn ngữ:
+
 ```typescript
 // Thay vì: throw ApiError.badRequest('Sản phẩm hết hàng')
 // Dùng: throw ApiError.badRequest(t('product.outOfStock'))

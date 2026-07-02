@@ -7,11 +7,13 @@
 ## 🎯 MVP Của Phase Này
 
 **Wishlist:**
+
 - API toggle yêu thích sản phẩm
 - API lấy danh sách sản phẩm yêu thích (lọc bỏ sản phẩm inactive)
 - Xóa item từ wishlist
 
 **Coupon:**
+
 - Seller tạo/quản lý coupon cho shop mình qua API
 - Admin tạo coupon platform (toàn sàn)
 - API validate và áp dụng coupon ở checkout
@@ -22,6 +24,7 @@
 Trong phase này, chúng ta tạo bảng quản lý danh sách yêu thích (`Wishlist`) và bảng quản lý mã giảm giá (`Coupon`) cho cả shop và platform.
 
 ### 1. Thêm Vào `prisma/schema.prisma`:
+
 ```prisma
 enum CouponType {
   PERCENTAGE   // Giảm theo % (ví dụ: 10%)
@@ -69,6 +72,7 @@ model Coupon {
 ```
 
 Đồng thời cập nhật trường `couponId` và quan hệ coupon trong model `Order` cũ để liên kết với Coupon:
+
 ```prisma
 model Order {
   // ... các trường cũ giữ nguyên
@@ -78,41 +82,45 @@ model Order {
 ```
 
 Và các liên kết trong các model cũ khác:
+
 - Trong `User`: `wishlistItems Wishlist[]`
 - Trong `Product`: `wishlistItems Wishlist[]`
 - Trong `Shop`: `coupons Coupon[]`
 
 ### 2. Chạy Migration:
+
 ```bash
 npx prisma migrate dev --name add_wishlist_coupon
 ```
 
 ### 3. Viết Seed Data Cho `prisma/seed.ts`:
+
 Cập nhật file `prisma/seed.ts` để tạo một platform coupon và một shop coupon làm dữ liệu test:
+
 ```typescript
-import { PrismaClient, ShopStatus, CouponType } from '@prisma/client';
+import { PrismaClient, ShopStatus, CouponType } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🌱 Seeding database for Phase 10...');
+  console.log("🌱 Seeding database for Phase 10...");
 
   // 1. Lấy shop đã có
   const shop = await prisma.shop.findUnique({
-    where: { slug: 'tech-store' },
+    where: { slug: "tech-store" },
   });
 
   if (!shop) {
-    console.log('⚠️ Không tìm thấy Shop để seed Coupon!');
+    console.log("⚠️ Không tìm thấy Shop để seed Coupon!");
     return;
   }
 
   // 2. Seed platform coupon
   await prisma.coupon.upsert({
-    where: { code: 'WELCOME10' },
+    where: { code: "WELCOME10" },
     update: {},
     create: {
-      code: 'WELCOME10',
+      code: "WELCOME10",
       shopId: null, // Platform coupon
       type: CouponType.PERCENTAGE,
       value: 10,
@@ -126,10 +134,10 @@ async function main() {
 
   // 3. Seed shop coupon
   await prisma.coupon.upsert({
-    where: { code: 'TECHSTORE50K' },
+    where: { code: "TECHSTORE50K" },
     update: {},
     create: {
-      code: 'TECHSTORE50K',
+      code: "TECHSTORE50K",
       shopId: shop.id, // Coupon của shop
       type: CouponType.FIXED_AMOUNT,
       value: 50000,
@@ -140,12 +148,12 @@ async function main() {
     },
   });
 
-  console.log('✅ Seeding Phase 10 complete!');
+  console.log("✅ Seeding Phase 10 complete!");
 }
 
 main()
   .catch((e) => {
-    console.error('❌ Seed failed:', e);
+    console.error("❌ Seed failed:", e);
     process.exit(1);
   })
   .finally(async () => {
@@ -154,6 +162,7 @@ main()
 ```
 
 Chạy seed:
+
 ```bash
 npx prisma db seed
 ```
@@ -165,9 +174,10 @@ npx prisma db seed
 ### Task 10.1: Wishlist — Simple Toggle (2-3h)
 
 #### `src/modules/wishlist/wishlist.service.ts`:
+
 ```typescript
-import { prisma } from '@/lib/prisma';
-import { ApiError } from '@/utils/ApiError';
+import { prisma } from "@/lib/prisma";
+import { ApiError } from "@/utils/ApiError";
 
 class WishlistService {
   async toggle(userId: string, productId: string) {
@@ -175,7 +185,7 @@ class WishlistService {
     const product = await prisma.product.findUnique({
       where: { id: productId, isActive: true, deletedAt: null },
     });
-    if (!product) throw ApiError.notFound('Sản phẩm không tồn tại');
+    if (!product) throw ApiError.notFound("Sản phẩm không tồn tại");
 
     // Check if already wishlisted
     const existing = await prisma.wishlist.findUnique({
@@ -185,12 +195,12 @@ class WishlistService {
     if (existing) {
       // Remove from wishlist
       await prisma.wishlist.delete({ where: { id: existing.id } });
-      return { wishlisted: false, message: 'Đã bỏ yêu thích' };
+      return { wishlisted: false, message: "Đã bỏ yêu thích" };
     }
 
     // Add to wishlist
     await prisma.wishlist.create({ data: { userId, productId } });
-    return { wishlisted: true, message: 'Đã thêm vào yêu thích' };
+    return { wishlisted: true, message: "Đã thêm vào yêu thích" };
   }
 
   async getMyWishlist(userId: string, page = 1, limit = 20) {
@@ -202,8 +212,13 @@ class WishlistService {
         include: {
           product: {
             select: {
-              id: true, name: true, slug: true, price: true, comparePrice: true,
-              stock: true, isActive: true,
+              id: true,
+              name: true,
+              slug: true,
+              price: true,
+              comparePrice: true,
+              stock: true,
+              isActive: true,
               images: { where: { isPrimary: true }, take: 1 },
               shop: { select: { name: true, slug: true } },
             },
@@ -211,7 +226,7 @@ class WishlistService {
         },
         skip,
         take: limit,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
       }),
       prisma.wishlist.count({ where: { userId } }),
     ]);
@@ -245,43 +260,51 @@ export const wishlistService = new WishlistService();
 ### Task 10.2: Coupon CRUD — Seller & Admin (3-4h)
 
 #### `src/modules/coupon/coupon.validation.ts`:
-```typescript
-import { z } from 'zod';
 
-export const createCouponSchema = z.object({
-  code: z
-    .string()
-    .min(3).max(20)
-    .transform((v) => v.toUpperCase().trim())
-    .refine((v) => /^[A-Z0-9]+$/.test(v), 'Mã chỉ chứa chữ hoa và số'),
-  type: z.enum(['PERCENTAGE', 'FIXED_AMOUNT']),
-  value: z.number().positive('Giá trị phải lớn hơn 0'),
-  minOrderValue: z.number().min(0).optional().nullable(),
-  maxDiscount: z.number().min(0).optional().nullable(),
-  usageLimit: z.number().int().positive().optional().nullable(),
-  startDate: z.coerce.date(),
-  endDate: z.coerce.date(),
-}).refine(
-  (data) => data.endDate > data.startDate,
-  { message: 'Ngày kết thúc phải sau ngày bắt đầu', path: ['endDate'] }
-).refine(
-  (data) => !(data.type === 'PERCENTAGE' && data.value > 100),
-  { message: 'Phần trăm giảm không được vượt 100%', path: ['value'] }
-);
+```typescript
+import { z } from "zod";
+
+export const createCouponSchema = z
+  .object({
+    code: z
+      .string()
+      .min(3)
+      .max(20)
+      .transform((v) => v.toUpperCase().trim())
+      .refine((v) => /^[A-Z0-9]+$/.test(v), "Mã chỉ chứa chữ hoa và số"),
+    type: z.enum(["PERCENTAGE", "FIXED_AMOUNT"]),
+    value: z.number().positive("Giá trị phải lớn hơn 0"),
+    minOrderValue: z.number().min(0).optional().nullable(),
+    maxDiscount: z.number().min(0).optional().nullable(),
+    usageLimit: z.number().int().positive().optional().nullable(),
+    startDate: z.coerce.date(),
+    endDate: z.coerce.date(),
+  })
+  .refine((data) => data.endDate > data.startDate, {
+    message: "Ngày kết thúc phải sau ngày bắt đầu",
+    path: ["endDate"],
+  })
+  .refine((data) => !(data.type === "PERCENTAGE" && data.value > 100), {
+    message: "Phần trăm giảm không được vượt 100%",
+    path: ["value"],
+  });
 ```
 
 #### `src/modules/coupon/coupon.service.ts`:
+
 ```typescript
-import { prisma } from '@/lib/prisma';
-import { ApiError } from '@/utils/ApiError';
-import { Prisma } from '@prisma/client';
+import { prisma } from "@/lib/prisma";
+import { ApiError } from "@/utils/ApiError";
+import { Prisma } from "@prisma/client";
 
 class CouponService {
   // === SELLER / ADMIN: CRUD ===
 
   async createCoupon(data: any, shopId?: string) {
     // Check code trùng
-    const existing = await prisma.coupon.findUnique({ where: { code: data.code } });
+    const existing = await prisma.coupon.findUnique({
+      where: { code: data.code },
+    });
     if (existing) throw ApiError.conflict(`Mã "${data.code}" đã tồn tại`);
 
     return prisma.coupon.create({
@@ -292,14 +315,14 @@ class CouponService {
   async getShopCoupons(shopId: string) {
     return prisma.coupon.findMany({
       where: { shopId },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
     });
   }
 
   async updateCoupon(couponId: string, shopId: string, data: any) {
     const coupon = await prisma.coupon.findUnique({ where: { id: couponId } });
     if (!coupon || coupon.shopId !== shopId) {
-      throw ApiError.forbidden('Bạn không có quyền sửa mã này');
+      throw ApiError.forbidden("Bạn không có quyền sửa mã này");
     }
     return prisma.coupon.update({ where: { id: couponId }, data });
   }
@@ -307,7 +330,7 @@ class CouponService {
   async deleteCoupon(couponId: string, shopId: string) {
     const coupon = await prisma.coupon.findUnique({ where: { id: couponId } });
     if (!coupon || coupon.shopId !== shopId) {
-      throw ApiError.forbidden('Bạn không có quyền xóa mã này');
+      throw ApiError.forbidden("Bạn không có quyền xóa mã này");
     }
     return prisma.coupon.update({
       where: { id: couponId },
@@ -325,38 +348,38 @@ class CouponService {
     const coupon = await prisma.coupon.findUnique({ where: { code } });
 
     if (!coupon || !coupon.isActive) {
-      throw ApiError.notFound('Mã giảm giá không tồn tại hoặc đã bị vô hiệu');
+      throw ApiError.notFound("Mã giảm giá không tồn tại hoặc đã bị vô hiệu");
     }
 
     // Check date range
     const now = new Date();
     if (now < coupon.startDate) {
-      throw ApiError.badRequest('Mã giảm giá chưa đến thời gian sử dụng');
+      throw ApiError.badRequest("Mã giảm giá chưa đến thời gian sử dụng");
     }
     if (now > coupon.endDate) {
-      throw ApiError.badRequest('Mã giảm giá đã hết hạn');
+      throw ApiError.badRequest("Mã giảm giá đã hết hạn");
     }
 
     // Check usage limit
     if (coupon.usageLimit && coupon.usedCount >= coupon.usageLimit) {
-      throw ApiError.badRequest('Mã giảm giá đã hết lượt sử dụng');
+      throw ApiError.badRequest("Mã giảm giá đã hết lượt sử dụng");
     }
 
     // Check shop coupon vs order shop
     if (coupon.shopId && shopId && coupon.shopId !== shopId) {
-      throw ApiError.badRequest('Mã giảm giá không áp dụng cho shop này');
+      throw ApiError.badRequest("Mã giảm giá không áp dụng cho shop này");
     }
 
     // Check min order value
     if (coupon.minOrderValue && orderSubtotal < Number(coupon.minOrderValue)) {
       throw ApiError.badRequest(
-        `Đơn hàng tối thiểu ${new Intl.NumberFormat('vi-VN').format(Number(coupon.minOrderValue))}₫ để sử dụng mã này`
+        `Đơn hàng tối thiểu ${new Intl.NumberFormat("vi-VN").format(Number(coupon.minOrderValue))}₫ để sử dụng mã này`,
       );
     }
 
     // Calculate discount
     let discount: number;
-    if (coupon.type === 'PERCENTAGE') {
+    if (coupon.type === "PERCENTAGE") {
       discount = orderSubtotal * (Number(coupon.value) / 100);
       // Cap at maxDiscount
       if (coupon.maxDiscount) {
@@ -396,6 +419,7 @@ export const couponService = new CouponService();
 ```
 
 #### ⚠️ Lỗi fresher hay mắc:
+
 - **Validate coupon ở client, không validate ở server:** User sửa request body → giảm giá 100% → mua free. Server PHẢI validate lại.
 - **Race condition với `usageLimit`:** 100 users cùng dùng coupon có limit = 1. Phải check + increment trong transaction hoặc dùng atomic update.
 - **Coupon của shop A dùng cho order của shop B:** Phải check `coupon.shopId === order.shopId` (nếu là shop coupon).
@@ -416,7 +440,7 @@ if (input.couponCode) {
   const couponResult = await couponService.validateCoupon(
     input.couponCode,
     Number(subtotal),
-    shopId
+    shopId,
   );
   discount = new Prisma.Decimal(couponResult.discount);
   couponId = couponResult.coupon.id;

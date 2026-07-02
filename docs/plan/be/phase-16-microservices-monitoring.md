@@ -7,6 +7,7 @@
 ## Tổng Quan
 
 Phase này là **graduation project** — tổng hợp tất cả kiến thức đã học. Chia thành 3 sub-phases:
+
 - **16A:** Tách services + API Gateway
 - **16B:** Message Queue (RabbitMQ) + Notification Service
 - **16C:** Monitoring & Logging (Prometheus + Grafana + Loki)
@@ -30,6 +31,7 @@ Trong phase này, thay vì thêm bảng mới, chúng ta thực hiện kiến tr
 ## 🔀 PHASE 16A: Microservices Split & API Gateway (10-12h)
 
 ### Mục tiêu:
+
 - Tách monolith thành 4 services ban đầu: Auth, Product, Order, Shop
 - API Gateway đứng trước, routing + auth check
 - Mỗi service có DB riêng
@@ -60,37 +62,40 @@ npm install express http-proxy-middleware cors helmet jsonwebtoken
 ```
 
 #### `services/api-gateway/src/routes.config.ts`:
+
 ```typescript
 export const serviceRoutes = [
   {
-    prefix: '/api/v1/auth',
-    target: process.env.AUTH_SERVICE_URL || 'http://localhost:8001',
+    prefix: "/api/v1/auth",
+    target: process.env.AUTH_SERVICE_URL || "http://localhost:8001",
     auth: false, // Public routes
   },
   {
-    prefix: '/api/v1/products',
-    target: process.env.PRODUCT_SERVICE_URL || 'http://localhost:8002',
+    prefix: "/api/v1/products",
+    target: process.env.PRODUCT_SERVICE_URL || "http://localhost:8002",
     auth: false, // Public reads, auth for writes (handled by service)
   },
   {
-    prefix: '/api/v1/orders',
-    target: process.env.ORDER_SERVICE_URL || 'http://localhost:8003',
+    prefix: "/api/v1/orders",
+    target: process.env.ORDER_SERVICE_URL || "http://localhost:8003",
     auth: true, // All order routes need auth
   },
   {
-    prefix: '/api/v1/shops',
-    target: process.env.SHOP_SERVICE_URL || 'http://localhost:8004',
+    prefix: "/api/v1/shops",
+    target: process.env.SHOP_SERVICE_URL || "http://localhost:8004",
     auth: false,
   },
 ];
 ```
 
 #### Gateway middleware chain:
+
 ```
 Request → Rate Limit → CORS → JWT Verify (if needed) → Proxy to Service
 ```
 
 **Gateway chỉ làm:**
+
 - ✅ Rate limiting
 - ✅ CORS
 - ✅ JWT verification (decode token, attach userId to header)
@@ -100,6 +105,7 @@ Request → Rate Limit → CORS → JWT Verify (if needed) → Proxy to Service
 - ❌ KHÔNG đọc/ghi DB
 
 #### Docker Compose Update:
+
 ```yaml
 services:
   gateway:
@@ -131,6 +137,7 @@ services:
 ```
 
 ### ⚠️ Lỗi fresher hay mắc:
+
 - **Shared database:** Các services vẫn dùng chung 1 DB → không phải microservices thật sự. Mỗi service PHẢI có DB riêng.
 - **Circular dependencies:** Auth Service call Product Service call Auth Service → deadlock. Thiết kế clear dependency graph.
 - **Gateway quá "fat":** Business logic rò rỉ vào gateway (validate order, calculate price) → gateway thành bottleneck.
@@ -140,6 +147,7 @@ services:
 ## 📨 PHASE 16B: Message Queue & Notification (8-10h)
 
 ### Mục tiêu:
+
 - RabbitMQ cho async communication giữa services
 - Notification Service gửi email khi: đặt hàng, đổi trạng thái, welcome
 - Event-driven: Order Service publish event → Notification Service consume
@@ -151,8 +159,8 @@ services:
 rabbitmq:
   image: rabbitmq:3-management-alpine
   ports:
-    - "5672:5672"    # AMQP
-    - "15672:15672"  # Management UI
+    - "5672:5672" # AMQP
+    - "15672:15672" # Management UI
   environment:
     RABBITMQ_DEFAULT_USER: admin
     RABBITMQ_DEFAULT_PASS: admin
@@ -164,7 +172,7 @@ rabbitmq:
 
 ```typescript
 // services/order-service/src/events/publisher.ts
-import amqplib from 'amqplib';
+import amqplib from "amqplib";
 
 class EventPublisher {
   private channel: amqplib.Channel | null = null;
@@ -172,24 +180,28 @@ class EventPublisher {
   async connect() {
     const connection = await amqplib.connect(process.env.RABBITMQ_URL!);
     this.channel = await connection.createChannel();
-    
+
     // Declare exchange
-    await this.channel.assertExchange('pixelmart.events', 'topic', { durable: true });
+    await this.channel.assertExchange("pixelmart.events", "topic", {
+      durable: true,
+    });
   }
 
   async publish(routingKey: string, data: any) {
-    if (!this.channel) throw new Error('Not connected');
-    
+    if (!this.channel) throw new Error("Not connected");
+
     this.channel.publish(
-      'pixelmart.events',
+      "pixelmart.events",
       routingKey,
-      Buffer.from(JSON.stringify({
-        event: routingKey,
-        data,
-        timestamp: new Date().toISOString(),
-        id: crypto.randomUUID(), // Idempotency
-      })),
-      { persistent: true } // Survive RabbitMQ restart
+      Buffer.from(
+        JSON.stringify({
+          event: routingKey,
+          data,
+          timestamp: new Date().toISOString(),
+          id: crypto.randomUUID(), // Idempotency
+        }),
+      ),
+      { persistent: true }, // Survive RabbitMQ restart
     );
   }
 }
@@ -205,36 +217,38 @@ export const publisher = new EventPublisher();
 
 ```typescript
 // services/notification-service/src/consumers/order.consumer.ts
-import amqplib from 'amqplib';
-import { emailService } from '../services/email.service';
+import amqplib from "amqplib";
+import { emailService } from "../services/email.service";
 
 export async function startOrderConsumer() {
   const connection = await amqplib.connect(process.env.RABBITMQ_URL!);
   const channel = await connection.createChannel();
 
-  await channel.assertExchange('pixelmart.events', 'topic', { durable: true });
-  
-  const queue = await channel.assertQueue('notification.order', { durable: true });
-  await channel.bindQueue(queue.queue, 'pixelmart.events', 'order.*');
+  await channel.assertExchange("pixelmart.events", "topic", { durable: true });
+
+  const queue = await channel.assertQueue("notification.order", {
+    durable: true,
+  });
+  await channel.bindQueue(queue.queue, "pixelmart.events", "order.*");
 
   channel.consume(queue.queue, async (msg) => {
     if (!msg) return;
 
     const event = JSON.parse(msg.content.toString());
-    
+
     try {
       switch (event.event) {
-        case 'order.created':
+        case "order.created":
           await emailService.sendOrderConfirmation(event.data);
           break;
-        case 'order.status.changed':
+        case "order.status.changed":
           await emailService.sendStatusUpdate(event.data);
           break;
       }
-      
+
       channel.ack(msg); // Xử lý xong → acknowledge
     } catch (error) {
-      console.error('Failed to process event:', error);
+      console.error("Failed to process event:", error);
       channel.nack(msg, false, true); // Retry
     }
   });
@@ -242,6 +256,7 @@ export async function startOrderConsumer() {
 ```
 
 ### ⚠️ Lỗi fresher hay mắc:
+
 - **Mất message khi RabbitMQ restart:** Phải set `durable: true` cho queue và `persistent: true` cho message.
 - **Xử lý trùng message:** Network error → message gửi 2 lần → khách nhận 2 email. Check idempotency (event ID đã xử lý chưa).
 - **Consumer crash → message mất:** Phải `ack()` SAU KHI xử lý xong. Nếu `ack()` trước rồi crash → message biến mất nhưng chưa xử lý.
@@ -251,6 +266,7 @@ export async function startOrderConsumer() {
 ## 📊 PHASE 16C: Monitoring & Logging (7-10h)
 
 ### Mục tiêu:
+
 - Structured logging (JSON format) cho tất cả services
 - Centralized log collection (Loki + Promtail)
 - Metrics monitoring (Prometheus + Grafana)
@@ -264,25 +280,26 @@ npm install winston
 
 ```typescript
 // packages/shared-utils/src/logger.ts
-import winston from 'winston';
+import winston from "winston";
 
 export const createLogger = (serviceName: string) => {
   return winston.createLogger({
-    level: process.env.LOG_LEVEL || 'info',
+    level: process.env.LOG_LEVEL || "info",
     format: winston.format.combine(
       winston.format.timestamp(),
       winston.format.errors({ stack: true }),
-      winston.format.json() // Structured JSON logging
+      winston.format.json(), // Structured JSON logging
     ),
     defaultMeta: { service: serviceName },
     transports: [
       new winston.transports.Console({
-        format: process.env.NODE_ENV === 'development'
-          ? winston.format.combine(
-              winston.format.colorize(),
-              winston.format.simple()
-            )
-          : winston.format.json(),
+        format:
+          process.env.NODE_ENV === "development"
+            ? winston.format.combine(
+                winston.format.colorize(),
+                winston.format.simple(),
+              )
+            : winston.format.json(),
       }),
     ],
   });
@@ -296,12 +313,13 @@ export const createLogger = (serviceName: string) => {
 ```
 
 **Log masking — SECURITY:**
+
 ```typescript
 // ❌ NGUY HIỂM:
-logger.info('User login', { email, password }); // Password in logs!
+logger.info("User login", { email, password }); // Password in logs!
 
 // ✅ AN TOÀN:
-logger.info('User login', { email, password: '***' });
+logger.info("User login", { email, password: "***" });
 ```
 
 ### Task 16C.2: Prometheus Metrics (2-3h)
@@ -312,40 +330,48 @@ npm install prom-client
 
 ```typescript
 // Expose /metrics endpoint cho Prometheus scrape
-import { collectDefaultMetrics, Counter, Histogram, register } from 'prom-client';
+import {
+  collectDefaultMetrics,
+  Counter,
+  Histogram,
+  register,
+} from "prom-client";
 
 // Auto-collect CPU, memory, event loop metrics
 collectDefaultMetrics();
 
 // Custom metrics
 export const httpRequestDuration = new Histogram({
-  name: 'http_request_duration_seconds',
-  help: 'Duration of HTTP requests in seconds',
-  labelNames: ['method', 'route', 'status'],
+  name: "http_request_duration_seconds",
+  help: "Duration of HTTP requests in seconds",
+  labelNames: ["method", "route", "status"],
   buckets: [0.01, 0.05, 0.1, 0.5, 1, 5],
 });
 
 export const httpRequestTotal = new Counter({
-  name: 'http_requests_total',
-  help: 'Total number of HTTP requests',
-  labelNames: ['method', 'route', 'status'],
+  name: "http_requests_total",
+  help: "Total number of HTTP requests",
+  labelNames: ["method", "route", "status"],
 });
 
 // Middleware to track metrics
 export const metricsMiddleware = (req, res, next) => {
   const start = Date.now();
-  res.on('finish', () => {
+  res.on("finish", () => {
     const duration = (Date.now() - start) / 1000;
     const route = req.route?.path || req.path;
-    httpRequestDuration.observe({ method: req.method, route, status: res.statusCode }, duration);
+    httpRequestDuration.observe(
+      { method: req.method, route, status: res.statusCode },
+      duration,
+    );
     httpRequestTotal.inc({ method: req.method, route, status: res.statusCode });
   });
   next();
 };
 
 // GET /metrics endpoint
-app.get('/metrics', async (req, res) => {
-  res.set('Content-Type', register.contentType);
+app.get("/metrics", async (req, res) => {
+  res.set("Content-Type", register.contentType);
   res.end(await register.metrics());
 });
 ```
@@ -383,6 +409,7 @@ promtail:
 ```
 
 Grafana dashboard panels:
+
 - **Request Rate:** HTTP requests per second per service
 - **Response Time:** P50, P95, P99 latencies
 - **Error Rate:** 4xx vs 5xx errors
@@ -395,6 +422,7 @@ Grafana dashboard panels:
 ## 🏁 Checklist Cuối Phase 16 (Graduation!)
 
 ### 16A — Microservices:
+
 - [ ] Auth Service chạy độc lập (port 8001)
 - [ ] Product Service chạy độc lập (port 8002)
 - [ ] Order Service chạy độc lập (port 8003)
@@ -403,6 +431,7 @@ Grafana dashboard panels:
 - [ ] Frontend chỉ gọi Gateway
 
 ### 16B — Message Queue:
+
 - [ ] RabbitMQ running + management UI accessible
 - [ ] Order created → email confirmation sent (async)
 - [ ] Order status changed → email notification sent
@@ -410,6 +439,7 @@ Grafana dashboard panels:
 - [ ] Dead letter queue cho failed messages
 
 ### 16C — Monitoring:
+
 - [ ] Winston structured logging (JSON)
 - [ ] Log masking cho sensitive data
 - [ ] Prometheus metrics exposed `/metrics`
@@ -417,6 +447,7 @@ Grafana dashboard panels:
 - [ ] Loki centralized log search
 
 ### Final:
+
 - [ ] `docker compose up` → TOÀN BỘ hệ thống chạy
 - [ ] README.md cực chất (architecture diagram, setup guide, screenshots)
 - [ ] **Portfolio-ready** 🎉
@@ -425,14 +456,14 @@ Grafana dashboard panels:
 
 ## 📚 Tài Liệu Nên Đọc
 
-| Chủ đề | Link |
-|---|---|
-| Microservices Patterns | https://microservices.io/patterns/index.html |
-| API Gateway Pattern | https://microservices.io/patterns/apigateway.html |
-| RabbitMQ Tutorials | https://www.rabbitmq.com/getstarted.html |
+| Chủ đề                     | Link                                                 |
+| -------------------------- | ---------------------------------------------------- |
+| Microservices Patterns     | https://microservices.io/patterns/index.html         |
+| API Gateway Pattern        | https://microservices.io/patterns/apigateway.html    |
+| RabbitMQ Tutorials         | https://www.rabbitmq.com/getstarted.html             |
 | Prometheus Getting Started | https://prometheus.io/docs/introduction/first_steps/ |
-| Grafana Dashboards | https://grafana.com/grafana/dashboards/ |
-| The Twelve-Factor App | https://12factor.net/ |
+| Grafana Dashboards         | https://grafana.com/grafana/dashboards/              |
+| The Twelve-Factor App      | https://12factor.net/                                |
 
 ---
 
@@ -452,4 +483,4 @@ Nếu em hoàn thành đến đây, em đã:
 
 Đây là kiến thức đủ để apply vị trí **Junior/Mid-level Backend Engineer** ở bất kỳ công ty nào. 🚀
 
-> *"The best way to learn is to build something real."*
+> _"The best way to learn is to build something real."_

@@ -181,6 +181,7 @@ async getRelatedProducts(productId: string, limit = 8) {
 ```
 
 #### ⚠️ Lỗi fresher hay mắc:
+
 - **Không filter theo shop status:** Sản phẩm từ shop bị suspended vẫn hiện → user mua hàng nhưng shop bị ban → đơn hàng treo. Luôn join + filter `shop.status = ACTIVE`.
 - **Trả toàn bộ data không cần thiết:** Public API không cần trả `createdAt`, `updatedAt`, `ownerId`... Dùng `select` chỉ lấy field cần hiển thị → response nhỏ hơn, nhanh hơn.
 - **OFFSET pagination cho dataset lớn:** `OFFSET 10000` → DB phải scan 10000 rows rồi skip. Rất chậm. Cho MVP thì OK, sau nên dùng Cursor-based pagination.
@@ -199,10 +200,10 @@ async getRelatedProducts(productId: string, limit = 8) {
 
 ## 📚 Tài Liệu Nên Đọc
 
-| Chủ đề | Link |
-|---|---|
+| Chủ đề                    | Link                                                                              |
+| ------------------------- | --------------------------------------------------------------------------------- |
 | Next.js Server Components | https://nextjs.org/docs/app/building-your-application/rendering/server-components |
-| Next.js Metadata API | https://nextjs.org/docs/app/building-your-application/optimizing/metadata |
-| Schema.org Product | https://schema.org/Product |
-| Debounce vs Throttle | https://css-tricks.com/debouncing-throttling-explained-examples/ |
-| Web Vitals & SEO | https://web.dev/learn-core-web-vitals/ |
+| Next.js Metadata API      | https://nextjs.org/docs/app/building-your-application/optimizing/metadata         |
+| Schema.org Product        | https://schema.org/Product                                                        |
+| Debounce vs Throttle      | https://css-tricks.com/debouncing-throttling-explained-examples/                  |
+| Web Vitals & SEO          | https://web.dev/learn-core-web-vitals/                                            |

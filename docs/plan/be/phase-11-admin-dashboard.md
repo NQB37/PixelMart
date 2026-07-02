@@ -24,27 +24,34 @@ Phase này **không có bảng mới** nào được tạo. Toàn bộ các ch�
 ### Task 11.1: Admin Stats API (3-4h)
 
 #### `src/modules/admin/admin.service.ts`:
+
 ```typescript
-import { prisma } from '@/lib/prisma';
+import { prisma } from "@/lib/prisma";
 
 class AdminService {
   async getDashboardStats() {
-    const [userCount, shopCount, orderCount, revenue, pendingShops, todayOrders] = 
-      await Promise.all([
-        prisma.user.count({ where: { isActive: true } }),
-        prisma.shop.count({ where: { status: 'ACTIVE' } }),
-        prisma.order.count({ where: { status: { not: 'CANCELLED' } } }),
-        prisma.order.aggregate({
-          where: { paymentStatus: 'PAID' },
-          _sum: { totalAmount: true },
-        }),
-        prisma.shop.count({ where: { status: 'PENDING' } }),
-        prisma.order.count({
-          where: {
-            createdAt: { gte: new Date(new Date().setHours(0, 0, 0, 0)) },
-          },
-        }),
-      ]);
+    const [
+      userCount,
+      shopCount,
+      orderCount,
+      revenue,
+      pendingShops,
+      todayOrders,
+    ] = await Promise.all([
+      prisma.user.count({ where: { isActive: true } }),
+      prisma.shop.count({ where: { status: "ACTIVE" } }),
+      prisma.order.count({ where: { status: { not: "CANCELLED" } } }),
+      prisma.order.aggregate({
+        where: { paymentStatus: "PAID" },
+        _sum: { totalAmount: true },
+      }),
+      prisma.shop.count({ where: { status: "PENDING" } }),
+      prisma.order.count({
+        where: {
+          createdAt: { gte: new Date(new Date().setHours(0, 0, 0, 0)) },
+        },
+      }),
+    ]);
 
     return {
       totalUsers: userCount,
@@ -56,22 +63,22 @@ class AdminService {
     };
   }
 
-  async getRevenueChart(period: 'week' | 'month' | 'year') {
+  async getRevenueChart(period: "week" | "month" | "year") {
     let startDate: Date;
     let groupBy: string;
 
     switch (period) {
-      case 'week':
+      case "week":
         startDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-        groupBy = 'day';
+        groupBy = "day";
         break;
-      case 'month':
+      case "month":
         startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-        groupBy = 'day';
+        groupBy = "day";
         break;
-      case 'year':
+      case "year":
         startDate = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000);
-        groupBy = 'month';
+        groupBy = "month";
         break;
     }
 
@@ -95,23 +102,31 @@ class AdminService {
     return prisma.product.findMany({
       where: { isActive: true, deletedAt: null },
       select: {
-        id: true, name: true, slug: true, price: true, soldCount: true,
+        id: true,
+        name: true,
+        slug: true,
+        price: true,
+        soldCount: true,
         images: { where: { isPrimary: true }, take: 1 },
         shop: { select: { name: true } },
       },
-      orderBy: { soldCount: 'desc' },
+      orderBy: { soldCount: "desc" },
       take: limit,
     });
   }
 
   async getTopShops(limit = 10) {
     return prisma.shop.findMany({
-      where: { status: 'ACTIVE' },
+      where: { status: "ACTIVE" },
       select: {
-        id: true, name: true, slug: true, logo: true, rating: true,
+        id: true,
+        name: true,
+        slug: true,
+        logo: true,
+        rating: true,
         _count: { select: { products: true, orders: true } },
       },
-      orderBy: { rating: 'desc' },
+      orderBy: { rating: "desc" },
       take: limit,
     });
   }
@@ -122,8 +137,8 @@ class AdminService {
     const where: any = {};
     if (search) {
       where.OR = [
-        { fullName: { contains: search, mode: 'insensitive' } },
-        { email: { contains: search, mode: 'insensitive' } },
+        { fullName: { contains: search, mode: "insensitive" } },
+        { email: { contains: search, mode: "insensitive" } },
       ];
     }
 
@@ -131,24 +146,31 @@ class AdminService {
       prisma.user.findMany({
         where,
         select: {
-          id: true, email: true, fullName: true, role: true,
-          isActive: true, createdAt: true,
+          id: true,
+          email: true,
+          fullName: true,
+          role: true,
+          isActive: true,
+          createdAt: true,
           _count: { select: { orders: true } },
         },
         skip,
         take: limit,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
       }),
       prisma.user.count({ where }),
     ]);
 
-    return { users, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+    return {
+      users,
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    };
   }
 
   async toggleUserActive(userId: string) {
     const user = await prisma.user.findUnique({ where: { id: userId } });
-    if (!user) throw new Error('User not found');
-    if (user.role === 'ADMIN') throw new Error('Cannot ban admin');
+    if (!user) throw new Error("User not found");
+    if (user.role === "ADMIN") throw new Error("Cannot ban admin");
 
     return prisma.user.update({
       where: { id: userId },
