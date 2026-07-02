@@ -3,9 +3,6 @@ import { env } from "@/config/env";
 
 const startServer = async () => {
   try {
-    // Database connection sẽ thêm ở Phase 2
-    // await prisma.$connect();
-
     app.listen(env.port, () => {
       console.log(`
 Environment : ${env.nodeEnv}

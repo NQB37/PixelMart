@@ -1,0 +1,608 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PixelMart — Code Review</title>
+  <meta name="description" content="Comprehensive security and code quality review of the PixelMart codebase." />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #080810;
+      --surface:   #10101e;
+      --surface2:  #161626;
+      --border:    #1e1e34;
+      --text:      #d4d4e8;
+      --muted:     #6868a0;
+      --high:      #ff2d78;
+      --med:       #ffd000;
+      --low:       #00e5ff;
+      --code-bg:   #0c0c1c;
+    }
+
+    html { font-size: 15px; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: ui-monospace, 'Cascadia Code', 'SF Mono', 'Fira Code', Consolas, monospace;
+      line-height: 1.65;
+      padding: 3rem 1.25rem 6rem;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .page { max-width: 820px; margin: 0 auto; }
+
+    /* ── HEADER ── */
+    header {
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 2rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .eyebrow {
+      font-size: 0.7rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.75rem;
+    }
+
+    h1 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      text-wrap: balance;
+    }
+
+    h1 span {
+      color: var(--high);
+    }
+
+    .meta {
+      display: flex;
+      gap: 1.5rem;
+      margin-top: 1rem;
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    /* ── SCOREBOARD ── */
+    .scoreboard {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.75rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .score-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 1.1rem 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .score-card .count {
+      font-size: 2rem;
+      font-weight: 700;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .score-card .label {
+      font-size: 0.68rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .score-card.high  .count { color: var(--high); }
+    .score-card.med   .count { color: var(--med);  }
+    .score-card.low   .count { color: var(--low);  }
+
+    /* ── SECTION HEADER ── */
+    .section-label {
+      font-size: 0.68rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.75rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .findings-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      margin-bottom: 2.5rem;
+    }
+
+    /* ── FINDING CARD ── */
+    .finding {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid transparent;
+      display: grid;
+      grid-template-columns: 1fr;
+      overflow: hidden;
+    }
+
+    .finding.high { border-left-color: var(--high); }
+    .finding.med  { border-left-color: var(--med);  }
+    .finding.low  { border-left-color: var(--low);  }
+
+    .finding-header {
+      display: flex;
+      align-items: baseline;
+      gap: 0.75rem;
+      padding: 0.85rem 1.1rem 0.6rem;
+      flex-wrap: wrap;
+    }
+
+    .finding-num {
+      font-size: 0.68rem;
+      color: var(--muted);
+      min-width: 1.4rem;
+      flex-shrink: 0;
+    }
+
+    .finding-title {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #fff;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .badge {
+      font-size: 0.62rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 0.2em 0.55em;
+      border: 1px solid;
+      flex-shrink: 0;
+    }
+
+    .badge.high { color: var(--high); border-color: color-mix(in srgb, var(--high) 35%, transparent); background: color-mix(in srgb, var(--high) 8%, transparent); }
+    .badge.med  { color: var(--med);  border-color: color-mix(in srgb, var(--med)  35%, transparent); background: color-mix(in srgb, var(--med)  8%, transparent); }
+    .badge.low  { color: var(--low);  border-color: color-mix(in srgb, var(--low)  35%, transparent); background: color-mix(in srgb, var(--low)  8%, transparent); }
+
+    .badge.cat {
+      color: var(--muted);
+      border-color: var(--border);
+      background: transparent;
+    }
+
+    .finding-body {
+      padding: 0 1.1rem 1rem 3rem;
+      font-size: 0.82rem;
+      line-height: 1.7;
+      color: var(--text);
+    }
+
+    .finding-body p + p { margin-top: 0.6rem; }
+
+    .file-ref {
+      display: inline-block;
+      background: var(--code-bg);
+      color: var(--low);
+      padding: 0.1em 0.45em;
+      font-size: 0.78em;
+      border: 1px solid var(--border);
+      margin-bottom: 0.6rem;
+      word-break: break-all;
+    }
+
+    pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      padding: 0.75rem 1rem;
+      font-size: 0.78rem;
+      overflow-x: auto;
+      line-height: 1.55;
+      margin: 0.6rem 0;
+      color: #a0a8d0;
+    }
+
+    pre .comment { color: var(--muted); }
+    pre .kw  { color: var(--high); }
+    pre .fix { color: #80ffb0; }
+
+    .fix-block {
+      background: color-mix(in srgb, #00ff80 5%, transparent);
+      border: 1px solid color-mix(in srgb, #00ff80 20%, transparent);
+      padding: 0.65rem 1rem;
+      font-size: 0.78rem;
+      margin-top: 0.6rem;
+      color: #80ffb0;
+    }
+
+    .fix-label {
+      font-size: 0.65rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #40cc80;
+      margin-bottom: 0.3rem;
+    }
+
+    /* ── SUMMARY TABLE ── */
+    .table-wrap { overflow-x: auto; margin-bottom: 2.5rem; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.78rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    th {
+      text-align: left;
+      font-size: 0.65rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding: 0.5rem 0.9rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    td {
+      padding: 0.55rem 0.9rem;
+      border-bottom: 1px solid color-mix(in srgb, var(--border) 50%, transparent);
+      vertical-align: top;
+    }
+
+    tr:last-child td { border-bottom: none; }
+
+    tbody tr:hover td { background: var(--surface2); }
+
+    td.num { color: var(--muted); }
+
+    td code {
+      background: var(--code-bg);
+      padding: 0.1em 0.35em;
+      color: var(--low);
+      font-size: 0.9em;
+      border: 1px solid var(--border);
+    }
+
+    @media (max-width: 560px) {
+      .scoreboard { grid-template-columns: repeat(3, 1fr); }
+      .score-card .count { font-size: 1.6rem; }
+      .finding-body { padding-left: 1.1rem; }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <header>
+    <p class="eyebrow">PixelMart &mdash; Codebase Audit</p>
+    <h1>Code Review <span>//</span> Security &amp; Quality</h1>
+    <div class="meta">
+      <span>2026-06-29</span>
+      <span>server/ &amp; website/client/</span>
+      <span>15 findings</span>
+    </div>
+  </header>
+
+  <!-- SCOREBOARD -->
+  <div class="scoreboard">
+    <div class="score-card high">
+      <span class="count">5</span>
+      <span class="label">High</span>
+    </div>
+    <div class="score-card med">
+      <span class="count">4</span>
+      <span class="label">Medium</span>
+    </div>
+    <div class="score-card low">
+      <span class="count">6</span>
+      <span class="label">Low</span>
+    </div>
+  </div>
+
+  <!-- ══ HIGH ══ -->
+  <p class="section-label">High Priority</p>
+  <div class="findings-group">
+
+    <div class="finding high">
+      <div class="finding-header">
+        <span class="finding-num">01</span>
+        <span class="finding-title">helmet installed but never applied</span>
+        <span class="badge high">High</span>
+        <span class="badge cat">Security</span>
+      </div>
+      <div class="finding-body">
+        <span class="file-ref">server/src/app.ts</span>
+        <p><code>helmet</code> is listed in <code>package.json</code> dependencies but is never imported or mounted. No security headers — CSP, X-Frame-Options, HSTS, X-Content-Type-Options — are set on any response.</p>
+        <div class="fix-block">
+          <p class="fix-label">Fix</p>
+          <code>import helmet from "helmet";<br>app.use(helmet()); // before CORS middleware</code>
+        </div>
+      </div>
+    </div>
+
+    <div class="finding high">
+      <div class="finding-header">
+        <span class="finding-num">02</span>
+        <span class="finding-title">Logout never invalidates the DB refresh token</span>
+        <span class="badge high">High</span>
+        <span class="badge cat">Security / Bug</span>
+      </div>
+      <div class="finding-body">
+        <span class="file-ref">server/src/utils/cookies.ts:10 &nbsp;+&nbsp; auth.controller.ts:28</span>
+        <p>The refresh token cookie is set with <code>path: "/api/v1/auth/refresh"</code>. Browsers only send a cookie when the request URL starts with the cookie's path. <code>POST /api/v1/auth/logout</code> does not satisfy that condition, so the browser never sends <code>refreshToken</code> to the logout endpoint.</p>
+        <p>The <code>if (refreshToken)</code> guard in the controller always evaluates to false — the DB token is never deleted. The old refresh token stays valid until natural expiry. This is a silent bug; logout appears to succeed but provides no revocation.</p>
+        <div class="fix-block">
+          <p class="fix-label">Fix — broaden cookie path to cover both endpoints</p>
+          <code>path: "/api/v1/auth"</code>
+        </div>
+      </div>
+    </div>
+
+    <div class="finding high">
+      <div class="finding-header">
+        <span class="finding-num">03</span>
+        <span class="finding-title">Zod transforms discarded in validate middleware</span>
+        <span class="badge high">High</span>
+        <span class="badge cat">Bug</span>
+      </div>
+      <div class="finding-body">
+        <span class="file-ref">server/src/middlewares/validate.middleware.ts:8</span>
+        <pre><span class="comment">// result is thrown away — transforms never applied to req.body</span>
+await schema.parseAsync(req.body);
+next();</pre>
+        <p>The <code>registerSchema</code> and <code>loginSchema</code> both apply <code>.toLowerCase().trim()</code> to the email field via Zod transforms. Because the parsed result is discarded, <code>req.body.email</code> reaches the service as the original raw string. Users can register <code>Test@Example.com</code> and <code>test@example.com</code> as separate accounts, bypassing the <code>@unique</code> database constraint.</p>
+        <div class="fix-block">
+          <p class="fix-label">Fix</p>
+          <code>req.body = await schema.parseAsync(req.body);</code>
+        </div>
+      </div>
+    </div>
+
+    <div class="finding high">
+      <div class="finding-header">
+        <span class="finding-num">04</span>
+        <span class="finding-title">No rate limiting on auth endpoints</span>
+        <span class="badge high">High</span>
+        <span class="badge cat">Security</span>
+      </div>
+      <div class="finding-body">
+        <span class="file-ref">server/src/modules/auth/auth.routes.ts</span>
+        <p><code>POST /auth/login</code>, <code>POST /auth/register</code>, and <code>POST /auth/refresh</code> have no rate limiting. The login endpoint is directly brute-forceable against any known email address.</p>
+        <div class="fix-block">
+          <p class="fix-label">Fix — add express-rate-limit to auth routes</p>
+          <code>import rateLimit from "express-rate-limit";<br>const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 20 });<br>router.post("/login", authLimiter, ...);</code>
+        </div>
+      </div>
+    </div>
+
+    <div class="finding high">
+      <div class="finding-header">
+        <span class="finding-num">05</span>
+        <span class="finding-title">CORS silently passes undefined origins</span>
+        <span class="badge high">High</span>
+        <span class="badge cat">Security</span>
+      </div>
+      <div class="finding-body">
+        <span class="file-ref">server/src/config/cors.ts</span>
+        <pre>origin: [env.clientWebUrl<span class="kw">!</span>, env.sellerWebUrl<span class="kw">!</span>, env.adminWebUrl<span class="kw">!</span>]</pre>
+        <p>All three env vars are typed <code>string | undefined</code>. The <code>!</code> non-null assertions lie to TypeScript — if the variables are unset, <code>undefined</code> lands in the origins array. The <code>cors</code> package may treat <code>undefined</code> entries as "allow all origins," opening the server to cross-origin requests from any domain.</p>
+        <div class="fix-block">
+          <p class="fix-label">Fix</p>
+          <code>[env.clientWebUrl, env.sellerWebUrl, env.adminWebUrl].filter(Boolean) as string[]</code>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══ MEDIUM ══ -->
+  <p class="section-label">Medium Priority</p>
+  <div class="findings-group">
+
+    <div class="finding med">
+      <div class="finding-header">
+        <span class="finding-num">06</span>
+        <span class="finding-title">DB token expiry hardcoded to 7 days — config says 14</span>
+        <span class="badge med">Medium</span>
+        <span class="badge cat">Bug</span>
+      </div>
+      <div class="finding-body">
+        <span class="file-ref">server/src/modules/auth/auth.service.ts:141</span>
+        <pre><span class="comment">// hardcoded — JWT is signed for 14d, cookie also uses 14d</span>
+expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),</pre>
+        <p>The JWT is signed for <code>refreshTokenExpiresIn</code> (default <code>"14d"</code>) and the cookie uses <code>refreshTokenExpiresInDays</code> (default <code>14</code>), but the DB record expires at day 7. Token rotation reuse-detection rejects tokens between days 7–14 even though the JWT itself is still valid, creating inconsistent behavior.</p>
+        <div class="fix-block">
+          <p class="fix-label">Fix</p>
+          <code>expiresAt: new Date(Date.now() + env.refreshTokenExpiresInDays * 24 * 60 * 60 * 1000),</code>
+        </div>
+      </div>
+    </div>
+
+    <div class="finding med">
+      <div class="finding-header">
+        <span class="finding-num">07</span>
+        <span class="finding-title">JWT secrets not validated at startup</span>
+        <span class="badge med">Medium</span>
+        <span class="badge cat">Bug</span>
+      </div>
+      <div class="finding-body">
+        <span class="file-ref">server/src/config/env.ts &nbsp;+&nbsp; utils/jwt.ts:12,18</span>
+        <p><code>jwtAccessSecret</code> and <code>jwtRefreshSecret</code> are typed <code>string | undefined</code> but used with <code>!</code> assertions in <code>jwt.ts</code>. If these env vars are missing, the server starts successfully and crashes with an opaque runtime error only on the first token operation.</p>
+        <div class="fix-block">
+          <p class="fix-label">Fix — validate required env vars before app.listen()</p>
+          <code>if (!env.jwtAccessSecret || !env.jwtRefreshSecret) {<br>&nbsp;&nbsp;throw new Error("Missing required JWT environment variables");<br>}</code>
+        </div>
+      </div>
+    </div>
+
+    <div class="finding med">
+      <div class="finding-header">
+        <span class="finding-num">08</span>
+        <span class="finding-title">refreshTokenExpiresInDays parsing is fragile</span>
+        <span class="badge med">Medium</span>
+        <span class="badge cat">Bug</span>
+      </div>
+      <div class="finding-body">
+        <span class="file-ref">server/src/config/env.ts:17</span>
+        <pre>parseInt(process.env.REFRESH_TOKEN_EXPIRES_IN || "14d", 10) || 14</pre>
+        <p><code>parseInt("14d", 10)</code> returns <code>14</code> only by coincidence. <code>parseInt("2w", 10)</code> silently returns <code>2</code> instead of <code>14</code>. Any operator setting <code>REFRESH_TOKEN_EXPIRES_IN=2w</code> gets a 2-day expiry window — and the mismatch between the JWT expiry and cookie <code>maxAge</code> creates a window where one is valid and the other is not.</p>
+        <div class="fix-block">
+          <p class="fix-label">Fix — enforce plain integer days and validate at startup</p>
+          <code>refreshTokenExpiresInDays: Number(process.env.REFRESH_TOKEN_EXPIRES_IN_DAYS ?? 14)</code>
+        </div>
+      </div>
+    </div>
+
+    <div class="finding med">
+      <div class="finding-header">
+        <span class="finding-num">09</span>
+        <span class="finding-title">AuthResponse type includes refreshToken that is never in the JSON body</span>
+        <span class="badge med">Medium</span>
+        <span class="badge cat">TypeScript</span>
+      </div>
+      <div class="finding-body">
+        <span class="file-ref">website/client/features/auth/types/auth.ts:8</span>
+        <pre><span class="comment">// server sets this as HttpOnly cookie only — never in the response body</span>
+refreshToken: string;</pre>
+        <p>Any code reading <code>data.refreshToken</code> silently receives <code>undefined</code>. The type creates a false guarantee and masks the actual transport mechanism.</p>
+        <div class="fix-block">
+          <p class="fix-label">Fix — remove refreshToken from AuthResponse</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══ LOW ══ -->
+  <p class="section-label">Low Priority</p>
+  <div class="findings-group">
+
+    <div class="finding low">
+      <div class="finding-header">
+        <span class="finding-num">10</span>
+        <span class="finding-title">useRefresh hook is unreachable dead code</span>
+        <span class="badge low">Low</span>
+        <span class="badge cat">Architecture</span>
+      </div>
+      <div class="finding-body">
+        <span class="file-ref">website/client/features/auth/hooks/useRefresh.ts</span>
+        <p>Token refresh is handled entirely inside the Axios response interceptor in <code>lib/api.ts</code>, which calls <code>authApi.refreshToken()</code> directly. The <code>useRefresh</code> hook wraps the same call in <code>useMutation</code> but is never imported or used anywhere in the codebase.</p>
+        <div class="fix-block"><p class="fix-label">Fix — delete useRefresh.ts</p></div>
+      </div>
+    </div>
+
+    <div class="finding low">
+      <div class="finding-header">
+        <span class="finding-num">11</span>
+        <span class="finding-title">Double-toasting on API errors</span>
+        <span class="badge low">Low</span>
+        <span class="badge cat">Bug / UX</span>
+      </div>
+      <div class="finding-body">
+        <span class="file-ref">website/client/features/auth/hooks/useLogin.ts:18 &nbsp;+&nbsp; useRegister.ts:18 &nbsp;+&nbsp; useLogout.ts:17</span>
+        <p>The Axios response interceptor in <code>lib/api.ts</code> already calls <code>toast.error()</code> for all non-401 errors before rejecting the promise. The <code>onError</code> callbacks in each mutation hook call <code>toast.error()</code> again for the same error, showing two toasts for every API failure.</p>
+        <div class="fix-block"><p class="fix-label">Fix — remove toast.error() from the onError handlers in the hooks; let the interceptor own it</p></div>
+      </div>
+    </div>
+
+    <div class="finding low">
+      <div class="finding-header">
+        <span class="finding-num">12</span>
+        <span class="finding-title">ROLE enum defined but never used in any model</span>
+        <span class="badge low">Low</span>
+        <span class="badge cat">Architecture</span>
+      </div>
+      <div class="finding-body">
+        <span class="file-ref">server/prisma/schema.prisma:49</span>
+        <p>The <code>ROLE</code> enum (<code>CUSTOMER</code>, <code>SELLER</code>, <code>ADMIN</code>, <code>DELIVERY_PERSON</code>) is defined but no model has a <code>role</code> field. It generates unused types in the Prisma client.</p>
+        <div class="fix-block"><p class="fix-label">Fix — add <code>role ROLE @default(CUSTOMER)</code> to the User model, or remove the enum</p></div>
+      </div>
+    </div>
+
+    <div class="finding low">
+      <div class="finding-header">
+        <span class="finding-num">13</span>
+        <span class="finding-title">console.log(data) in auth hooks leaks tokens to console</span>
+        <span class="badge low">Low</span>
+        <span class="badge cat">Security</span>
+      </div>
+      <div class="finding-body">
+        <span class="file-ref">website/client/features/auth/hooks/useLogin.ts:14 &nbsp;+&nbsp; useRegister.ts:14</span>
+        <p>The <code>onSuccess</code> callbacks log the full API response including the <code>accessToken</code> to the browser console. In production this exposes tokens to anyone with DevTools access.</p>
+        <div class="fix-block"><p class="fix-label">Fix — remove the console.log calls</p></div>
+      </div>
+    </div>
+
+    <div class="finding low">
+      <div class="finding-header">
+        <span class="finding-num">14</span>
+        <span class="finding-title">Test accesses undocumented Axios internals</span>
+        <span class="badge low">Low</span>
+        <span class="badge cat">Testing</span>
+      </div>
+      <div class="finding-body">
+        <span class="file-ref">website/client/features/auth/tests/api-auth.test.ts:43</span>
+        <pre>const interceptor = api.interceptors.request.<span class="kw">handlers</span>[0];</pre>
+        <p><code>.handlers</code> is a private Axios internal with no stability guarantee. This test will silently break on an Axios minor version bump. Interceptor behaviour should be tested through the public API — an actual <code>api.get()</code> call with a mocked adapter.</p>
+      </div>
+    </div>
+
+    <div class="finding low">
+      <div class="finding-header">
+        <span class="finding-num">15</span>
+        <span class="finding-title">Unused beforeAll import in integration test</span>
+        <span class="badge low">Low</span>
+        <span class="badge cat">Testing</span>
+      </div>
+      <div class="finding-body">
+        <span class="file-ref">server/src/modules/auth/tests/auth-refresh.test.ts:1</span>
+        <pre>import { describe, it, expect, <span class="kw">beforeAll</span> } from "vitest"; <span class="comment">// beforeAll unused</span></pre>
+        <p>Leftover from an earlier draft. Remove the unused import.</p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══ SUMMARY TABLE ══ -->
+  <p class="section-label">Summary</p>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>File</th>
+          <th>Category</th>
+          <th>Severity</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td class="num">01</td><td><code>server/src/app.ts</code></td><td>Security</td><td><span class="badge high">High</span></td></tr>
+        <tr><td class="num">02</td><td><code>server/src/utils/cookies.ts:10</code></td><td>Security / Bug</td><td><span class="badge high">High</span></td></tr>
+        <tr><td class="num">03</td><td><code>server/src/middlewares/validate.middleware.ts:8</code></td><td>Bug</td><td><span class="badge high">High</span></td></tr>
+        <tr><td class="num">04</td><td><code>server/src/modules/auth/auth.routes.ts</code></td><td>Security</td><td><span class="badge high">High</span></td></tr>
+        <tr><td class="num">05</td><td><code>server/src/config/cors.ts</code></td><td>Security</td><td><span class="badge high">High</span></td></tr>
+        <tr><td class="num">06</td><td><code>server/src/modules/auth/auth.service.ts:141</code></td><td>Bug</td><td><span class="badge med">Med</span></td></tr>
+        <tr><td class="num">07</td><td><code>server/src/config/env.ts</code></td><td>Bug</td><td><span class="badge med">Med</span></td></tr>
+        <tr><td class="num">08</td><td><code>server/src/config/env.ts:17</code></td><td>Bug</td><td><span class="badge med">Med</span></td></tr>
+        <tr><td class="num">09</td><td><code>website/client/features/auth/types/auth.ts:8</code></td><td>TypeScript</td><td><span class="badge med">Med</span></td></tr>
+        <tr><td class="num">10</td><td><code>website/client/features/auth/hooks/useRefresh.ts</code></td><td>Architecture</td><td><span class="badge low">Low</span></td></tr>
+        <tr><td class="num">11</td><td><code>website/client/features/auth/hooks/use*.ts</code></td><td>Bug / UX</td><td><span class="badge low">Low</span></td></tr>
+        <tr><td class="num">12</td><td><code>server/prisma/schema.prisma:49</code></td><td>Architecture</td><td><span class="badge low">Low</span></td></tr>
+        <tr><td class="num">13</td><td><code>website/client/features/auth/hooks/use*.ts:14</code></td><td>Security</td><td><span class="badge low">Low</span></td></tr>
+        <tr><td class="num">14</td><td><code>website/client/features/auth/tests/api-auth.test.ts:43</code></td><td>Testing</td><td><span class="badge low">Low</span></td></tr>
+        <tr><td class="num">15</td><td><code>server/src/modules/auth/tests/auth-refresh.test.ts:1</code></td><td>Testing</td><td><span class="badge low">Low</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+</body>
+</html>

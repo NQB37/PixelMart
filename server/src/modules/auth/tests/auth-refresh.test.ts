@@ -30,7 +30,9 @@ describe("Auth Refresh Token Integration Tests", () => {
 
       const cookies = res.headers["set-cookie"];
       expect(cookies).toBeDefined();
-      const hasRefreshCookie = cookies.some((c: string) => c.includes("refreshToken="));
+      const hasRefreshCookie = cookies.some((c: string) =>
+        c.includes("refreshToken="),
+      );
       expect(hasRefreshCookie).toBe(true);
     } finally {
       await cleanupUser(email);
@@ -46,7 +48,7 @@ describe("Auth Refresh Token Integration Tests", () => {
       const regRes = await request(app)
         .post("/api/v1/auth/register")
         .send({ email, password: testPassword });
-      
+
       const cookies1 = regRes.headers["set-cookie"];
       const cookie1 = cookies1.find((c: string) => c.includes("refreshToken="));
 
@@ -61,7 +63,9 @@ describe("Auth Refresh Token Integration Tests", () => {
 
       const cookies2 = res.headers["set-cookie"];
       expect(cookies2).toBeDefined();
-      const newRefreshCookie = cookies2.find((c: string) => c.includes("refreshToken="));
+      const newRefreshCookie = cookies2.find((c: string) =>
+        c.includes("refreshToken="),
+      );
       expect(newRefreshCookie).toBeDefined();
     } finally {
       await cleanupUser(email);
