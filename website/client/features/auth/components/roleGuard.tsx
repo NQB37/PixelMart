@@ -6,24 +6,27 @@ import { useAuthStore } from "../stores/auth.store";
 import { UserRole } from "../types/auth";
 
 type RoleGuardProps = {
-  allowedRoles: UserRole[];
+  // omit to require authentication only (any logged-in user)
+  allowedRoles?: UserRole[];
   children: React.ReactNode;
 };
 
 const RoleGuard = ({ allowedRoles, children }: RoleGuardProps) => {
   const router = useRouter();
-  const { user, isAuthenticated } = useAuthStore();
-  const hasRole = !!user?.roles.some((role) => allowedRoles.includes(role));
+  const { user, isAuthenticated, hasHydrated } = useAuthStore();
+  const hasRole =
+    !allowedRoles || !!user?.roles.some((role) => allowedRoles.includes(role));
 
   useEffect(() => {
+    if (!hasHydrated) return;
     if (!isAuthenticated) {
       router.replace("/login");
     } else if (!hasRole) {
       router.replace("/");
     }
-  }, [isAuthenticated, hasRole, router]);
+  }, [hasHydrated, isAuthenticated, hasRole, router]);
 
-  if (!isAuthenticated || !hasRole) return null;
+  if (!hasHydrated || !isAuthenticated || !hasRole) return null;
 
   return <>{children}</>;
 };
