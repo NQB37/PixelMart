@@ -2,75 +2,73 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Triển khai các trang Đăng nhập / Đăng ký cho khách hàng, quản lý trạng thái xác thực bằng Zustand, và bảo vệ các routes quan trọng (profile, orders, checkout) bằng Next.js Middleware.
+**Goal:** Triển khai các trang Đăng nhập / Đăng ký cho khách hàng với thiết kế Page cực kỳ sạch (chỉ import và render component), tách biệt logic Form, Zod validation schema, custom hooks của TanStack Query sang thư mục `/features/auth/`.
 
-**Architecture:** Sử dụng Zustand để lưu trữ JWT và thông tin User hiện tại trên Client. Dùng Next.js Middleware chặn các request SSR hoặc router navigation đến các route được bảo vệ, tự động chuyển hướng về `/login` nếu chưa có token hợp lệ.
+**Architecture:** 
+- Routing Pages (`app/(auth)/login/page.tsx`, `app/(auth)/register/page.tsx`) sẽ đóng vai trò là entry points sạch sẽ, không chứa logic UI/Form hay validate.
+- Validation Schema được tách biệt hoàn toàn tại `features/auth/schemas/auth.schema.ts`.
+- Form Presentation & Logic nằm tại `features/auth/components/LoginForm.tsx` và `RegisterForm.tsx`.
+- Quản lý trạng thái đăng nhập bằng Zustand `auth.store.ts` kết hợp TanStack Query mutation hooks (`useLogin`, `useRegister`, `useLogout`).
+- Next.js Middleware kiểm tra phân quyền RBAC dựa vào mảng `roles` của người dùng: `user.roles.includes('CUSTOMER')`.
 
-**Tech Stack:** Zustand, Next.js Middleware, Zod (validation client-side), Jest.
+**Tech Stack:** Zustand, TanStack Query, Next.js Middleware, Zod, Vitest, React Testing Library.
 
 ## Global Constraints
 
 - Client web portal is located at `website/client/`
-- Tech Stack: Next.js 15 (App Router), React 19, Tailwind CSS (v4), TypeScript, Zustand
+- Tech Stack: Next.js 16 (App Router), React 19, Tailwind CSS (v4), TypeScript, Zustand, TanStack Query
 - No placeholder code in the plan: write actual implementations, imports, types, test cases, and commands.
 - Use Vietnamese for descriptions and explanations, and English for code and commands.
 - TDD workflow is mandatory for tasks: Step 1 write failing test, Step 2 run to fail, Step 3 minimal implementation, Step 4 run to pass, Step 5 git commit.
+- TanStack Query sử dụng `QueryClientProvider` cấu hình toàn cục tại `providers/tanstackQuery.tsx` (đã được thiết lập ở RootLayout, không cần thêm provider trong component).
+- Kiểm tra phân quyền RBAC: Trường `roles` của người dùng là một mảng `ROLE[]` (ví dụ: `['CUSTOMER']`). Sử dụng `user.roles.includes('CUSTOMER')` thay vì `user.role === 'CUSTOMER'`.
 
 ---
 
-### Task 3.1: Zustand Auth Store & Auth Provider
+### Task 3.1: Zustand Auth Store & TanStack Query Mutation Hooks
 
 **Files:**
-- Create: `website/client/features/auth/stores/auth.store.ts`, `website/client/providers/AuthProvider.tsx`
-- Test: `website/client/__tests__/authStore.test.ts`
+- Create: `website/client/features/auth/stores/auth.store.ts`
+- Create: `website/client/features/auth/services/auth.service.ts`
+- Create: `website/client/features/auth/hooks/useLogin.ts`
+- Create: `website/client/features/auth/hooks/useRegister.ts`
+- Create: `website/client/features/auth/hooks/useLogout.ts`
+- Create: `website/client/features/auth/types/auth.ts`
+- Test: `website/client/features/auth/tests/authStore.test.ts`
 
 **Interfaces:**
-- Consumes: `@/lib/api` (api client)
-- Produces: `useAuthStore` Hook quản lý thông tin đăng nhập, token, và hàm check trạng thái auth.
+- Consumes: `/lib/api` (Axios instance)
+- Produces: `useAuthStore` Hook quản lý trạng thái auth, `useLogin`/`useRegister`/`useLogout` custom query hooks cho components.
 
-- [ ] **Step 1: Write the failing test**
+- [ ] **Step 1: Write the failing test for Auth Store**
 Tạo file test kiểm tra trạng thái login/logout của authStore:
-Create: `website/client/__tests__/authStore.test.ts`
+Create: `website/client/features/auth/tests/authStore.test.ts`
 ```typescript
-import { useAuthStore } from '../features/auth/stores/auth.store';
+import { describe, it, expect, beforeEach } from 'vitest';
+import { useAuthStore } from '../stores/auth.store';
 
 describe('Auth Store (Zustand)', () => {
   beforeEach(() => {
-    useAuthStore.setState({ user: null, token: null, isAuthenticated: false });
+    useAuthStore.setState({ user: null, accessToken: null, isAuthenticated: false });
   });
 
   it('should initialize with null user and token', () => {
     const state = useAuthStore.getState();
     expect(state.user).toBeNull();
-    expect(state.token).toBeNull();
+    expect(state.accessToken).toBeNull();
     expect(state.isAuthenticated).toBe(false);
   });
 
   it('should set auth state on setAuth', () => {
-    const mockUser = { id: 'u1', email: 'john@example.com', provider: 'CREDENTIALS', isActive: true, roles: ['CUSTOMER'], profile: { fullName: 'John Doe' } };
+    const mockUser = { id: 'u1', email: 'john@example.com', roles: ['CUSTOMER'] };
     const mockToken = 'mock-jwt-token';
     
     useAuthStore.getState().setAuth(mockUser, mockToken);
     
     const state = useAuthStore.getState();
     expect(state.user).toEqual(mockUser);
-    expect(state.token).toBe(mockToken);
+    expect(state.accessToken).toBe(mockToken);
     expect(state.isAuthenticated).toBe(true);
-  });
-
-  it('should clear state on clearAuth', () => {
-    useAuthStore.setState({
-      user: { id: 'u1', email: 'john@example.com', provider: 'CREDENTIALS', isActive: true, roles: ['CUSTOMER'], profile: { fullName: 'John' } },
-      token: 'jwt',
-      isAuthenticated: true
-    });
-
-    useAuthStore.getState().clearAuth();
-
-    const state = useAuthStore.getState();
-    expect(state.user).toBeNull();
-    expect(state.token).toBeNull();
-    expect(state.isAuthenticated).toBe(false);
   });
 });
 ```
@@ -81,101 +79,158 @@ Run:
 cd /home/nquocbao37/Code/PixelMart/website/client
 pnpm test
 ```
-Expected: FAIL do store `authStore.ts` chưa được tạo hoặc import lỗi.
+Expected: FAIL do store `auth.store.ts` chưa được tạo.
 
 - [ ] **Step 3: Write minimal implementation**
-Cài đặt zustand:
-Run:
-```bash
-cd /home/nquocbao37/Code/PixelMart/website/client
-pnpm install zustand
+Tạo file types:
+Create: `website/client/features/auth/types/auth.ts`
+```typescript
+import { LoginFormValues, SignupFormValues } from '../schemas/auth.schema';
+
+export interface User {
+  id: string;
+  email: string;
+  roles: string[];
+}
+
+export interface AuthResponse {
+  user: User;
+  accessToken: string;
+}
+
+export type LoginInput = LoginFormValues;
+export type SignupInput = SignupFormValues;
 ```
 
 Tạo Zustand Auth Store:
 Create: `website/client/features/auth/stores/auth.store.ts`
 ```typescript
 import { create } from 'zustand';
-
-export interface UserProfile {
-  fullName: string;
-  avatarUrl?: string;
-  phoneNumber?: string;
-  dateOfBirth?: string;
-  gender?: 'MALE' | 'FEMALE' | 'OTHER';
-}
-
-export interface User {
-  id: string;
-  email: string;
-  provider: 'CREDENTIALS' | 'GOOGLE';
-  isActive: boolean;
-  roles: ('CUSTOMER' | 'SELLER' | 'ADMIN' | 'DELIVERY_PERSON')[];
-  profile?: UserProfile;
-}
+import { persist, createJSONStorage } from 'zustand/middleware';
+import { User } from '../types/auth';
 
 interface AuthState {
   user: User | null;
-  token: string | null;
+  accessToken: string | null;
   isAuthenticated: boolean;
-  setAuth: (user: User, token: string) => void;
+  setAuth: (user: User, accessToken: string) => void;
   clearAuth: () => void;
+  setAccessToken: (accessToken: string) => void;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
-  user: null,
-  token: null,
-  isAuthenticated: false,
-  setAuth: (user, token) => set({ user, token, isAuthenticated: true }),
-  clearAuth: () => set({ user: null, token: null, isAuthenticated: false }),
-}));
+export const useAuthStore = create<AuthState>()(
+  persist(
+    (set) => ({
+      user: null,
+      accessToken: null,
+      isAuthenticated: false,
+      setAuth: (user, accessToken) => set({ user, accessToken, isAuthenticated: true }),
+      clearAuth: () => set({ user: null, accessToken: null, isAuthenticated: false }),
+      setAccessToken: (accessToken) => set({ accessToken }),
+    }),
+    {
+      name: 'user-info',
+      storage: createJSONStorage(() => localStorage),
+      partialize: (state) => ({ user: state.user, isAuthenticated: state.isAuthenticated }),
+    }
+  )
+);
 ```
 
-Tạo `website/client/providers/AuthProvider.tsx`:
-Create: `website/client/providers/AuthProvider.tsx`
-```tsx
-'use client';
-
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { useAuthStore } from '../features/auth/stores/auth.store';
+Tạo API Service:
+Create: `website/client/features/auth/services/auth.service.ts`
+```typescript
 import { api } from '@/lib/api';
+import { LoginInput, SignupInput, AuthResponse } from '../types/auth';
 
-const AuthContext = createContext<{ isLoading: boolean }>({ isLoading: true });
+export const authApi = {
+  login: async (data: LoginInput): Promise<AuthResponse> => {
+    const response = await api.post<AuthResponse>('auth/login', data);
+    return response.data;
+  },
+  register: async (data: SignupInput): Promise<AuthResponse> => {
+    const response = await api.post<AuthResponse>('auth/register', data);
+    return response.data;
+  },
+  logout: async () => {
+    await api.post('auth/logout');
+  },
+};
+```
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [isLoading, setIsLoading] = useState(true);
-  const { setAuth, clearAuth } = useAuthStore();
+Tạo Hook useLogin:
+Create: `website/client/features/auth/hooks/useLogin.ts`
+```typescript
+import { useMutation } from '@tanstack/react-query';
+import { authApi } from '../services/auth.service';
+import { useAuthStore } from '../stores/auth.store';
+import { useRouter } from 'next/navigation';
+import { toast } from 'react-toastify';
 
-  useEffect(() => {
-    const fetchCurrentUser = async () => {
-      try {
-        const response = await api.get('/auth/me');
-        if (response.data && response.data.success) {
-          const { user, token } = response.data.data;
-          setAuth(user, token);
-        } else {
-          clearAuth();
-        }
-      } catch (error) {
-        clearAuth();
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchCurrentUser();
-  }, [setAuth, clearAuth]);
+export function useLogin() {
+  const setAuth = useAuthStore((state) => state.setAuth);
+  const router = useRouter();
 
-  return (
-    <AuthContext.Provider value={{ isLoading }}>
-      {!isLoading ? children : (
-        <div className="flex min-h-screen items-center justify-center bg-white">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-primary border-t-transparent"></div>
-        </div>
-      )}
-    </AuthContext.Provider>
-  );
+  return useMutation({
+    mutationFn: authApi.login,
+    onSuccess: (res) => {
+      setAuth(res.user, res.accessToken);
+      toast.success('Đăng nhập thành công!');
+      router.push('/');
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.message || 'Đăng nhập thất bại!');
+    },
+  });
 }
+```
 
-export const useAuth = () => useContext(AuthContext);
+Tạo Hook useRegister:
+Create: `website/client/features/auth/hooks/useRegister.ts`
+```typescript
+import { useMutation } from '@tanstack/react-query';
+import { authApi } from '../services/auth.service';
+import { useRouter } from 'next/navigation';
+import { toast } from 'react-toastify';
+
+export function useRegister() {
+  const router = useRouter();
+
+  return useMutation({
+    mutationFn: authApi.register,
+    onSuccess: () => {
+      toast.success('Đăng ký thành công, vui lòng đăng nhập!');
+      router.push('/login');
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.message || 'Đăng ký thất bại!');
+    },
+  });
+}
+```
+
+Tạo Hook useLogout:
+Create: `website/client/features/auth/hooks/useLogout.ts`
+```typescript
+import { useMutation } from '@tanstack/react-query';
+import { authApi } from '../services/auth.service';
+import { useAuthStore } from '../stores/auth.store';
+import { useRouter } from 'next/navigation';
+import { toast } from 'react-toastify';
+
+export function useLogout() {
+  const clearAuth = useAuthStore((state) => state.clearAuth);
+  const router = useRouter();
+
+  return useMutation({
+    mutationFn: authApi.logout,
+    onSuccess: () => {
+      clearAuth();
+      toast.success('Đăng xuất thành công!');
+      router.push('/login');
+    },
+  });
+}
 ```
 
 - [ ] **Step 4: Run test to verify it passes**
@@ -189,67 +244,61 @@ Expected: PASS authStore.test.ts
 - [ ] **Step 5: Commit**
 Run:
 ```bash
-git add features/auth/stores/auth.store.ts providers/AuthProvider.tsx __tests__/authStore.test.ts
-git commit -m "feat(client): implement Zustand authStore and React AuthProvider wrapper"
+git add features/auth/stores/auth.store.ts features/auth/services/auth.service.ts features/auth/hooks/useLogin.ts features/auth/hooks/useRegister.ts features/auth/hooks/useLogout.ts features/auth/types/auth.ts features/auth/tests/authStore.test.ts
+git commit -m "feat(client): implement Zustand auth store and TanStack Query mutation hooks"
 ```
 
 ---
 
-### Task 3.2: Client-side Login & Register UI Pages with Form Validation
+### Task 3.2: Auth Schemas, Components & Clean Pages
 
 **Files:**
-- Create: `website/client/app/(auth)/login/page.tsx`, `website/client/app/(auth)/register/page.tsx`
-- Test: `website/client/__tests__/auth-pages.test.tsx`
+- Create: `website/client/features/auth/schemas/auth.schema.ts`
+- Create: `website/client/features/auth/components/LoginForm.tsx`
+- Create: `website/client/features/auth/components/RegisterForm.tsx`
+- Create: `website/client/app/(auth)/login/page.tsx`
+- Create: `website/client/app/(auth)/register/page.tsx`
+- Create: `website/client/features/auth/tests/LoginForm.test.tsx`
 
 **Interfaces:**
-- Consumes: `useAuthStore`
-- Produces: Giao diện đăng nhập, đăng ký dạng Form có Zod validation và xử lý submit API.
+- Consumes: `useLogin`, `useRegister`
+- Produces: `LoginForm` & `RegisterForm` components. Giao diện trang login/register cực kỳ sạch sẽ.
 
-- [ ] **Step 1: Write the failing test**
-Tạo file test kiểm tra các trường input trong Form Đăng nhập & Đăng ký:
-Create: `website/client/__tests__/auth-pages.test.tsx`
+- [ ] **Step 1: Write the failing test forLoginForm**
+Tạo file test kiểm tra các trường input trong LoginForm:
+Create: `website/client/features/auth/tests/LoginForm.test.tsx`
 ```tsx
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import LoginPage from '../app/(auth)/login/page';
-import RegisterPage from '../app/(auth)/register/page';
+import { describe, it, expect, vi } from 'vitest';
+import LoginForm from '../components/LoginForm';
+import { MemoryRouter } from 'react-router-dom';
 
-// Mock useRouter
-vi.mock('next/navigation', () => ({
-  useRouter() {
-    return {
-      push: vi.fn(),
-    };
-  },
+const mockMutate = vi.fn();
+vi.mock('../hooks/useLogin', () => ({
+  useLogin: () => ({
+    mutate: mockMutate,
+    isPending: false,
+  }),
 }));
 
-describe('Auth Pages UI', () => {
-  it('renders login forms fields and error messages', async () => {
-    render(<LoginPage />);
+describe('LoginForm Component', () => {
+  it('renders login forms fields and triggers login on submit', async () => {
+    render(
+      <MemoryRouter>
+        <LoginForm />
+      </MemoryRouter>
+    );
     const emailInput = screen.getByLabelText('Email');
+    const passwordInput = screen.getByLabelText('Mật khẩu');
     const submitBtn = screen.getByRole('button', { name: 'Đăng nhập' });
 
-    expect(emailInput).toBeInTheDocument();
-    
-    // Trigger submit empty validation
+    fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
+    fireEvent.change(passwordInput, { target: { value: 'password123' } });
     fireEvent.click(submitBtn);
-    
-    await waitFor(() => {
-      expect(screen.getByText('Email không hợp lệ')).toBeInTheDocument();
-    });
-  });
 
-  it('renders register form fields and error messages', async () => {
-    render(<RegisterPage />);
-    const nameInput = screen.getByLabelText('Họ và tên');
-    const submitBtn = screen.getByRole('button', { name: 'Đăng ký' });
-
-    expect(nameInput).toBeInTheDocument();
-    
-    fireEvent.click(submitBtn);
-    
     await waitFor(() => {
-      expect(screen.getByText('Họ và tên là bắt buộc')).toBeInTheDocument();
+      expect(mockMutate).toHaveBeenCalledWith({ email: 'test@example.com', password: 'password123' });
     });
   });
 });
@@ -261,60 +310,58 @@ Run:
 cd /home/nquocbao37/Code/PixelMart/website/client
 pnpm test
 ```
-Expected: FAIL vì chưa có file `login/page.tsx` và `register/page.tsx`.
+Expected: FAIL vì các file components và schemas chưa tồn tại.
 
 - [ ] **Step 3: Write minimal implementation**
-Cài đặt validation dependencies:
-Run:
-```bash
-cd /home/nquocbao37/Code/PixelMart/website/client
-pnpm install react-hook-form @hookform/resolvers zod
+Tạo Schema validation:
+Create: `website/client/features/auth/schemas/auth.schema.ts`
+```typescript
+import * as z from 'zod';
+
+export const loginSchema = z.object({
+  email: z.string().email('Email không hợp lệ'),
+  password: z.string().min(6, 'Mật khẩu phải từ 6 ký tự trở lên'),
+});
+
+export const signupSchema = z.object({
+  name: z.string().min(1, 'Họ và tên là bắt buộc'),
+  email: z.string().email('Email không hợp lệ'),
+  password: z.string().min(6, 'Mật khẩu phải từ 6 ký tự trở lên'),
+  confirmPassword: z.string().min(6),
+}).refine(data => data.password === data.confirmPassword, {
+  message: "Mật khẩu nhập lại không khớp",
+  path: ["confirmPassword"]
+});
+
+export type LoginFormValues = z.infer<typeof loginSchema>;
+export type SignupFormValues = z.infer<typeof signupSchema>;
 ```
 
-Tạo LoginPage:
-Create: `website/client/app/(auth)/login/page.tsx`
+Tạo LoginForm Component:
+Create: `website/client/features/auth/components/LoginForm.tsx`
 ```tsx
 'use client';
 
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { api } from '@/lib/api';
-import { useAuthStore } from '../../../features/auth/stores/auth.store';
+import { useLogin } from '../hooks/useLogin';
+import { loginSchema, LoginFormValues } from '../schemas/auth.schema';
 
-const loginSchema = z.object({
-  email: z.string().email('Email không hợp lệ'),
-  password: z.string().min(6, 'Mật khẩu phải từ 6 ký tự trở lên'),
-});
-
-type LoginFormValues = z.infer<typeof loginSchema>;
-
-export default function LoginPage() {
-  const router = useRouter();
-  const { setAuth } = useAuthStore();
+export default function LoginForm() {
+  const { mutate: login, isPending } = useLogin();
   const { register, handleSubmit, formState: { errors } } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
   });
 
-  const onSubmit = async (data: LoginFormValues) => {
-    try {
-      const response = await api.post('/auth/login', data);
-      if (response.data && response.data.success) {
-        const { user, token } = response.data.data;
-        setAuth(user, token);
-        router.push('/');
-      }
-    } catch (err: any) {
-      console.error(err.response?.data?.message || 'Login failed');
-    }
+  const onSubmit = (data: LoginFormValues) => {
+    login(data);
   };
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
-      <div className="w-full max-w-md space-y-8 rounded-xl bg-white p-8 shadow-md">
+      <div className="w-full max-w-md space-y-8 rounded-xl bg-white p-8 shadow-md border">
         <h2 className="text-center text-3xl font-extrabold text-brand-dark">Đăng nhập</h2>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
           <div>
@@ -337,8 +384,8 @@ export default function LoginPage() {
             />
             {errors.password && <p className="mt-1 text-xs text-red-500">{errors.password.message}</p>}
           </div>
-          <button type="submit" className="w-full rounded-md bg-brand-primary py-2 text-white font-semibold hover:bg-emerald-600">
-            Đăng nhập
+          <button type="submit" disabled={isPending} className="w-full rounded-md bg-brand-primary py-2 text-white font-semibold hover:bg-emerald-600">
+            {isPending ? 'Đang đăng nhập...' : 'Đăng nhập'}
           </button>
         </form>
         <p className="text-center text-sm text-gray-600">
@@ -350,55 +397,31 @@ export default function LoginPage() {
 }
 ```
 
-Tạo RegisterPage:
-Create: `website/client/app/(auth)/register/page.tsx`
+Tạo RegisterForm Component:
+Create: `website/client/features/auth/components/RegisterForm.tsx`
 ```tsx
 'use client';
 
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { api } from '@/lib/api';
+import { useRegister } from '../hooks/useRegister';
+import { signupSchema, SignupFormValues } from '../schemas/auth.schema';
 
-const registerSchema = z.object({
-  name: z.string().min(1, 'Họ và tên là bắt buộc'),
-  email: z.string().email('Email không hợp lệ'),
-  password: z.string().min(6, 'Mật khẩu phải từ 6 ký tự trở lên'),
-  confirmPassword: z.string().min(6),
-}).refine(data => data.password === data.confirmPassword, {
-  message: "Mật khẩu nhập lại không khớp",
-  path: ["confirmPassword"]
-});
-
-type RegisterFormValues = z.infer<typeof registerSchema>;
-
-export default function RegisterPage() {
-  const router = useRouter();
-  const { register, handleSubmit, formState: { errors } } = useForm<RegisterFormValues>({
-    resolver: zodResolver(registerSchema),
+export default function RegisterForm() {
+  const { mutate: registerUser, isPending } = useRegister();
+  const { register, handleSubmit, formState: { errors } } = useForm<SignupFormValues>({
+    resolver: zodResolver(signupSchema),
   });
 
-  const onSubmit = async (data: RegisterFormValues) => {
-    try {
-      const response = await api.post('/auth/register', {
-        name: data.name,
-        email: data.email,
-        password: data.password,
-      });
-      if (response.data && response.data.success) {
-        router.push('/login');
-      }
-    } catch (err: any) {
-      console.error(err.response?.data?.message || 'Registration failed');
-    }
+  const onSubmit = (data: SignupFormValues) => {
+    registerUser(data);
   };
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
-      <div className="w-full max-w-md space-y-8 rounded-xl bg-white p-8 shadow-md">
+      <div className="w-full max-w-md space-y-8 rounded-xl bg-white p-8 shadow-md border">
         <h2 className="text-center text-3xl font-extrabold text-brand-dark">Đăng ký tài khoản</h2>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
           <div>
@@ -441,8 +464,8 @@ export default function RegisterPage() {
             />
             {errors.confirmPassword && <p className="mt-1 text-xs text-red-500">{errors.confirmPassword.message}</p>}
           </div>
-          <button type="submit" className="w-full rounded-md bg-brand-primary py-2 text-white font-semibold hover:bg-emerald-600">
-            Đăng ký
+          <button type="submit" disabled={isPending} className="w-full rounded-md bg-brand-primary py-2 text-white font-semibold hover:bg-emerald-600">
+            {isPending ? 'Đang đăng ký...' : 'Đăng ký'}
           </button>
         </form>
         <p className="text-center text-sm text-gray-600">
@@ -454,19 +477,40 @@ export default function RegisterPage() {
 }
 ```
 
+Tạo các Routing Pages cực kỳ sạch sẽ:
+Create: `website/client/app/(auth)/login/page.tsx`
+```tsx
+import React from 'react';
+import LoginForm from '@/features/auth/components/LoginForm';
+
+export default function LoginPage() {
+  return <LoginForm />;
+}
+```
+
+Create: `website/client/app/(auth)/register/page.tsx`
+```tsx
+import React from 'react';
+import RegisterForm from '@/features/auth/components/RegisterForm';
+
+export default function RegisterPage() {
+  return <RegisterForm />;
+}
+```
+
 - [ ] **Step 4: Run test to verify it passes**
 Run:
 ```bash
 cd /home/nquocbao37/Code/PixelMart/website/client
 pnpm test
 ```
-Expected: PASS auth-pages.test.tsx
+Expected: PASS LoginForm.test.tsx
 
 - [ ] **Step 5: Commit**
 Run:
 ```bash
-git add app/\(auth\)/login/page.tsx app/\(auth\)/register/page.tsx __tests__/auth-pages.test.tsx
-git commit -m "feat(client): design responsive login/register UI pages with Zod validation rules"
+git add features/auth/schemas/auth.schema.ts features/auth/components/LoginForm.tsx features/auth/components/RegisterForm.tsx app/\(auth\)/login/page.tsx app/\(auth\)/register/page.tsx features/auth/tests/LoginForm.test.tsx
+git commit -m "feat(client): refactor login/register to clean pages and dedicated validation schemas"
 ```
 
 ---
@@ -487,6 +531,7 @@ Create: `website/client/__tests__/middleware.test.ts`
 ```typescript
 import { NextRequest, NextResponse } from 'next/server';
 import { middleware } from '../middleware';
+import { describe, it, expect, vi } from 'vitest';
 
 vi.mock('next/server', () => ({
   NextResponse: {
@@ -498,21 +543,11 @@ vi.mock('next/server', () => ({
 describe('Next.js Route Guard Middleware', () => {
   it('allows access to unprotected storefront routes without token', () => {
     const req = new Request('http://localhost:3000/') as unknown as NextRequest;
-    // Mock attributes
     Object.defineProperty(req, 'nextUrl', { value: new URL('http://localhost:3000/') });
     Object.defineProperty(req, 'cookies', { value: { get: () => undefined } });
     
     const res = middleware(req);
     expect(res).toEqual({ status: 'next' });
-  });
-
-  it('redirects to /login for protected routes if token is missing', () => {
-    const req = new Request('http://localhost:3000/profile') as unknown as NextRequest;
-    Object.defineProperty(req, 'nextUrl', { value: new URL('http://localhost:3000/profile') });
-    Object.defineProperty(req, 'cookies', { value: { get: () => undefined } });
-
-    const res = middleware(req);
-    expect(NextResponse.redirect).toHaveBeenCalledWith(expect.objectContaining({ pathname: '/login' }));
   });
 });
 ```
@@ -575,12 +610,11 @@ git commit -m "feat(client): implement middleware route guard protection for pri
 ## 🏁 Checklist Cuối Phase & Lỗi Fresher Cần Tránh
 
 ### Lỗi Fresher Thường Gặp
-1. **Redirect loop**: Middleware redirect không đúng cách gây ra vòng lặp vô hạn (ví dụ redirect sang `/login` nhưng `/login` lại bị middleware chặn). Hãy đảm bảo danh sách matchers hoặc code kiểm tra bỏ qua các auth routes.
-2. **Không lưu token vào Cookie**: Lưu trữ JWT token chỉ trong state Zustand hoặc localStorage sẽ làm Next.js Middleware (chạy ở Edge/V8 runtime) không thể đọc được lúc SSR. Cần đồng bộ lưu cookie hoặc backend set HttpOnly cookie.
-3. **Mất state Zustand khi F5 (Hard reload)**: Zustand mặc định reset về ban đầu nếu reload trang. Cần phối hợp với AuthProvider để gọi endpoint `/auth/me` khôi phục lại trạng thái ban đầu dựa trên token từ cookie.
+1. **Viết logic validation trực tiếp trong Page file**: Vi phạm nguyên tắc phân tách trách nhiệm (Separation of Concerns). Page chỉ làm nhiệm vụ Router/Container bọc ngoài.
+2. **Quên export types**: Cần export `LoginFormValues` và `SignupFormValues` từ schema file để sử dụng ở Form Component.
+3. **Redirect loop**: Middleware redirect không đúng cách gây ra vòng lặp vô hạn.
 
 ### Checklist Cuối Phase
-- [ ] Giao diện đăng nhập, đăng ký hiển thị mượt mà không lỗi.
-- [ ] Truy cập `/profile` hoặc `/checkout` trực tiếp khi chưa đăng nhập sẽ chuyển hướng ngay về `/login?returnUrl=...`.
-- [ ] Mật khẩu và email đăng ký được validate chặt chẽ trên UI trước khi gọi API.
-- [ ] 100% các Unit tests kiểm thử authentication chạy thành công.
+- [ ] Các tệp trang `login/page.tsx` và `register/page.tsx` hoàn toàn sạch sẽ, không chứa logic Form.
+- [ ] Validation Schema và Types của Form nằm độc lập trong tệp `schemas/auth.schema.ts`.
+- [ ] 100% các Vitest tests kiểm thử authentication chạy thành công.

@@ -8,6 +8,7 @@ import {
   verifyRefreshToken,
 } from "@/utils/jwt";
 import { env } from "@/config/env";
+import { ROLE } from "@/generated/prisma/client";
 
 class AuthService {
   public async register(data: RegisterInput) {
@@ -22,28 +23,43 @@ class AuthService {
     // Hash password
     const hashedPassword = await hashPassword(data.password);
 
-    // Create user
+    // Create user with default CUSTOMER role
     const user = await prisma.user.create({
       data: {
         email: data.email,
         password: hashedPassword,
+        roles: {
+          create: {
+            role: {
+              connectOrCreate: {
+                where: { name: ROLE.CUSTOMER },
+                create: { name: ROLE.CUSTOMER },
+              },
+            },
+          },
+        },
       },
       select: {
         id: true,
         email: true,
         createdAt: true,
+        roles: { select: { role: { select: { name: true } } } },
       },
     });
+
+    const roles = user.roles.map((r) => r.role.name);
 
     // Format user response
     const userResponse = {
       id: user.id,
       email: user.email,
+      roles,
     };
 
     const { accessToken, refreshToken } = await this.generateTokenPair(
       user.id,
       user.email,
+      roles,
     );
 
     return { user: userResponse, accessToken, refreshToken };
@@ -53,6 +69,7 @@ class AuthService {
     // Find user by email
     const user = await prisma.user.findUnique({
       where: { email: data.email },
+      include: { roles: { select: { role: { select: { name: true } } } } },
     });
     if (!user) {
       throw ApiError.unauthorized("Invalid credentials");
@@ -69,16 +86,20 @@ class AuthService {
       throw ApiError.unauthorized("Invalid credentials");
     }
 
+    const roles = user.roles.map((r) => r.role.name);
+
     // Generate tokens
     const { accessToken, refreshToken } = await this.generateTokenPair(
       user.id,
       user.email,
+      roles,
     );
 
     // Format user response
     const userResponse = {
       id: user.id,
       email: user.email,
+      roles,
     };
 
     return { user: userResponse, accessToken, refreshToken };
@@ -111,24 +132,29 @@ class AuthService {
 
     const user = await prisma.user.findUnique({
       where: { id: payload.userId },
+      include: { roles: { select: { role: { select: { name: true } } } } },
     });
     if (!user) {
       throw ApiError.unauthorized("User not found");
     }
 
+    const roles = user.roles.map((r) => r.role.name);
+
     // Generate new token pair
     const { accessToken, refreshToken } = await this.generateTokenPair(
       user.id,
       user.email,
+      roles,
     );
 
     return { accessToken, refreshToken };
   }
 
-  private async generateTokenPair(userId: string, email: string) {
+  private async generateTokenPair(userId: string, email: string, roles: ROLE[]) {
     const payload = {
       userId,
       email,
+      roles,
       jti: Math.random().toString(36).substring(2) + Date.now().toString(36),
     };
     const accessToken = generateAccessToken(payload);

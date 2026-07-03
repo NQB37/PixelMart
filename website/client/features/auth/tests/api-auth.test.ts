@@ -38,7 +38,7 @@ describe("Axios Interceptors & Queueing tests", () => {
   });
 
   it("should append access token to headers", async () => {
-    useAuthStore.getState().setAuth({ id: "1", email: "test@example.com" }, "initial-token");
+    useAuthStore.getState().setAuth({ id: "1", email: "test@example.com", roles: [] }, "initial-token");
 
     const interceptor = api.interceptors.request.handlers[0];
     const config = await interceptor.fulfilled({ headers: {} } as any);
@@ -46,7 +46,7 @@ describe("Axios Interceptors & Queueing tests", () => {
   });
 
   it("should queue parallel requests when refreshing token", async () => {
-    useAuthStore.getState().setAuth({ id: "1", email: "test@example.com" }, "old-token");
+    useAuthStore.getState().setAuth({ id: "1", email: "test@example.com", roles: [] }, "old-token");
 
     let refreshCalls = 0;
     vi.mocked(authApi.refreshToken).mockImplementation(async () => {
@@ -117,7 +117,7 @@ describe("Axios Interceptors & Queueing tests", () => {
   });
 
   it("should fail all queued requests and logout if refresh token fails", async () => {
-    useAuthStore.getState().setAuth({ id: "1", email: "test@example.com" }, "old-token");
+    useAuthStore.getState().setAuth({ id: "1", email: "test@example.com", roles: [] }, "old-token");
 
     vi.mocked(authApi.refreshToken).mockRejectedValue(new Error("Refresh failed"));
 

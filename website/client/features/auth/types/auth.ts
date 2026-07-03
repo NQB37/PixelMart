@@ -1,6 +1,9 @@
+export type UserRole = "CUSTOMER" | "SELLER" | "ADMIN" | "DELIVERY_PERSON";
+
 export interface UserInfo {
   id: string;
   email: string;
+  roles: UserRole[];
 }
 
 export interface AuthResponse {

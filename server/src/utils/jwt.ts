@@ -1,10 +1,12 @@
 import jwt from "jsonwebtoken";
 import { env } from "@/config/env";
 import { ApiError } from "./ApiError";
+import { ROLE } from "@/generated/prisma/client";
 
 export interface JwtPayload {
   userId: string;
   email: string;
+  roles: ROLE[];
   jti?: string;
 }
 

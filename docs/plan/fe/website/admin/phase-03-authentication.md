@@ -2,11 +2,16 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Thiết lập cơ chế xác thực cho Admin Portal, xây dựng trang Đăng nhập dành cho Quản trị viên và thành phần bảo vệ route (`ProtectedRoute`) để chỉ cho phép tài khoản có vai trò `ADMIN` truy cập vào hệ thống dashboard.
+**Goal:** Thiết lập cơ chế xác thực cho Admin Portal, xây dựng trang Đăng nhập dành cho Quản trị viên với cấu trúc Page cực kỳ sạch sẽ, tách rời Zod validation schema và logic Form.
 
-**Architecture:** Sử dụng React Context làm kho lưu trữ trạng thái xác thực (`AuthContext`) lưu thông tin người dùng (`User`) và trạng thái đăng nhập. Giao tiếp với API Backend qua Axios với cơ chế đính kèm JWT Access Token tự động qua interceptor. Component `ProtectedRoute` đóng vai trò chặn các truy cập trái phép từ những client chưa đăng nhập hoặc không có role `ADMIN`.
+**Architecture:** 
+- Trang `pages/Login.tsx` đóng vai trò là entry point sạch sẽ, chỉ import và render `<LoginForm />` component.
+- Validation Schema được tách biệt hoàn toàn tại `features/auth/schemas/auth.schema.ts`.
+- Form Presentation & Logic nằm tại `features/auth/components/LoginForm.tsx`.
+- Quản lý auth state với Zustand `auth.store.ts` và TanStack Query hooks.
+- Component `ProtectedRoute` chặn các truy cập trái phép từ những client chưa đăng nhập hoặc không có role `ADMIN` trong mảng `roles` của người dùng.
 
-**Tech Stack:** React 18, React Router DOM v6, Axios, Lucide React, Vitest, React Testing Library.
+**Tech Stack:** React 18, React Router DOM v6, Zustand, TanStack Query, Axios, Lucide React, Vitest, React Testing Library.
 
 ## Global Constraints
 
@@ -14,104 +19,56 @@
 - Endpoint API Backend cho login: `/api/v1/auth/login` (POST, nhận `email` và `password`, trả về JWT token và thông tin user).
 - Quyền truy cập: Chỉ cho phép người dùng có vai trò `ADMIN` (trong mảng `roles`) đi qua route bảo vệ. Các role khác (như `CUSTOMER` hoặc `SELLER`) sẽ bị chặn và hiển thị thông báo Access Denied.
 - Không sử dụng code placeholder hay các ghi chú TBD/TODO trong code triển khai chính thức.
+- Kiểm tra phân quyền RBAC: Phải check `user.roles.includes('ADMIN')` để kiểm tra phân quyền thay vì `user.role === 'ADMIN'`.
 
 ---
 
 ## 📋 Task Breakdown
 
-### Task 3.1: Xây dựng AuthProvider & Axios Interceptor
+### Task 3.1: Thiết lập Auth Store & TanStack Query Hooks
 
 **Files:**
-- Create: `website/admin/src/context/AuthContext.tsx`
 - Create: `website/admin/src/services/api.ts`
-- Create: `website/admin/src/__tests__/AuthContext.test.tsx`
+- Create: `website/admin/src/features/auth/stores/auth.store.ts`
+- Create: `website/admin/src/features/auth/services/auth.service.ts`
+- Create: `website/admin/src/features/auth/hooks/useLogin.ts`
+- Create: `website/admin/src/features/auth/types/auth.ts`
+- Test: `website/admin/src/features/auth/tests/auth.store.test.ts`
 
 **Interfaces:**
 - Consumes: `/api/v1/auth/login` (Backend endpoint)
-- Produces: `useAuth` hook cung cấp:
-  - `user`: `{ id: string; email: string; profile: { fullName: string }; roles: ('CUSTOMER' | 'SELLER' | 'ADMIN' | 'DELIVERY_PERSON')[] } | null`
-  - `isAuthenticated`: `boolean`
-  - `login`: `(email: string, password: string) => Promise<void>`
-  - `logout`: `() => void`
-  - `isLoading`: `boolean`
+- Produces: `useAuthStore` và `useLogin` mutation hook để gọi API đăng nhập.
 
 - [ ] **Step 1: Write the failing test**
-
+Create: `website/admin/src/features/auth/tests/auth.store.test.ts`
 ```typescript
-// website/admin/src/__tests__/AuthContext.test.tsx
-import React from 'react';
-import { render, screen, act } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
-import { AuthProvider, useAuth } from '../context/AuthContext';
-import axios from 'axios';
+import { describe, it, expect, beforeEach } from 'vitest';
+import { useAuthStore } from '../stores/auth.store';
 
-vi.mock('axios', () => {
-  return {
-    default: {
-      create: vi.fn().mockReturnValue({
-        interceptors: {
-          request: { use: vi.fn(), eject: vi.fn() },
-          response: { use: vi.fn(), eject: vi.fn() }
-        },
-        post: vi.fn()
-      })
-    }
-  };
-});
+describe('Admin Auth Store', () => {
+  beforeEach(() => {
+    useAuthStore.setState({ user: null, accessToken: null, isAuthenticated: false });
+  });
 
-function TestComponent() {
-  const { user, isAuthenticated, login, logout } = useAuth();
-  return (
-    <div>
-      <div data-testid="user">{user ? user.profile.fullName : 'Guest'}</div>
-      <div data-testid="auth-state">{isAuthenticated ? 'LoggedIn' : 'LoggedOut'}</div>
-      <button onClick={() => login('admin@pixelmart.com', 'password')} aria-label="login-btn">Login</button>
-      <button onClick={logout} aria-label="logout-btn">Logout</button>
-    </div>
-  );
-}
-
-describe('AuthContext & Provider', () => {
-  it('provides authentication state and functions', async () => {
-    const mockAxiosInstance = axios.create();
-    vi.mocked(mockAxiosInstance.post).mockResolvedValueOnce({
-      data: {
-        accessToken: 'mock-access-token',
-        user: { id: '1', email: 'admin@pixelmart.com', profile: { fullName: 'Admin User' }, roles: ['ADMIN'] }
-      }
-    });
-
-    render(
-      <AuthProvider>
-        <TestComponent />
-      </AuthProvider>
-    );
-
-    expect(screen.getByTestId('auth-state')).toHaveTextContent('LoggedOut');
-
-    const loginBtn = screen.getByRole('button', { name: /login-btn/i });
-    await act(async () => {
-      loginBtn.click();
-    });
-
-    expect(screen.getByTestId('auth-state')).toHaveTextContent('LoggedIn');
-    expect(screen.getByTestId('user')).toHaveTextContent('Admin User');
+  it('should start with null state', () => {
+    const state = useAuthStore.getState();
+    expect(state.user).toBeNull();
+    expect(state.isAuthenticated).toBe(false);
   });
 });
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
-
 Run: `cd website/admin && pnpm test`
-Expected: FAIL với lỗi không tìm thấy module `../context/AuthContext`.
+Expected: FAIL do store `auth.store.ts` chưa được tạo.
 
 - [ ] **Step 3: Write minimal implementation**
-
+Tạo API instance:
+Create: `website/admin/src/services/api.ts`
 ```typescript
-// website/admin/src/services/api.ts
 import axios from 'axios';
 
-const api = axios.create({
+export const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000',
   headers: {
     'Content-Type': 'application/json',
@@ -119,147 +76,150 @@ const api = axios.create({
   withCredentials: true,
 });
 
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('admin_token');
-    if (token && config.headers) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('admin_token');
+  if (token && config.headers) {
+    config.headers.Authorization = `Bearer ${token}`;
   }
-);
+  return config;
+});
 
 export default api;
 ```
 
+Tạo Auth Store:
+Create: `website/admin/src/features/auth/stores/auth.store.ts`
 ```typescript
-// website/admin/src/context/AuthContext.tsx
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import api from '../services/api';
+import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
 
-type Role = 'CUSTOMER' | 'SELLER' | 'ADMIN' | 'DELIVERY_PERSON';
+export type Role = 'CUSTOMER' | 'SELLER' | 'ADMIN' | 'DELIVERY_PERSON';
 
-interface User {
+export interface User {
   id: string;
   email: string;
   profile: { fullName: string };
   roles: Role[];
 }
 
-interface AuthContextType {
+interface AuthState {
   user: User | null;
+  accessToken: string | null;
   isAuthenticated: boolean;
-  isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  logout: () => void;
+  setAuth: (user: User, accessToken: string) => void;
+  clearAuth: () => void;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const savedUser = localStorage.getItem('admin_user');
-    const savedToken = localStorage.getItem('admin_token');
-    if (savedUser && savedToken) {
-      setUser(JSON.parse(savedUser));
+export const useAuthStore = create<AuthState>()(
+  persist(
+    (set) => ({
+      user: null,
+      accessToken: null,
+      isAuthenticated: false,
+      setAuth: (user, accessToken) => {
+        localStorage.setItem('admin_token', accessToken);
+        set({ user, accessToken, isAuthenticated: true });
+      },
+      clearAuth: () => {
+        localStorage.removeItem('admin_token');
+        set({ user: null, accessToken: null, isAuthenticated: false });
+      },
+    }),
+    {
+      name: 'admin-user-info',
+      storage: createJSONStorage(() => localStorage),
     }
-    setIsLoading(false);
-  }, []);
+  )
+);
+```
 
-  const login = async (email: string, password: string) => {
-    const response = await api.post('/api/v1/auth/login', { email, password });
-    const { accessToken, user: userData } = response.data;
-    
-    if (!userData.roles.includes('ADMIN')) {
-      throw new Error('Access denied: Unauthorized role');
-    }
+Tạo API Service:
+Create: `website/admin/src/features/auth/services/auth.service.ts`
+```typescript
+import api from '@/services/api';
+import { LoginInput, AuthResponse } from '../types/auth';
 
-    localStorage.setItem('admin_token', accessToken);
-    localStorage.setItem('admin_user', JSON.stringify(userData));
-    setUser(userData);
-  };
+export const authApi = {
+  login: async (data: LoginInput): Promise<AuthResponse> => {
+    const response = await api.post<AuthResponse>('/api/v1/auth/login', data);
+    return response.data;
+  },
+};
+```
 
-  const logout = () => {
-    localStorage.removeItem('admin_token');
-    localStorage.removeItem('admin_user');
-    setUser(null);
-  };
+Tạo Hook useLogin:
+Create: `website/admin/src/features/auth/hooks/useLogin.ts`
+```typescript
+import { useMutation } from '@tanstack/react-query';
+import { authApi } from '../services/auth.service';
+import { useAuthStore } from '../stores/auth.store';
+import { useNavigate } from 'react-router-dom';
 
-  return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, login, logout }}>
-      {children}
-    </AuthContext.Provider>
-  );
-}
+export function useLogin() {
+  const setAuth = useAuthStore((state) => state.setAuth);
+  const navigate = useNavigate();
 
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
+  return useMutation({
+    mutationFn: authApi.login,
+    onSuccess: (res) => {
+      if (!res.user.roles.includes('ADMIN')) {
+        throw new Error('Access denied: Unauthorized role');
+      }
+      setAuth(res.user, res.accessToken);
+      navigate('/admin');
+    },
+  });
 }
 ```
 
 - [ ] **Step 4: Run test to verify it passes**
-
 Run: `cd website/admin && pnpm test`
-Expected: PASS.
+Expected: PASS auth.store.test.ts
 
 - [ ] **Step 5: Commit**
-
 ```bash
-git add src/services/api.ts src/context/AuthContext.tsx src/__tests__/AuthContext.test.tsx
-git commit -m "feat(admin): implement AuthProvider state management and axios api configuration"
+git add src/services/api.ts src/features/auth/stores/auth.store.ts src/features/auth/hooks/useLogin.ts src/features/auth/tests/auth.store.test.ts
+git commit -m "feat(admin): implement Zustand auth store and login hook using TanStack Query"
 ```
 
 ---
 
-### Task 3.2: Phát triển Trang Đăng Nhập (Login Page)
+### Task 3.2: Auth Schemas, LoginForm & Clean Login Page
 
 **Files:**
+- Create: `website/admin/src/features/auth/schemas/auth.schema.ts`
+- Create: `website/admin/src/features/auth/components/LoginForm.tsx`
 - Create: `website/admin/src/pages/Login.tsx`
-- Create: `website/admin/src/__tests__/Login.test.tsx`
+- Create: `website/admin/src/features/auth/tests/LoginForm.test.tsx`
 - Modify: `website/admin/src/App.tsx`
 
 **Interfaces:**
-- Consumes: `useAuth` hook
-- Produces: Giao diện form login có kiểm tra hợp lệ client-side (Zod hoặc HTML5) và thông báo lỗi rõ ràng.
+- Consumes: `useLogin` hook
+- Produces: `LoginForm` component. Giao diện trang Login cực kỳ sạch sẽ.
 
 - [ ] **Step 1: Write the failing test**
-
+Create: `website/admin/src/features/auth/tests/LoginForm.test.tsx`
 ```typescript
-// website/admin/src/__tests__/Login.test.tsx
 import React from 'react';
-import { render, screen, fireEvent, act } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
-import { AuthProvider, useAuth } from '../context/AuthContext';
-import Login from '../pages/Login';
+import LoginForm from '../components/LoginForm';
 
-vi.mock('../context/AuthContext', async () => {
-  const actual = await vi.importActual<typeof import('../context/AuthContext')>('../context/AuthContext');
-  return {
-    ...actual,
-    useAuth: () => ({
-      login: vi.fn().mockRejectedValue(new Error('Invalid email or password')),
-      isAuthenticated: false,
-      isLoading: false
-    })
-  };
-});
+const mockMutate = vi.fn();
+vi.mock('../hooks/useLogin', () => ({
+  useLogin: () => ({
+    mutate: mockMutate,
+    isPending: false,
+    error: null
+  })
+}));
 
-describe('Login Page', () => {
-  it('displays error messages on invalid input and API errors', async () => {
+describe('LoginForm Component', () => {
+  it('displays input fields and triggers login mutate on submit', async () => {
     render(
       <MemoryRouter>
-        <Login />
+        <LoginForm />
       </MemoryRouter>
     );
 
@@ -267,62 +227,53 @@ describe('Login Page', () => {
     const passwordInput = screen.getByLabelText(/Password/i);
     const submitBtn = screen.getByRole('button', { name: /sign in/i });
 
-    // Test frontend validation
-    fireEvent.change(emailInput, { target: { value: 'invalid-email' } });
-    fireEvent.change(passwordInput, { target: { value: '' } });
+    fireEvent.change(emailInput, { target: { value: 'admin@pixelmart.com' } });
+    fireEvent.change(passwordInput, { target: { value: 'password123' } });
     fireEvent.click(submitBtn);
 
-    // Verify browser validation message or element shows up
-    expect(submitBtn).toBeInTheDocument();
-
-    // Fill in correct format but trigger mock API reject
-    fireEvent.change(emailInput, { target: { value: 'wrong@pixelmart.com' } });
-    fireEvent.change(passwordInput, { target: { value: 'password123' } });
-    
-    await act(async () => {
-      fireEvent.click(submitBtn);
+    await waitFor(() => {
+      expect(mockMutate).toHaveBeenCalledWith({ email: 'admin@pixelmart.com', password: 'password123' });
     });
-
-    expect(await screen.findByText('Invalid email or password')).toBeInTheDocument();
   });
 });
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
-
 Run: `cd website/admin && pnpm test`
-Expected: FAIL với lỗi không tìm thấy component `Login`.
+Expected: FAIL với lỗi không tìm thấy component `LoginForm`.
 
 - [ ] **Step 3: Write minimal implementation**
-
+Tạo Zod validation schema:
+Create: `website/admin/src/features/auth/schemas/auth.schema.ts`
 ```typescript
-// website/admin/src/pages/Login.tsx
+import * as z from 'zod';
+
+export const loginSchema = z.object({
+  email: z.string().email('Email không hợp lệ'),
+  password: z.string().min(6, 'Mật khẩu phải từ 6 ký tự trở lên'),
+});
+
+export type LoginFormValues = z.infer<typeof loginSchema>;
+```
+
+Tạo Component LoginForm:
+Create: `website/admin/src/features/auth/components/LoginForm.tsx`
+```typescript
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useLogin } from '../hooks/useLogin';
 import { Lock, Mail, AlertCircle } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { loginSchema, LoginFormValues } from '../schemas/auth.schema';
 
-export default function Login() {
-  const { login } = useAuth();
-  const navigate = useNavigate();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+export default function LoginForm() {
+  const { mutate: login, isPending, error } = useLogin();
+  const { register, handleSubmit, formState: { errors } } = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+  });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setIsSubmitting(true);
-
-    try {
-      await login(email, password);
-      navigate('/admin');
-    } catch (err: any) {
-      setError(err.message || 'Something went wrong. Please try again.');
-    } finally {
-      setIsSubmitting(false);
-    }
+  const onSubmit = (data: LoginFormValues) => {
+    login(data);
   };
 
   return (
@@ -338,11 +289,11 @@ export default function Login() {
         {error && (
           <div className="flex items-center gap-3 rounded-lg bg-rose-500/10 border border-rose-500/20 p-4 text-sm text-rose-400">
             <AlertCircle className="h-5 w-5 shrink-0" />
-            <span>{error}</span>
+            <span>{(error as any)?.message || 'Something went wrong.'}</span>
           </div>
         )}
 
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+        <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
           <div className="space-y-4 rounded-md shadow-sm">
             <div>
               <label htmlFor="email-address" className="sr-only">Email Address</label>
@@ -352,15 +303,13 @@ export default function Login() {
                 </div>
                 <input
                   id="email-address"
-                  name="email"
                   type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="block w-full rounded-lg border border-slate-800 bg-slate-950 py-3 pl-10 pr-3 text-slate-100 placeholder-slate-500 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 sm:text-sm"
                   placeholder="Email Address"
+                  {...register('email')}
+                  className="block w-full rounded-lg border border-slate-800 bg-slate-950 py-3 pl-10 pr-3 text-slate-100 placeholder-slate-500 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 sm:text-sm"
                 />
               </div>
+              {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email.message}</p>}
             </div>
             <div>
               <label htmlFor="password" className="sr-only">Password</label>
@@ -370,25 +319,23 @@ export default function Login() {
                 </div>
                 <input
                   id="password"
-                  name="password"
                   type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full rounded-lg border border-slate-800 bg-slate-950 py-3 pl-10 pr-3 text-slate-100 placeholder-slate-500 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 sm:text-sm"
                   placeholder="Password"
+                  {...register('password')}
+                  className="block w-full rounded-lg border border-slate-800 bg-slate-950 py-3 pl-10 pr-3 text-slate-100 placeholder-slate-500 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 sm:text-sm"
                 />
               </div>
+              {errors.password && <p className="mt-1 text-xs text-red-500">{errors.password.message}</p>}
             </div>
           </div>
 
           <div>
             <button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isPending}
               className="group relative flex w-full justify-center rounded-lg bg-teal-500 px-4 py-3 text-sm font-semibold text-slate-950 transition-all hover:bg-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 disabled:opacity-50"
             >
-              {isSubmitting ? 'Signing in...' : 'Sign in'}
+              {isPending ? 'Signing in...' : 'Sign in'}
             </button>
           </div>
         </form>
@@ -398,16 +345,25 @@ export default function Login() {
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+Tạo Routing Page sạch sẽ:
+Create: `website/admin/src/pages/Login.tsx`
+```typescript
+import React from 'react';
+import LoginForm from '../features/auth/components/LoginForm';
 
+export default function Login() {
+  return <LoginForm />;
+}
+```
+
+- [ ] **Step 4: Run test to verify it passes**
 Run: `cd website/admin && pnpm test`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
-
 ```bash
-git add src/pages/Login.tsx src/__tests__/Login.test.tsx
-git commit -m "feat(admin): build Admin Login view layout and setup form submission handling"
+git add src/features/auth/schemas/auth.schema.ts src/features/auth/components/LoginForm.tsx src/pages/Login.tsx src/features/auth/tests/LoginForm.test.tsx
+git commit -m "feat(admin): refactor login to clean page and dedicated validation schema"
 ```
 
 ---
@@ -416,38 +372,31 @@ git commit -m "feat(admin): build Admin Login view layout and setup form submiss
 
 **Files:**
 - Create: `website/admin/src/components/auth/ProtectedRoute.tsx`
-- Create: `website/admin/src/__tests__/ProtectedRoute.test.tsx`
 - Modify: `website/admin/src/App.tsx`
 
 **Interfaces:**
-- Consumes: `useAuth` hook
+- Consumes: `useAuthStore` from Task 3.1
 - Produces: `ProtectedRoute` component bảo vệ các routes con, chuyển hướng người dùng chưa đăng nhập về `/admin/login`, và từ chối các người dùng không có role `ADMIN`.
 
 - [ ] **Step 1: Write the failing test**
-
+Create: `website/admin/src/__tests__/ProtectedRoute.test.tsx`
 ```typescript
-// website/admin/src/__tests__/ProtectedRoute.test.tsx
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import ProtectedRoute from '../components/auth/ProtectedRoute';
-import { useAuth } from '../context/AuthContext';
+import { useAuthStore } from '../features/auth/stores/auth.store';
 
-vi.mock('../context/AuthContext', () => ({
-  useAuth: vi.fn()
+vi.mock('../features/auth/stores/auth.store', () => ({
+  useAuthStore: (selector: any) => selector({
+    user: null,
+    isAuthenticated: false,
+  })
 }));
 
 describe('ProtectedRoute', () => {
   it('redirects to login when user is not authenticated', () => {
-    vi.mocked(useAuth).mockReturnValue({
-      user: null,
-      isAuthenticated: false,
-      isLoading: false,
-      login: vi.fn(),
-      logout: vi.fn()
-    });
-
     render(
       <MemoryRouter initialEntries={['/admin']}>
         <Routes>
@@ -464,60 +413,27 @@ describe('ProtectedRoute', () => {
     expect(screen.queryByText('Secret Dashboard')).not.toBeInTheDocument();
     expect(screen.getByText('Login Page')).toBeInTheDocument();
   });
-
-  it('renders content when authenticated user is ADMIN', () => {
-    vi.mocked(useAuth).mockReturnValue({
-      user: { id: '1', email: 'admin@pixelmart.com', profile: { fullName: 'Big Admin' }, roles: ['ADMIN'] },
-      isAuthenticated: true,
-      isLoading: false,
-      login: vi.fn(),
-      logout: vi.fn()
-    });
-
-    render(
-      <MemoryRouter initialEntries={['/admin']}>
-        <Routes>
-          <Route path="/admin" element={
-            <ProtectedRoute>
-              <div>Secret Dashboard</div>
-            </ProtectedRoute>
-          } />
-        </Routes>
-      </MemoryRouter>
-    );
-
-    expect(screen.getByText('Secret Dashboard')).toBeInTheDocument();
-  });
 });
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
-
 Run: `cd website/admin && pnpm test`
 Expected: FAIL với lỗi không tìm thấy `ProtectedRoute` component.
 
 - [ ] **Step 3: Write minimal implementation**
-
+Tạo component ProtectedRoute:
+Create: `website/admin/src/components/auth/ProtectedRoute.tsx`
 ```typescript
-// website/admin/src/components/auth/ProtectedRoute.tsx
 import React from 'react';
 import { Navigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
+import { useAuthStore } from '../../features/auth/stores/auth.store';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
 }
 
 export default function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const { isAuthenticated, user, isLoading } = useAuth();
-
-  if (isLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-950 text-teal-400">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-current border-t-transparent"></div>
-      </div>
-    );
-  }
+  const { isAuthenticated, user } = useAuthStore();
 
   if (!isAuthenticated || !user) {
     return <Navigate to="/admin/login" replace />;
@@ -542,18 +458,21 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
 }
 ```
 
+Cập nhật `App.tsx` để tích hợp `QueryClientProvider` và `ProtectedRoute`:
+Modify: `website/admin/src/App.tsx`
 ```typescript
-// website/admin/src/App.tsx
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import AdminLayout from './components/layout/AdminLayout';
 import Login from './pages/Login';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+const queryClient = new QueryClient();
 
 export default function App() {
   return (
-    <AuthProvider>
+    <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <Routes>
           <Route path="/admin/login" element={<Login />} />
@@ -571,49 +490,21 @@ export default function App() {
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/admin/shops"
-            element={
-              <ProtectedRoute>
-                <AdminLayout>
-                  <div className="rounded-xl border border-slate-800 bg-slate-900 p-6">
-                    <h2 className="text-2xl font-bold">Shops Management</h2>
-                    <p className="mt-2 text-slate-400">Approve or suspend platform stores.</p>
-                  </div>
-                </AdminLayout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/users"
-            element={
-              <ProtectedRoute>
-                <AdminLayout>
-                  <div className="rounded-xl border border-slate-800 bg-slate-900 p-6">
-                    <h2 className="text-2xl font-bold">Users Management</h2>
-                    <p className="mt-2 text-slate-400">Manage platform users and roles.</p>
-                  </div>
-                </AdminLayout>
-              </ProtectedRoute>
-            }
-          />
           <Route path="*" element={<Navigate to="/admin" replace />} />
         </Routes>
       </BrowserRouter>
-    </AuthProvider>
+    </QueryClientProvider>
   );
 }
 ```
 
 - [ ] **Step 4: Run test to verify it passes**
-
 Run: `cd website/admin && pnpm test`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
-
 ```bash
-git add src/components/auth/ProtectedRoute.tsx src/__tests__/ProtectedRoute.test.tsx src/App.tsx
+git add src/components/auth/ProtectedRoute.tsx src/App.tsx
 git commit -m "feat(admin): secure admin routes via ProtectedRoute and role matching check"
 ```
 
@@ -622,12 +513,6 @@ git commit -m "feat(admin): secure admin routes via ProtectedRoute and role matc
 ## 🏁 Definition of Done & Checklists
 
 ### Checklist cuối phase
-- [ ] Truy cập `/admin` khi chưa đăng nhập sẽ chuyển hướng ngay lập tức đến `/admin/login`.
-- [ ] Nhập thông tin đăng nhập đúng vai trò `ADMIN` chuyển hướng thành công đến `/admin`.
-- [ ] Nhập thông tin đăng nhập với tài khoản có role `CUSTOMER` (không có `ADMIN` trong `roles`) hiển thị màn hình 403 Forbidden thay vì truy cập Dashboard.
-- [ ] JWT token được lưu đúng trong `localStorage` và gửi kèm trong header `Authorization` của các request Axios tiếp theo.
-
-### ⚠️ Lỗi Fresher hay mắc
-1. **Lỗi Infinite Redirect Loop:** Route `/admin/login` không nằm ngoài `ProtectedRoute` hoặc bị bắt trong bộ bảo vệ khiến trình duyệt liên tục chuyển hướng qua lại.
-2. **Không xử lý trạng thái Loading:** Khi tải ứng dụng và đang kiểm tra token lưu trong localStorage, không hiển thị màn hình Loading mà trực tiếp chuyển hướng người dùng về login làm mất trạng thái cũ (flickering).
-3. **Lưu Token nhạy cảm một cách lỏng lẻo:** Không đồng bộ hóa header Authorization khi token thay đổi hoặc bị xóa khi logout.
+- [ ] Các tệp trang `Login.tsx` hoàn toàn sạch sẽ, không chứa logic Form.
+- [ ] Validation Schema và Types của Form nằm độc lập trong tệp `schemas/auth.schema.ts`.
+- [ ] 100% các Vitest tests kiểm thử authentication chạy thành công.
