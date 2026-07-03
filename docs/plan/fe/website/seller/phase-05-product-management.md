@@ -12,8 +12,8 @@
 
 - Node.js version >= 18
 - Package manager: pnpm
-- Toàn bộ source code của seller-web nằm trong thư mục `web/seller-web/`
-- Sử dụng Path Alias `@/` trỏ tới `web/seller-web/src`
+- Toàn bộ source code của seller nằm trong thư mục `website/seller/`
+- Sử dụng Path Alias `@/` trỏ tới `website/seller/src`
 - TDD: Mọi component/helper phải viết test trước khi code minimal implementation
 - Không sử dụng code placeholder (ví dụ: `// TODO`, `/* code here */`). Toàn bộ code trong plan phải hoạt động được.
 
@@ -24,15 +24,15 @@
 ### Task 1: Xây dựng Danh sách Sản phẩm (Bảng, Tìm kiếm & Phân trang)
 
 **Files:**
-- Create: `web/seller-web/src/pages/Products.tsx`
-- Create: `web/seller-web/src/__tests__/productList.test.tsx`
+- Create: `website/seller/src/pages/Products.tsx`
+- Create: `website/seller/src/__tests__/productList.test.tsx`
 
 **Interfaces:**
 - Consumes: Axios `api` instance từ Phase 3.
 - Produces: Màn hình `/products` hiển thị bảng danh sách sản phẩm của Shop, thanh tìm kiếm theo Tên/SKU, nút phân trang Trước/Sau.
 
 - [ ] **Step 1: Write the failing test**
-Create: `web/seller-web/src/__tests__/productList.test.tsx`
+Create: `website/seller/src/__tests__/productList.test.tsx`
 ```typescript
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
@@ -55,11 +55,11 @@ describe('Products Table & Filtering', () => {
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
-Run: `pnpm --filter seller-web test run`
+Run: `pnpm --filter seller test run`
 Expected: FAIL vì `pages/Products.tsx` chưa tồn tại.
 
 - [ ] **Step 3: Write minimal implementation**
-Create: `web/seller-web/src/pages/Products.tsx`
+Create: `website/seller/src/pages/Products.tsx`
 ```typescript
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
@@ -262,13 +262,13 @@ export default function Products() {
 ```
 
 - [ ] **Step 4: Run test to verify it passes**
-Run: `pnpm --filter seller-web test run`
+Run: `pnpm --filter seller test run`
 Expected: PASS 1/1 (productList.test.tsx)
 
 - [ ] **Step 5: Commit**
 ```bash
-git add web/seller-web/src/pages/Products.tsx web/seller-web/src/__tests__/productList.test.tsx
-git commit -m "feat(seller-web): add Products lists layout view with pagination, search logic"
+git add website/seller/src/pages/Products.tsx website/seller/src/__tests__/productList.test.tsx
+git commit -m "feat(seller): add Products lists layout view with pagination, search logic"
 ```
 
 ---
@@ -276,15 +276,15 @@ git commit -m "feat(seller-web): add Products lists layout view with pagination,
 ### Task 2: Form Tạo mới/Chỉnh sửa sản phẩm có Xác thực dữ liệu
 
 **Files:**
-- Create: `web/seller-web/src/pages/ProductForm.tsx`
-- Create: `web/seller-web/src/__tests__/productForm.test.tsx`
+- Create: `website/seller/src/pages/ProductForm.tsx`
+- Create: `website/seller/src/__tests__/productForm.test.tsx`
 
 **Interfaces:**
 - Consumes: Cấu hình `api` và router URL params.
 - Produces: Component `ProductForm` phục vụ cả hành động Thêm (POST) lẫn Sửa (PUT), tích hợp kiểm tra dữ liệu đầu vào.
 
 - [ ] **Step 1: Write the failing test**
-Create: `web/seller-web/src/__tests__/productForm.test.tsx`
+Create: `website/seller/src/__tests__/productForm.test.tsx`
 ```typescript
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
@@ -309,11 +309,11 @@ describe('ProductForm validation rules', () => {
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
-Run: `pnpm --filter seller-web test run`
+Run: `pnpm --filter seller test run`
 Expected: FAIL do component `ProductForm` chưa tồn tại.
 
 - [ ] **Step 3: Write minimal implementation**
-Create: `web/seller-web/src/pages/ProductForm.tsx`
+Create: `website/seller/src/pages/ProductForm.tsx`
 ```typescript
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -567,13 +567,13 @@ export default function ProductForm() {
 ```
 
 - [ ] **Step 4: Run test to verify it passes**
-Run: `pnpm --filter seller-web test run`
+Run: `pnpm --filter seller test run`
 Expected: PASS cả form validate test.
 
 - [ ] **Step 5: Commit**
 ```bash
-git add web/seller-web/src/pages/ProductForm.tsx web/seller-web/src/__tests__/productForm.test.tsx
-git commit -m "feat(seller-web): implement ProductForm validation fields for Create, Edit"
+git add website/seller/src/pages/ProductForm.tsx website/seller/src/__tests__/productForm.test.tsx
+git commit -m "feat(seller): implement ProductForm validation fields for Create, Edit"
 ```
 
 ---
@@ -581,16 +581,16 @@ git commit -m "feat(seller-web): implement ProductForm validation fields for Cre
 ### Task 3: Tải Ảnh Lên & Trình Xem Preview Danh Sách Ảnh (Cloudinary Client Mock)
 
 **Files:**
-- Create: `web/seller-web/src/components/products/ImageUpload.tsx`
-- Create: `web/seller-web/src/__tests__/imageUpload.test.tsx`
-- Modify: `web/seller-web/src/pages/ProductForm.tsx`
+- Create: `website/seller/src/components/products/ImageUpload.tsx`
+- Create: `website/seller/src/__tests__/imageUpload.test.tsx`
+- Modify: `website/seller/src/pages/ProductForm.tsx`
 
 **Interfaces:**
 - Consumes: Component UI của Task 2.
 - Produces: Trình upload ảnh sản phẩm (có preview danh sách ảnh, đặt ảnh chính làm thumbnail, xóa ảnh).
 
 - [ ] **Step 1: Write the failing test**
-Create: `web/seller-web/src/__tests__/imageUpload.test.tsx`
+Create: `website/seller/src/__tests__/imageUpload.test.tsx`
 ```typescript
 import React from 'react';
 import { render, screen } from '@testing-library/react';
@@ -608,12 +608,12 @@ describe('ImageUpload Component', () => {
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
-Run: `pnpm --filter seller-web test run`
+Run: `pnpm --filter seller test run`
 Expected: FAIL do component `ImageUpload` chưa được tạo.
 
 - [ ] **Step 3: Write minimal implementation**
 Tạo ImageUpload component:
-Create: `web/seller-web/src/components/products/ImageUpload.tsx`
+Create: `website/seller/src/components/products/ImageUpload.tsx`
 ```typescript
 import React from 'react';
 import { ImageIcon, Trash2, Star } from 'lucide-react';
@@ -731,17 +731,17 @@ export default function ImageUpload({ images, onChange }: ImageUploadProps) {
 ```
 
 Cập nhật `ProductForm.tsx` để nhúng `ImageUpload`:
-Modify: `web/seller-web/src/pages/ProductForm.tsx:1-250`
+Modify: `website/seller/src/pages/ProductForm.tsx:1-250`
 (Chèn `ImageUpload` component vào phía trên phần thông tin chính hoặc mô tả trong form của `ProductForm.tsx`, thêm state `images` dạng `ProductImage[]` và khai báo `api` gửi body sản phẩm kèm mảng ảnh).
 
 - [ ] **Step 4: Run test to verify it passes**
-Run: `pnpm --filter seller-web test run`
+Run: `pnpm --filter seller test run`
 Expected: PASS tất cả 10 tests.
 
 - [ ] **Step 5: Commit**
 ```bash
-git add web/seller-web/src/components/products/ImageUpload.tsx web/seller-web/src/pages/ProductForm.tsx web/seller-web/src/__tests__/imageUpload.test.tsx
-git commit -m "feat(seller-web): add ImageUpload handler with list visualizer and thumbnail manager"
+git add website/seller/src/components/products/ImageUpload.tsx website/seller/src/pages/ProductForm.tsx website/seller/src/__tests__/imageUpload.test.tsx
+git commit -m "feat(seller): add ImageUpload handler with list visualizer and thumbnail manager"
 ```
 
 ---
@@ -749,16 +749,16 @@ git commit -m "feat(seller-web): add ImageUpload handler with list visualizer an
 ### Task 4: Cấu hình Tuyến đường CRUD Sản phẩm & Tích hợp Menu
 
 **Files:**
-- Modify: `web/seller-web/src/components/layout/Sidebar.tsx`
-- Modify: `web/seller-web/src/main.tsx`
-- Create: `web/seller-web/src/__tests__/productRoutes.test.tsx`
+- Modify: `website/seller/src/components/layout/Sidebar.tsx`
+- Modify: `website/seller/src/main.tsx`
+- Create: `website/seller/src/__tests__/productRoutes.test.tsx`
 
 **Interfaces:**
 - Consumes: Các trang `Products` và `ProductForm` từ Task 1 và Task 3.
 - Produces: Router điều hướng cho `/products`, `/products/new` và `/products/:id/edit`.
 
 - [ ] **Step 1: Write the failing test**
-Create: `web/seller-web/src/__tests__/productRoutes.test.tsx`
+Create: `website/seller/src/__tests__/productRoutes.test.tsx`
 ```typescript
 import React from 'react';
 import { render, screen } from '@testing-library/react';
@@ -780,12 +780,12 @@ describe('Sidebar Product Management Links', () => {
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
-Run: `pnpm --filter seller-web test run`
+Run: `pnpm --filter seller test run`
 Expected: FAIL vì Sidebar chưa hiển thị danh mục `Sản phẩm` (Products navigation link).
 
 - [ ] **Step 3: Write minimal implementation**
 Cập nhật Sidebar bổ sung menu Sản phẩm:
-Modify: `web/seller-web/src/components/layout/Sidebar.tsx:1-60`
+Modify: `website/seller/src/components/layout/Sidebar.tsx:1-60`
 ```typescript
 import React from 'react';
 import { NavLink } from 'react-router-dom';
@@ -829,7 +829,7 @@ export default function Sidebar() {
 ```
 
 Cập nhật `main.tsx` cấu hình các route `/products`, `/products/new` và `/products/:id/edit`:
-Modify: `web/seller-web/src/main.tsx:1-120`
+Modify: `website/seller/src/main.tsx:1-120`
 ```typescript
 import React from 'react';
 import ReactDOM from 'react-dom/client';
@@ -923,13 +923,13 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 ```
 
 - [ ] **Step 4: Run test to verify it passes**
-Run: `pnpm --filter seller-web test run`
+Run: `pnpm --filter seller test run`
 Expected: PASS tất cả 11 tests.
 
 - [ ] **Step 5: Commit**
 ```bash
-git add web/seller-web/src/components/layout/Sidebar.tsx web/seller-web/src/main.tsx web/seller-web/src/__tests__/productRoutes.test.tsx
-git commit -m "feat(seller-web): update Sidebar and main routing map with product CRUD routes"
+git add website/seller/src/components/layout/Sidebar.tsx website/seller/src/main.tsx website/seller/src/__tests__/productRoutes.test.tsx
+git commit -m "feat(seller): update Sidebar and main routing map with product CRUD routes"
 ```
 
 ---

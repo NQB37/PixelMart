@@ -10,7 +10,7 @@
 
 ## Global Constraints
 
-- Client web portal is located at `web/client-web/`
+- Client web portal is located at `website/client/`
 - Tech Stack: Next.js 15 (App Router), React 19, Tailwind CSS (v4), TypeScript, Zustand
 - No placeholder code in the plan: write actual implementations, imports, types, test cases, and commands.
 - Use Vietnamese for descriptions and explanations, and English for code and commands.
@@ -21,8 +21,8 @@
 ### Task 6.1: Search Debounce Hook & Product Filters Component
 
 **Files:**
-- Create: `web/client-web/hooks/useDebounce.ts`, `web/client-web/features/product/components/ProductFilters.tsx`
-- Test: `web/client-web/hooks/__tests__/useDebounce.test.ts`
+- Create: `website/client/hooks/useDebounce.ts`, `website/client/features/product/components/ProductFilters.tsx`
+- Test: `website/client/hooks/__tests__/useDebounce.test.ts`
 
 **Interfaces:**
 - Consumes: None
@@ -30,7 +30,7 @@
 
 - [ ] **Step 1: Write the failing test**
 Tạo file test kiểm tra xem hook `useDebounce` có cập nhật giá trị đúng thời gian trễ hay không:
-Create: `web/client-web/hooks/__tests__/useDebounce.test.ts`
+Create: `website/client/hooks/__tests__/useDebounce.test.ts`
 ```typescript
 import { renderHook, act } from '@testing-library/react';
 import { useDebounce } from '../useDebounce';
@@ -62,14 +62,14 @@ describe('useDebounce Hook', () => {
 - [ ] **Step 2: Run test to verify it fails**
 Run:
 ```bash
-cd /home/nquocbao37/Code/PixelMart/web/client-web
-npm run test
+cd /home/nquocbao37/Code/PixelMart/website/client
+pnpm test
 ```
 Expected: FAIL do chưa tạo hook `useDebounce.ts`.
 
 - [ ] **Step 3: Write minimal implementation**
 Tạo Hook `useDebounce.ts`:
-Create: `web/client-web/hooks/useDebounce.ts`
+Create: `website/client/hooks/useDebounce.ts`
 ```typescript
 import { useState, useEffect } from 'react';
 
@@ -91,7 +91,7 @@ export function useDebounce<T>(value: T, delay: number = 500): T {
 ```
 
 Tạo component `ProductFilters.tsx` cho phép filter:
-Create: `web/client-web/features/product/components/ProductFilters.tsx`
+Create: `website/client/features/product/components/ProductFilters.tsx`
 ```tsx
 'use client';
 
@@ -169,8 +169,8 @@ export default function ProductFilters({
 - [ ] **Step 4: Run test to verify it passes**
 Run:
 ```bash
-cd /home/nquocbao37/Code/PixelMart/web/client-web
-npm run test
+cd /home/nquocbao37/Code/PixelMart/website/client
+pnpm test
 ```
 Expected: PASS useDebounce.test.ts
 
@@ -178,7 +178,7 @@ Expected: PASS useDebounce.test.ts
 Run:
 ```bash
 git add hooks/useDebounce.ts features/product/components/ProductFilters.tsx hooks/__tests__/useDebounce.test.ts
-git commit -m "feat(client-web): implement useDebounce hook and UI sidebar ProductFilters component"
+git commit -m "feat(client): implement useDebounce hook and UI sidebar ProductFilters component"
 ```
 
 ---
@@ -186,8 +186,8 @@ git commit -m "feat(client-web): implement useDebounce hook and UI sidebar Produ
 ### Task 6.2: Product Card Layout and Shop Page Listing
 
 **Files:**
-- Create: `web/client-web/features/product/components/ProductCard.tsx`, `web/client-web/app/(storefront)/products/page.tsx`
-- Test: `web/client-web/features/product/__tests__/ProductCard.test.tsx`
+- Create: `website/client/features/product/components/ProductCard.tsx`, `website/client/app/(public)/products/page.tsx`
+- Test: `website/client/features/product/__tests__/ProductCard.test.tsx`
 
 **Interfaces:**
 - Consumes: Tailwind v4 theme utility
@@ -195,7 +195,7 @@ git commit -m "feat(client-web): implement useDebounce hook and UI sidebar Produ
 
 - [ ] **Step 1: Write the failing test**
 Tạo file test kiểm tra khả năng render của ProductCard:
-Create: `web/client-web/features/product/__tests__/ProductCard.test.tsx`
+Create: `website/client/features/product/__tests__/ProductCard.test.tsx`
 ```tsx
 import React from 'react';
 import { render, screen } from '@testing-library/react';
@@ -221,14 +221,14 @@ describe('ProductCard Component', () => {
 - [ ] **Step 2: Run test to verify it fails**
 Run:
 ```bash
-cd /home/nquocbao37/Code/PixelMart/web/client-web
-npm run test
+cd /home/nquocbao37/Code/PixelMart/website/client
+pnpm test
 ```
 Expected: FAIL do chưa tạo component `ProductCard.tsx`.
 
 - [ ] **Step 3: Write minimal implementation**
 Tạo Component ProductCard:
-Create: `web/client-web/features/product/components/ProductCard.tsx`
+Create: `website/client/features/product/components/ProductCard.tsx`
 ```tsx
 import React from 'react';
 import Link from 'next/link';
@@ -277,8 +277,8 @@ export default function ProductCard({ product }: { product: Product }) {
 }
 ```
 
-Tạo page `web/client-web/app/(storefront)/products/page.tsx`:
-Create: `web/client-web/app/(storefront)/products/page.tsx`
+Tạo page `website/client/app/(public)/products/page.tsx`:
+Create: `website/client/app/(public)/products/page.tsx`
 ```tsx
 'use client';
 
@@ -286,7 +286,7 @@ import React, { useState, useEffect } from 'react';
 import ProductFilters from '../../features/product/components/ProductFilters';
 import ProductCard, { Product } from '../../features/product/components/ProductCard';
 import { useDebounce } from '../../hooks/useDebounce';
-import { api } from '@pixelmart/shared-web';
+import { api } from '@/lib/api';
 
 export default function ProductsPage() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -357,8 +357,8 @@ export default function ProductsPage() {
 - [ ] **Step 4: Run test to verify it passes**
 Run:
 ```bash
-cd /home/nquocbao37/Code/PixelMart/web/client-web
-npm run test
+cd /home/nquocbao37/Code/PixelMart/website/client
+pnpm test
 ```
 Expected: PASS ProductCard.test.tsx
 
@@ -366,7 +366,7 @@ Expected: PASS ProductCard.test.tsx
 Run:
 ```bash
 git add features/product/components/ProductCard.tsx app/\(storefront\)/products/page.tsx features/product/__tests__/ProductCard.test.tsx
-git commit -m "feat(client-web): develop ProductCard component and render dynamic product list with filters"
+git commit -m "feat(client): develop ProductCard component and render dynamic product list with filters"
 ```
 
 ---
@@ -374,8 +374,8 @@ git commit -m "feat(client-web): develop ProductCard component and render dynami
 ### Task 6.3: SSR Product Details Page with dynamic SEO Metadata & Clipboard Sharing
 
 **Files:**
-- Create: `web/client-web/app/(storefront)/products/[slug]/page.tsx`, `web/client-web/features/product/components/ShareButton.tsx`
-- Test: `web/client-web/app/(storefront)/products/[slug]/__tests__/ProductDetailsPage.test.tsx`, `web/client-web/features/product/__tests__/ShareButton.test.tsx`
+- Create: `website/client/app/(public)/products/[slug]/page.tsx`, `website/client/features/product/components/ShareButton.tsx`
+- Test: `website/client/app/(public)/products/[slug]/__tests__/ProductDetailsPage.test.tsx`, `website/client/features/product/__tests__/ShareButton.test.tsx`
 
 **Interfaces:**
 - Consumes: Next.js 15 generateMetadata, Clipboard API
@@ -384,14 +384,14 @@ git commit -m "feat(client-web): develop ProductCard component and render dynami
 - [ ] **Step 1: Write the failing tests**
 
 Tạo file test kiểm tra khả năng render SSR và cấu hình generateMetadata:
-Create: `web/client-web/app/(storefront)/products/[slug]/__tests__/ProductDetailsPage.test.tsx`
+Create: `website/client/app/(public)/products/[slug]/__tests__/ProductDetailsPage.test.tsx`
 ```tsx
 import { generateMetadata } from '../page';
 
 // Mock the API library
-jest.mock('@pixelmart/shared-web', () => ({
+vi.mock('@/lib/api', () => ({
   api: {
-    get: jest.fn().mockResolvedValue({
+    get: vi.fn().mockResolvedValue({
       data: {
         success: true,
         data: {
@@ -417,7 +417,7 @@ describe('Product Details SSR SEO', () => {
 ```
 
 Tạo file test kiểm tra chức năng Share Button sao chép đường dẫn:
-Create: `web/client-web/features/product/__tests__/ShareButton.test.tsx`
+Create: `website/client/features/product/__tests__/ShareButton.test.tsx`
 ```tsx
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
@@ -428,7 +428,7 @@ describe('ShareButton Component', () => {
 
   beforeAll(() => {
     const mockClipboard = {
-      writeText: jest.fn().mockResolvedValue(undefined),
+      writeText: vi.fn().mockResolvedValue(undefined),
     };
     Object.defineProperty(global.navigator, 'clipboard', {
       value: mockClipboard,
@@ -467,15 +467,15 @@ describe('ShareButton Component', () => {
 
 Run:
 ```bash
-cd /home/nquocbao37/Code/PixelMart/web/client-web
-npm run test
+cd /home/nquocbao37/Code/PixelMart/website/client
+pnpm test
 ```
 Expected: FAIL do chưa tạo các file component và page.
 
 - [ ] **Step 3: Write minimal implementation**
 
 Tạo Component ShareButton sử dụng Clipboard API:
-Create: `web/client-web/features/product/components/ShareButton.tsx`
+Create: `website/client/features/product/components/ShareButton.tsx`
 ```tsx
 'use client';
 
@@ -520,11 +520,11 @@ export default function ShareButton() {
 ```
 
 Tạo SSR Page `products/[slug]/page.tsx` tích hợp `ShareButton`:
-Create: `web/client-web/app/(storefront)/products/[slug]/page.tsx`
+Create: `website/client/app/(public)/products/[slug]/page.tsx`
 ```tsx
 import React from 'react';
 import Image from 'next/image';
-import { api } from '@pixelmart/shared-web';
+import { api } from '@/lib/api';
 import type { Metadata } from 'next';
 import ShareButton from '../../../../features/product/components/ShareButton';
 
@@ -616,8 +616,8 @@ export default async function ProductDetailPage({ params }: Props) {
 
 Run:
 ```bash
-cd /home/nquocbao37/Code/PixelMart/web/client-web
-npm run test
+cd /home/nquocbao37/Code/PixelMart/website/client
+pnpm test
 ```
 Expected: PASS ProductDetailsPage.test.tsx & ShareButton.test.tsx
 
@@ -626,7 +626,7 @@ Expected: PASS ProductDetailsPage.test.tsx & ShareButton.test.tsx
 Run:
 ```bash
 git add app/\(storefront\)/products/\[slug\]/page.tsx app/\(storefront\)/products/\[slug\]/__tests__/ProductDetailsPage.test.tsx features/product/components/ShareButton.tsx features/product/__tests__/ShareButton.test.tsx
-git commit -m "feat(client-web): build SSR Product Details page with dynamic OpenGraph SEO tags and clipboard link sharing"
+git commit -m "feat(client): build SSR Product Details page with dynamic OpenGraph SEO tags and clipboard link sharing"
 ```
 
 ---

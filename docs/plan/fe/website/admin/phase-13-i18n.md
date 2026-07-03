@@ -10,7 +10,7 @@
 
 ## Global Constraints
 
-- Thư mục làm việc: `web/admin-web/`
+- Thư mục làm việc: `website/admin/`
 - Hai ngôn ngữ chính hỗ trợ: Tiếng Việt (`vi`) và Tiếng Anh (`en`). Mặc định ban đầu chọn `vi`.
 - Key lưu trữ trong LocalStorage: `admin_lang`
 - Mọi chuỗi ký tự hiển thị trên giao diện của Sidebar, Header và Dashboard chính cần được chuyển sang hàm dịch `t('key')` thay vì viết cứng.
@@ -23,11 +23,11 @@
 ### Task 13.1: Cấu hình react-i18next & Định nghĩa Dictionary
 
 **Files:**
-- Create: `web/admin-web/src/locales/vi/translation.json`
-- Create: `web/admin-web/src/locales/en/translation.json`
-- Create: `web/admin-web/src/lib/i18n.ts`
-- Create: `web/admin-web/src/__tests__/i18n.test.tsx`
-- Modify: `web/admin-web/src/main.tsx` (import `./lib/i18n`)
+- Create: `website/admin/src/locales/vi/translation.json`
+- Create: `website/admin/src/locales/en/translation.json`
+- Create: `website/admin/src/lib/i18n.ts`
+- Create: `website/admin/src/__tests__/i18n.test.tsx`
+- Modify: `website/admin/src/main.tsx` (import `./lib/i18n`)
 
 **Interfaces:**
 - Consumes: None
@@ -36,7 +36,7 @@
 - [ ] **Step 1: Write the failing test**
 
 ```typescript
-// web/admin-web/src/__tests__/i18n.test.tsx
+// website/admin/src/__tests__/i18n.test.tsx
 import React from 'react';
 import { render, screen, act } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
@@ -73,13 +73,13 @@ describe('i18n configuration setup', () => {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `cd web/admin-web && npm run test`
+Run: `cd website/admin && pnpm test`
 Expected: FAIL với lỗi không import được `../lib/i18n` do file chưa được tạo.
 
 - [ ] **Step 3: Write minimal implementation**
 
 ```json
-// web/admin-web/src/locales/vi/translation.json
+// website/admin/src/locales/vi/translation.json
 {
   "common": {
     "search": "Tìm kiếm...",
@@ -102,7 +102,7 @@ Expected: FAIL với lỗi không import được `../lib/i18n` do file chưa đ
 ```
 
 ```json
-// web/admin-web/src/locales/en/translation.json
+// website/admin/src/locales/en/translation.json
 {
   "common": {
     "search": "Search...",
@@ -125,7 +125,7 @@ Expected: FAIL với lỗi không import được `../lib/i18n` do file chưa đ
 ```
 
 ```typescript
-// web/admin-web/src/lib/i18n.ts
+// website/admin/src/lib/i18n.ts
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import viTranslation from '../locales/vi/translation.json';
@@ -150,7 +150,7 @@ i18n
 export default i18n;
 ```
 
-Modify `web/admin-web/src/main.tsx` to include `import './lib/i18n';` tại dòng đầu tiên của file:
+Modify `website/admin/src/main.tsx` to include `import './lib/i18n';` tại dòng đầu tiên của file:
 ```typescript
 import React from 'react';
 import ReactDOM from 'react-dom/client';
@@ -165,13 +165,13 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 );
 ```
 
-Modify `web/admin-web/package.json` to add i18n dependencies:
+Modify `website/admin/package.json` to add i18n dependencies:
 Run: `npm install i18next react-i18next`
 (Add entries to dependencies in `package.json` file inside implementing phase).
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `cd web/admin-web && npm run test`
+Run: `cd website/admin && pnpm test`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -186,10 +186,10 @@ git commit -m "feat(admin): configure react-i18next and define dictionaries for 
 ### Task 13.2: Xây dựng LanguageSwitcher & Cập Nhật Hệ Thống Bản Dịch Trên Giao Diện Layout
 
 **Files:**
-- Create: `web/admin-web/src/components/layout/LanguageSwitcher.tsx`
-- Create: `web/admin-web/src/__tests__/LanguageSwitcher.test.tsx`
-- Modify: `web/admin-web/src/components/layout/Header.tsx` (chèn LanguageSwitcher vào header)
-- Modify: `web/admin-web/src/components/layout/Sidebar.tsx` (dùng useTranslation dịch menu navigation)
+- Create: `website/admin/src/components/layout/LanguageSwitcher.tsx`
+- Create: `website/admin/src/__tests__/LanguageSwitcher.test.tsx`
+- Modify: `website/admin/src/components/layout/Header.tsx` (chèn LanguageSwitcher vào header)
+- Modify: `website/admin/src/components/layout/Sidebar.tsx` (dùng useTranslation dịch menu navigation)
 
 **Interfaces:**
 - Consumes: `useTranslation` hook
@@ -198,7 +198,7 @@ git commit -m "feat(admin): configure react-i18next and define dictionaries for 
 - [ ] **Step 1: Write the failing test**
 
 ```typescript
-// web/admin-web/src/__tests__/LanguageSwitcher.test.tsx
+// website/admin/src/__tests__/LanguageSwitcher.test.tsx
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
@@ -231,13 +231,13 @@ describe('LanguageSwitcher Component', () => {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `cd web/admin-web && npm run test`
+Run: `cd website/admin && pnpm test`
 Expected: FAIL với lỗi không tìm thấy `LanguageSwitcher` component.
 
 - [ ] **Step 3: Write minimal implementation**
 
 ```typescript
-// web/admin-web/src/components/layout/LanguageSwitcher.tsx
+// website/admin/src/components/layout/LanguageSwitcher.tsx
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Globe } from 'lucide-react';
@@ -269,7 +269,7 @@ export default function LanguageSwitcher() {
 ```
 
 ```typescript
-// web/admin-web/src/components/layout/Header.tsx
+// website/admin/src/components/layout/Header.tsx
 import React from 'react';
 import { Menu, Bell, User } from 'lucide-react';
 import LanguageSwitcher from './LanguageSwitcher'; // Tích hợp LanguageSwitcher
@@ -310,7 +310,7 @@ export default function Header({ onToggleSidebar }: HeaderProps) {
 ```
 
 ```typescript
-// web/admin-web/src/components/layout/Sidebar.tsx
+// website/admin/src/components/layout/Sidebar.tsx
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { LayoutDashboard, Store, Users } from 'lucide-react';
@@ -363,7 +363,7 @@ export default function Sidebar({ isCollapsed }: SidebarProps) {
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `cd web/admin-web && npm run test`
+Run: `cd website/admin && pnpm test`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**

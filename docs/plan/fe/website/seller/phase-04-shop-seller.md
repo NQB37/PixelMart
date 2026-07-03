@@ -12,8 +12,8 @@
 
 - Node.js version >= 18
 - Package manager: pnpm
-- Toàn bộ source code của seller-web nằm trong thư mục `web/seller-web/`
-- Sử dụng Path Alias `@/` trỏ tới `web/seller-web/src`
+- Toàn bộ source code của seller nằm trong thư mục `website/seller/`
+- Sử dụng Path Alias `@/` trỏ tới `website/seller/src`
 - TDD: Mọi component/helper phải viết test trước khi code minimal implementation
 - Không sử dụng code placeholder (ví dụ: `// TODO`, `/* code here */`). Toàn bộ code trong plan phải hoạt động được.
 
@@ -24,15 +24,15 @@
 ### Task 1: Xây dựng Component Form thiết lập Cửa hàng
 
 **Files:**
-- Create: `web/seller-web/src/pages/ShopSettings.tsx`
-- Create: `web/seller-web/src/__tests__/shopSettings.test.tsx`
+- Create: `website/seller/src/pages/ShopSettings.tsx`
+- Create: `website/seller/src/__tests__/shopSettings.test.tsx`
 
 **Interfaces:**
 - Consumes: `AuthContext` để lấy thông tin đăng nhập cửa hàng.
 - Produces: Giao diện form điều chỉnh thông tin shop bao gồm: Tên shop (`shopName`) và logo (`logoUrl`) kèm theo nút Lưu.
 
 - [ ] **Step 1: Write the failing test**
-Create: `web/seller-web/src/__tests__/shopSettings.test.tsx`
+Create: `website/seller/src/__tests__/shopSettings.test.tsx`
 ```typescript
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
@@ -53,11 +53,11 @@ describe('ShopSettings Component', () => {
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
-Run: `pnpm --filter seller-web test run`
+Run: `pnpm --filter seller test run`
 Expected: FAIL vì `pages/ShopSettings.tsx` chưa được tạo.
 
 - [ ] **Step 3: Write minimal implementation**
-Create: `web/seller-web/src/pages/ShopSettings.tsx`
+Create: `website/seller/src/pages/ShopSettings.tsx`
 ```typescript
 import React, { useState, useEffect } from 'react';
 import { Store, Image as ImageIcon, Save, CheckCircle } from 'lucide-react';
@@ -204,13 +204,13 @@ export default function ShopSettings() {
 ```
 
 - [ ] **Step 4: Run test to verify it passes**
-Run: `pnpm --filter seller-web test run`
+Run: `pnpm --filter seller test run`
 Expected: PASS 1/1 (shopSettings.test.tsx)
 
 - [ ] **Step 5: Commit**
 ```bash
-git add web/seller-web/src/pages/ShopSettings.tsx web/seller-web/src/__tests__/shopSettings.test.tsx
-git commit -m "feat(seller-web): add ShopSettings component with logo upload preview state"
+git add website/seller/src/pages/ShopSettings.tsx website/seller/src/__tests__/shopSettings.test.tsx
+git commit -m "feat(seller): add ShopSettings component with logo upload preview state"
 ```
 
 ---
@@ -218,16 +218,16 @@ git commit -m "feat(seller-web): add ShopSettings component with logo upload pre
 ### Task 2: Cấu hình Tuyến đường đi tới Shop Settings
 
 **Files:**
-- Modify: `web/seller-web/src/components/layout/Sidebar.tsx`
-- Modify: `web/seller-web/src/main.tsx`
-- Create: `web/seller-web/src/__tests__/shopSettingsRoute.test.tsx`
+- Modify: `website/seller/src/components/layout/Sidebar.tsx`
+- Modify: `website/seller/src/main.tsx`
+- Create: `website/seller/src/__tests__/shopSettingsRoute.test.tsx`
 
 **Interfaces:**
 - Consumes: Component `ShopSettings` từ Task 1.
 - Produces: Sidebar hiển thị menu điều hướng đến Thiết lập Shop, Router dẫn tới `/settings` hiển thị trang cấu hình.
 
 - [ ] **Step 1: Write the failing test**
-Create: `web/seller-web/src/__tests__/shopSettingsRoute.test.tsx`
+Create: `website/seller/src/__tests__/shopSettingsRoute.test.tsx`
 ```typescript
 import React from 'react';
 import { render, screen } from '@testing-library/react';
@@ -249,12 +249,12 @@ describe('Shop Settings Navigation link', () => {
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
-Run: `pnpm --filter seller-web test run`
+Run: `pnpm --filter seller test run`
 Expected: FAIL vì Sidebar chưa có liên kết `Thiết lập` (shop settings).
 
 - [ ] **Step 3: Write minimal implementation**
 Cập nhật Sidebar để thêm menu Thiết lập shop:
-Modify: `web/seller-web/src/components/layout/Sidebar.tsx:1-55`
+Modify: `website/seller/src/components/layout/Sidebar.tsx:1-55`
 ```typescript
 import React from 'react';
 import { NavLink } from 'react-router-dom';
@@ -297,7 +297,7 @@ export default function Sidebar() {
 ```
 
 Cập nhật `main.tsx` để bảo vệ và render tuyến đường `/settings`:
-Modify: `web/seller-web/src/main.tsx:1-85`
+Modify: `website/seller/src/main.tsx:1-85`
 ```typescript
 import React from 'react';
 import ReactDOM from 'react-dom/client';
@@ -359,13 +359,13 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 ```
 
 - [ ] **Step 4: Run test to verify it passes**
-Run: `pnpm --filter seller-web test run`
+Run: `pnpm --filter seller test run`
 Expected: PASS tất cả 8 tests bao gồm settings route test.
 
 - [ ] **Step 5: Commit**
 ```bash
-git add web/seller-web/src/components/layout/Sidebar.tsx web/seller-web/src/main.tsx web/seller-web/src/__tests__/shopSettingsRoute.test.tsx
-git commit -m "feat(seller-web): add ShopSettings routing and link in Sidebar navigation"
+git add website/seller/src/components/layout/Sidebar.tsx website/seller/src/main.tsx website/seller/src/__tests__/shopSettingsRoute.test.tsx
+git commit -m "feat(seller): add ShopSettings routing and link in Sidebar navigation"
 ```
 
 ---

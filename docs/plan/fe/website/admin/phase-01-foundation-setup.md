@@ -10,7 +10,7 @@
 
 ## Global Constraints
 
-- Thư mục làm việc: `web/admin-web/`
+- Thư mục làm việc: `website/admin/`
 - Phiên bản Node.js tối thiểu: Node.js 18+
 - Mọi thành phần UI phải được kiểm thử bằng unit test viết trên Vitest + React Testing Library
 - Không sử dụng code placeholder hay các ghi chú TBD/TODO trong code triển khai chính thức
@@ -23,14 +23,14 @@
 ### Task 1.1: Setup React + Vite SPA với TypeScript & Vitest
 
 **Files:**
-- Create: `web/admin-web/package.json`
-- Create: `web/admin-web/vite.config.ts`
-- Create: `web/admin-web/tsconfig.json`
-- Create: `web/admin-web/src/setupTests.ts`
-- Create: `web/admin-web/src/index.css`
-- Create: `web/admin-web/src/main.tsx`
-- Create: `web/admin-web/src/App.tsx`
-- Create: `web/admin-web/src/__tests__/App.test.tsx`
+- Create: `website/admin/package.json`
+- Create: `website/admin/vite.config.ts`
+- Create: `website/admin/tsconfig.json`
+- Create: `website/admin/src/setupTests.ts`
+- Create: `website/admin/src/index.css`
+- Create: `website/admin/src/main.tsx`
+- Create: `website/admin/src/App.tsx`
+- Create: `website/admin/src/__tests__/App.test.tsx`
 
 **Interfaces:**
 - Consumes: None (khởi tạo từ đầu)
@@ -39,7 +39,7 @@
 - [ ] **Step 1: Write the failing test**
 
 ```typescript
-// web/admin-web/src/__tests__/App.test.tsx
+// website/admin/src/__tests__/App.test.tsx
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
 import App from '../App';
@@ -54,15 +54,15 @@ describe('App Component', () => {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `cd web/admin-web && npm run test`
+Run: `cd website/admin && pnpm test`
 Expected: FAIL với lỗi không tìm thấy component `App` hoặc file chưa tồn tại.
 
 - [ ] **Step 3: Write minimal implementation**
 
 ```json
-// web/admin-web/package.json
+// website/admin/package.json
 {
-  "name": "@pixelmart/admin-web",
+  "name": "@pixelmart/admin",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -95,7 +95,7 @@ Expected: FAIL với lỗi không tìm thấy component `App` hoặc file chưa 
 ```
 
 ```typescript
-// web/admin-web/vite.config.ts
+// website/admin/vite.config.ts
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react-swc';
 import tailwindcss from '@tailwindcss/vite';
@@ -111,17 +111,17 @@ export default defineConfig({
 ```
 
 ```typescript
-// web/admin-web/src/setupTests.ts
+// website/admin/src/setupTests.ts
 import '@testing-library/jest-dom';
 ```
 
 ```css
-/* web/admin-web/src/index.css */
+/* website/admin/src/index.css */
 @import "tailwindcss";
 ```
 
 ```typescript
-// web/admin-web/src/App.tsx
+// website/admin/src/App.tsx
 import React from 'react';
 
 export default function App() {
@@ -134,7 +134,7 @@ export default function App() {
 ```
 
 ```typescript
-// web/admin-web/src/main.tsx
+// website/admin/src/main.tsx
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
@@ -148,7 +148,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 ```
 
 ```json
-// web/admin-web/tsconfig.json
+// website/admin/tsconfig.json
 {
   "compilerOptions": {
     "target": "ES2020",
@@ -178,7 +178,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 ```
 
 ```json
-// web/admin-web/tsconfig.node.json
+// website/admin/tsconfig.node.json
 {
   "compilerOptions": {
     "composite": true,
@@ -194,7 +194,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `cd web/admin-web && npm run test`
+Run: `cd website/admin && pnpm test`
 Expected: PASS 1 test.
 
 - [ ] **Step 5: Commit**
@@ -209,11 +209,11 @@ git commit -m "feat(admin): initialize vite project with typescript and vitest"
 ### Task 1.2: Cài đặt Layout Shell (Header, Sidebar) & Routing
 
 **Files:**
-- Create: `web/admin-web/src/components/layout/AdminLayout.tsx`
-- Create: `web/admin-web/src/components/layout/Header.tsx`
-- Create: `web/admin-web/src/components/layout/Sidebar.tsx`
-- Create: `web/admin-web/src/__tests__/AdminLayout.test.tsx`
-- Modify: `web/admin-web/src/App.tsx`
+- Create: `website/admin/src/components/layout/AdminLayout.tsx`
+- Create: `website/admin/src/components/layout/Header.tsx`
+- Create: `website/admin/src/components/layout/Sidebar.tsx`
+- Create: `website/admin/src/__tests__/AdminLayout.test.tsx`
+- Modify: `website/admin/src/App.tsx`
 
 **Interfaces:**
 - Consumes: None
@@ -222,7 +222,7 @@ git commit -m "feat(admin): initialize vite project with typescript and vitest"
 - [ ] **Step 1: Write the failing test**
 
 ```typescript
-// web/admin-web/src/__tests__/AdminLayout.test.tsx
+// website/admin/src/__tests__/AdminLayout.test.tsx
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
@@ -254,13 +254,13 @@ describe('AdminLayout Component', () => {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `cd web/admin-web && npm run test`
+Run: `cd website/admin && pnpm test`
 Expected: FAIL với lỗi không tìm thấy `AdminLayout` component.
 
 - [ ] **Step 3: Write minimal implementation**
 
 ```typescript
-// web/admin-web/src/components/layout/Header.tsx
+// website/admin/src/components/layout/Header.tsx
 import React from 'react';
 import { Menu, Bell, User } from 'lucide-react';
 
@@ -299,7 +299,7 @@ export default function Header({ onToggleSidebar }: HeaderProps) {
 ```
 
 ```typescript
-// web/admin-web/src/components/layout/Sidebar.tsx
+// website/admin/src/components/layout/Sidebar.tsx
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { LayoutDashboard, Store, Users } from 'lucide-react';
@@ -349,7 +349,7 @@ export default function Sidebar({ isCollapsed }: SidebarProps) {
 ```
 
 ```typescript
-// web/admin-web/src/components/layout/AdminLayout.tsx
+// website/admin/src/components/layout/AdminLayout.tsx
 import React, { useState } from 'react';
 import Header from './Header';
 import Sidebar from './Sidebar';
@@ -376,7 +376,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 ```
 
 ```typescript
-// web/admin-web/src/App.tsx
+// website/admin/src/App.tsx
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import AdminLayout from './components/layout/AdminLayout';
@@ -427,7 +427,7 @@ export default function App() {
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `cd web/admin-web && npm run test`
+Run: `cd website/admin && pnpm test`
 Expected: PASS all tests.
 
 - [ ] **Step 5: Commit**
@@ -443,7 +443,7 @@ git commit -m "feat(admin): build AdminLayout Shell with collapsible sidebar and
 
 ### Checklist cuối phase
 - [ ] Chạy lệnh `npm run build` hoàn thành không có lỗi biên dịch TypeScript.
-- [ ] Chạy lệnh `npm run test` vượt qua tất cả các bài unit test.
+- [ ] Chạy lệnh `pnpm test` vượt qua tất cả các bài unit test.
 - [ ] Có thể thu nhỏ Sidebar khi click nút Menu ở Header, layout tự co giãn mượt mà.
 - [ ] Các route `/admin`, `/admin/shops`, `/admin/users` hoạt động và hiển thị nội dung mẫu đúng layout.
 

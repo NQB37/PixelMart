@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Khởi tạo cấu trúc dự án React + Vite + TypeScript cho Kênh người bán (seller-web), cấu hình Tailwind CSS v4, Router DOM, và xây dựng khung giao diện chính (Layout Shell) với Sidebar.
+**Goal:** Khởi tạo cấu trúc dự án React + Vite + TypeScript cho Kênh người bán (seller), cấu hình Tailwind CSS v4, Router DOM, và xây dựng khung giao diện chính (Layout Shell) với Sidebar.
 
 **Architecture:** Sử dụng React + Vite làm Single Page Application (SPA), React Router v6 cho routing, Tailwind CSS v4 cho giao diện responsive, tích hợp Vitest + React Testing Library làm khung kiểm thử đơn vị.
 
@@ -12,8 +12,8 @@
 
 - Node.js version >= 18
 - Package manager: pnpm
-- Toàn bộ source code của seller-web nằm trong thư mục `web/seller-web/`
-- Sử dụng Path Alias `@/` trỏ tới `web/seller-web/src`
+- Toàn bộ source code của seller nằm trong thư mục `website/seller/`
+- Sử dụng Path Alias `@/` trỏ tới `website/seller/src`
 - TDD: Mọi component/helper phải viết test trước khi code minimal implementation
 - Không sử dụng code placeholder (ví dụ: `// TODO`, `/* code here */`). Toàn bộ code trong plan phải hoạt động được.
 
@@ -24,11 +24,11 @@
 ### Task 1: Khởi tạo dự án Vite & Cấu hình TypeScript, Tailwind v4
 
 **Files:**
-- Create: `web/seller-web/package.json`
-- Create: `web/seller-web/vite.config.ts`
-- Create: `web/seller-web/tsconfig.json`
-- Create: `web/seller-web/src/index.css`
-- Create: `web/seller-web/index.html`
+- Create: `website/seller/package.json`
+- Create: `website/seller/vite.config.ts`
+- Create: `website/seller/tsconfig.json`
+- Create: `website/seller/src/index.css`
+- Create: `website/seller/index.html`
 
 **Interfaces:**
 - Consumes: None (khởi tạo từ đầu)
@@ -36,7 +36,7 @@
 
 - [ ] **Step 1: Write the failing test**
 Vì đây là cấu hình hạ tầng, ta tạo file test đầu tiên kiểm tra xem môi trường test chạy được.
-Create: `web/seller-web/src/__tests__/smoke.test.ts`
+Create: `website/seller/src/__tests__/smoke.test.ts`
 ```typescript
 import { describe, it, expect } from 'vitest';
 
@@ -49,15 +49,15 @@ describe('Smoke Test', () => {
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
-Run: `pnpm --filter seller-web test run`
+Run: `pnpm --filter seller test run`
 Expected: Lệnh fail vì package.json chưa được cấu hình lệnh `test` và vitest chưa được cài đặt.
 
 - [ ] **Step 3: Write minimal implementation**
 Tạo file `package.json` để khai báo các dependencies và scripts:
-Create: `web/seller-web/package.json`
+Create: `website/seller/package.json`
 ```json
 {
-  "name": "seller-web",
+  "name": "seller",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -91,7 +91,7 @@ Create: `web/seller-web/package.json`
 ```
 
 Tạo file `vite.config.ts`:
-Create: `web/seller-web/vite.config.ts`
+Create: `website/seller/vite.config.ts`
 ```typescript
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
@@ -114,13 +114,13 @@ export default defineConfig({
 ```
 
 Tạo file setup cho test:
-Create: `web/seller-web/src/__tests__/setup.ts`
+Create: `website/seller/src/__tests__/setup.ts`
 ```typescript
 import '@testing-library/jest-dom';
 ```
 
 Tạo file `tsconfig.json`:
-Create: `web/seller-web/tsconfig.json`
+Create: `website/seller/tsconfig.json`
 ```json
 {
   "compilerOptions": {
@@ -154,7 +154,7 @@ Create: `web/seller-web/tsconfig.json`
 ```
 
 Tạo CSS file với Tailwind v4:
-Create: `web/seller-web/src/index.css`
+Create: `website/seller/src/index.css`
 ```css
 @import "tailwindcss";
 
@@ -168,7 +168,7 @@ Create: `web/seller-web/src/index.css`
 ```
 
 Tạo file `index.html`:
-Create: `web/seller-web/index.html`
+Create: `website/seller/index.html`
 ```html
 <!doctype html>
 <html lang="vi">
@@ -186,7 +186,7 @@ Create: `web/seller-web/index.html`
 ```
 
 Tạo file main entrypoint:
-Create: `web/seller-web/src/main.tsx`
+Create: `website/seller/src/main.tsx`
 ```typescript
 import React from 'react';
 import ReactDOM from 'react-dom/client';
@@ -200,7 +200,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
-Run: `pnpm --filter seller-web test run`
+Run: `pnpm --filter seller test run`
 Expected: Lệnh fail vì các dependencies chưa được cài đặt.
 
 - [ ] **Step 3: Write minimal implementation**
@@ -208,13 +208,13 @@ Thực thi cài đặt các package trong project.
 Run: `pnpm install`
 
 - [ ] **Step 4: Run test to verify it passes**
-Run: `pnpm --filter seller-web test run`
+Run: `pnpm --filter seller test run`
 Expected: PASS 1/1 test (smoke.test.ts)
 
 - [ ] **Step 5: Commit**
 ```bash
-git add web/seller-web/package.json web/seller-web/vite.config.ts web/seller-web/tsconfig.json web/seller-web/index.html web/seller-web/src/index.css web/seller-web/src/main.tsx web/seller-web/src/__tests__/smoke.test.ts web/seller-web/src/__tests__/setup.ts
-git commit -m "feat(seller-web): initialize Vite project with TypeScript, Tailwind v4 and Vitest setup"
+git add website/seller/package.json website/seller/vite.config.ts website/seller/tsconfig.json website/seller/index.html website/seller/src/index.css website/seller/src/main.tsx website/seller/src/__tests__/smoke.test.ts website/seller/src/__tests__/setup.ts
+git commit -m "feat(seller): initialize Vite project with TypeScript, Tailwind v4 and Vitest setup"
 ```
 
 ---
@@ -222,18 +222,18 @@ git commit -m "feat(seller-web): initialize Vite project with TypeScript, Tailwi
 ### Task 2: Cấu hình Router & Page Shells cơ bản
 
 **Files:**
-- Create: `web/seller-web/src/pages/Dashboard.tsx`
-- Create: `web/seller-web/src/pages/Orders.tsx`
-- Create: `web/seller-web/src/pages/NotFound.tsx`
-- Modify: `web/seller-web/src/main.tsx`
-- Create: `web/seller-web/src/__tests__/router.test.tsx`
+- Create: `website/seller/src/pages/Dashboard.tsx`
+- Create: `website/seller/src/pages/Orders.tsx`
+- Create: `website/seller/src/pages/NotFound.tsx`
+- Modify: `website/seller/src/main.tsx`
+- Create: `website/seller/src/__tests__/router.test.tsx`
 
 **Interfaces:**
 - Consumes: Cấu hình Vite & packages ở Task 1
 - Produces: Router điều hướng cho các trang Dashboard, Orders và trang 404.
 
 - [ ] **Step 1: Write the failing test**
-Create: `web/seller-web/src/__tests__/router.test.tsx`
+Create: `website/seller/src/__tests__/router.test.tsx`
 ```typescript
 import React from 'react';
 import { render, screen } from '@testing-library/react';
@@ -266,12 +266,12 @@ describe('Router Page Shells', () => {
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
-Run: `pnpm --filter seller-web test run`
+Run: `pnpm --filter seller test run`
 Expected: FAIL do các file pages/Dashboard, pages/Orders, pages/NotFound chưa tồn tại.
 
 - [ ] **Step 3: Write minimal implementation**
 Tạo trang Dashboard:
-Create: `web/seller-web/src/pages/Dashboard.tsx`
+Create: `website/seller/src/pages/Dashboard.tsx`
 ```typescript
 import React from 'react';
 
@@ -286,7 +286,7 @@ export default function Dashboard() {
 ```
 
 Tạo trang Orders:
-Create: `web/seller-web/src/pages/Orders.tsx`
+Create: `website/seller/src/pages/Orders.tsx`
 ```typescript
 import React from 'react';
 
@@ -301,7 +301,7 @@ export default function Orders() {
 ```
 
 Tạo trang NotFound:
-Create: `web/seller-web/src/pages/NotFound.tsx`
+Create: `website/seller/src/pages/NotFound.tsx`
 ```typescript
 import React from 'react';
 import { Link } from 'react-router-dom';
@@ -321,7 +321,7 @@ export default function NotFound() {
 ```
 
 Cập nhật `main.tsx` để tích hợp `react-router-dom`:
-Modify: `web/seller-web/src/main.tsx`
+Modify: `website/seller/src/main.tsx`
 ```typescript
 import React from 'react';
 import ReactDOM from 'react-dom/client';
@@ -345,13 +345,13 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 ```
 
 - [ ] **Step 4: Run test to verify it passes**
-Run: `pnpm --filter seller-web test run`
+Run: `pnpm --filter seller test run`
 Expected: PASS 4/4 tests.
 
 - [ ] **Step 5: Commit**
 ```bash
-git add web/seller-web/src/pages/Dashboard.tsx web/seller-web/src/pages/Orders.tsx web/seller-web/src/pages/NotFound.tsx web/seller-web/src/main.tsx web/seller-web/src/__tests__/router.test.tsx
-git commit -m "feat(seller-web): add basic routing and page shells for Dashboard, Orders, and 404"
+git add website/seller/src/pages/Dashboard.tsx website/seller/src/pages/Orders.tsx website/seller/src/pages/NotFound.tsx website/seller/src/main.tsx website/seller/src/__tests__/router.test.tsx
+git commit -m "feat(seller): add basic routing and page shells for Dashboard, Orders, and 404"
 ```
 
 ---
@@ -359,18 +359,18 @@ git commit -m "feat(seller-web): add basic routing and page shells for Dashboard
 ### Task 3: Xây dựng Layout Shell có Sidebar & Header
 
 **Files:**
-- Create: `web/seller-web/src/components/layout/Sidebar.tsx`
-- Create: `web/seller-web/src/components/layout/Header.tsx`
-- Create: `web/seller-web/src/components/layout/SellerLayout.tsx`
-- Modify: `web/seller-web/src/main.tsx`
-- Create: `web/seller-web/src/__tests__/layout.test.tsx`
+- Create: `website/seller/src/components/layout/Sidebar.tsx`
+- Create: `website/seller/src/components/layout/Header.tsx`
+- Create: `website/seller/src/components/layout/SellerLayout.tsx`
+- Modify: `website/seller/src/main.tsx`
+- Create: `website/seller/src/__tests__/layout.test.tsx`
 
 **Interfaces:**
 - Consumes: Cấu hình Router và pages từ Task 2.
 - Produces: Layout dùng chung `SellerLayout` bao quanh các trang nội bộ của Kênh người bán.
 
 - [ ] **Step 1: Write the failing test**
-Create: `web/seller-web/src/__tests__/layout.test.tsx`
+Create: `website/seller/src/__tests__/layout.test.tsx`
 ```typescript
 import React from 'react';
 import { render, screen } from '@testing-library/react';
@@ -402,12 +402,12 @@ describe('SellerLayout Component', () => {
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
-Run: `pnpm --filter seller-web test run`
+Run: `pnpm --filter seller test run`
 Expected: FAIL do các file layout chưa tồn tại.
 
 - [ ] **Step 3: Write minimal implementation**
 Tạo Sidebar component:
-Create: `web/seller-web/src/components/layout/Sidebar.tsx`
+Create: `website/seller/src/components/layout/Sidebar.tsx`
 ```typescript
 import React from 'react';
 import { NavLink } from 'react-router-dom';
@@ -449,7 +449,7 @@ export default function Sidebar() {
 ```
 
 Tạo Header component:
-Create: `web/seller-web/src/components/layout/Header.tsx`
+Create: `website/seller/src/components/layout/Header.tsx`
 ```typescript
 import React from 'react';
 import { Bell, User } from 'lucide-react';
@@ -476,7 +476,7 @@ export default function Header() {
 ```
 
 Tạo SellerLayout wrapper component:
-Create: `web/seller-web/src/components/layout/SellerLayout.tsx`
+Create: `website/seller/src/components/layout/SellerLayout.tsx`
 ```typescript
 import React from 'react';
 import Sidebar from './Sidebar';
@@ -502,7 +502,7 @@ export default function SellerLayout({ children }: SellerLayoutProps) {
 ```
 
 Cập nhật `main.tsx` để render các page lồng trong `SellerLayout`:
-Modify: `web/seller-web/src/main.tsx`
+Modify: `website/seller/src/main.tsx`
 ```typescript
 import React from 'react';
 import ReactDOM from 'react-dom/client';
@@ -541,13 +541,13 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 ```
 
 - [ ] **Step 4: Run test to verify it passes**
-Run: `pnpm --filter seller-web test run`
+Run: `pnpm --filter seller test run`
 Expected: PASS tất cả 5 tests bao gồm `layout.test.tsx`.
 
 - [ ] **Step 5: Commit**
 ```bash
-git add web/seller-web/src/components/layout/Sidebar.tsx web/seller-web/src/components/layout/Header.tsx web/seller-web/src/components/layout/SellerLayout.tsx web/seller-web/src/main.tsx web/seller-web/src/__tests__/layout.test.tsx
-git commit -m "feat(seller-web): add SellerLayout with Sidebar, Header components and update routing structure"
+git add website/seller/src/components/layout/Sidebar.tsx website/seller/src/components/layout/Header.tsx website/seller/src/components/layout/SellerLayout.tsx website/seller/src/main.tsx website/seller/src/__tests__/layout.test.tsx
+git commit -m "feat(seller): add SellerLayout with Sidebar, Header components and update routing structure"
 ```
 
 ---
@@ -555,7 +555,7 @@ git commit -m "feat(seller-web): add SellerLayout with Sidebar, Header component
 ## 🏁 Phase Checklist & Common Fresher Errors
 
 ### 📋 Phase Complete Checklist
-1. Thư mục `web/seller-web` được khởi tạo thành công với cấu hình Vite, tsconfig, package.json sạch.
+1. Thư mục `website/seller` được khởi tạo thành công với cấu hình Vite, tsconfig, package.json sạch.
 2. Tailwind CSS v4 được cài đặt qua `@tailwindcss/vite` plugin, biên dịch thành công class utility.
 3. Test suite với `vitest` và `@testing-library/react` chạy thành công không có lỗi.
 4. Giao diện Sidebar chứa các Tab hoạt động điều hướng chính xác bằng `react-router-dom` Link/NavLink.

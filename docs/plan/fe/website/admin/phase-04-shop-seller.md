@@ -10,7 +10,7 @@
 
 ## Global Constraints
 
-- Thư mục làm việc: `web/admin-web/`
+- Thư mục làm việc: `website/admin/`
 - API Endpoints:
   - Lấy danh sách shop: `GET /api/v1/admin/shops?page=1&limit=10&status=PENDING`
   - Cập nhật trạng thái shop: `PATCH /api/v1/admin/shops/:id/status` (Body phê duyệt: `{ approvalStatus: 'APPROVED' | 'REJECTED', rejectedReason?: string }`; Body vận hành: `{ status: 'ACTIVE' | 'SUSPENDED' }`)
@@ -24,9 +24,9 @@
 ### Task 4.1: Xây dựng Danh Sách Shop (Shops Table) với Bộ Lọc
 
 **Files:**
-- Create: `web/admin-web/src/pages/Shops.tsx`
-- Create: `web/admin-web/src/__tests__/Shops.test.tsx`
-- Modify: `web/admin-web/src/App.tsx`
+- Create: `website/admin/src/pages/Shops.tsx`
+- Create: `website/admin/src/__tests__/Shops.test.tsx`
+- Modify: `website/admin/src/App.tsx`
 
 **Interfaces:**
 - Consumes: `GET /api/v1/admin/shops` (Backend API)
@@ -35,7 +35,7 @@
 - [ ] **Step 1: Write the failing test**
 
 ```typescript
-// web/admin-web/src/__tests__/Shops.test.tsx
+// website/admin/src/__tests__/Shops.test.tsx
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -85,13 +85,13 @@ describe('Shops Management Page', () => {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `cd web/admin-web && npm run test`
+Run: `cd website/admin && pnpm test`
 Expected: FAIL với lỗi component `Shops` không tồn tại hoặc import thất bại.
 
 - [ ] **Step 3: Write minimal implementation**
 
 ```typescript
-// web/admin-web/src/pages/Shops.tsx
+// website/admin/src/pages/Shops.tsx
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import { AlertCircle, CheckCircle2, XCircle, Ban, RefreshCw } from 'lucide-react';
@@ -233,13 +233,13 @@ export default function Shops() {
 ```
 
 ```typescript
-// web/admin-web/src/App.tsx (Modify routes to use Shops page)
+// website/admin/src/App.tsx (Modify routes to use Shops page)
 // File is updated by the build pipeline to map "/admin/shops" path to the <Shops /> component.
 ```
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `cd web/admin-web && npm run test`
+Run: `cd website/admin && pnpm test`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -254,9 +254,9 @@ git commit -m "feat(admin): build Shops list table layout with status filtering 
 ### Task 4.2: Tích Hợp Nút Phê Duyệt, Từ Chối & Đình Chỉ Hoạt Động Cửa Hàng Kèm Lý Do
 
 **Files:**
-- Modify: `web/admin-web/src/pages/Shops.tsx:100-200` (đưa các nút hành động vào ô Actions của bảng và xử lý click)
-- Create: `web/admin-web/src/components/shops/ActionReasonModal.tsx`
-- Modify: `web/admin-web/src/__tests__/Shops.test.tsx` (thêm test cho các hành động click button & submit reason)
+- Modify: `website/admin/src/pages/Shops.tsx:100-200` (đưa các nút hành động vào ô Actions của bảng và xử lý click)
+- Create: `website/admin/src/components/shops/ActionReasonModal.tsx`
+- Modify: `website/admin/src/__tests__/Shops.test.tsx` (thêm test cho các hành động click button & submit reason)
 
 **Interfaces:**
 - Consumes: `PATCH /api/v1/admin/shops/:id/status` (Backend API)
@@ -265,7 +265,7 @@ git commit -m "feat(admin): build Shops list table layout with status filtering 
 - [ ] **Step 1: Write the failing test**
 
 ```typescript
-// Cập nhật file web/admin-web/src/__tests__/Shops.test.tsx
+// Cập nhật file website/admin/src/__tests__/Shops.test.tsx
 // Thêm ca kiểm thử kiểm tra hoạt động phê duyệt và từ chối kèm lý do
 import { act } from '@testing-library/react';
 
@@ -312,13 +312,13 @@ it('approves a shop and rejects a shop with a reason through modal', async () =>
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `cd web/admin-web && npm run test`
+Run: `cd website/admin && pnpm test`
 Expected: FAIL do các nút Approve/Reject/Suspend chưa được thêm vào bảng, hoặc logic modal chưa được gọi.
 
 - [ ] **Step 3: Write minimal implementation**
 
 ```typescript
-// web/admin-web/src/components/shops/ActionReasonModal.tsx
+// website/admin/src/components/shops/ActionReasonModal.tsx
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
 
@@ -396,7 +396,7 @@ export default function ActionReasonModal({ isOpen, onClose, onConfirm, title, a
 ```
 
 ```typescript
-// web/admin-web/src/pages/Shops.tsx
+// website/admin/src/pages/Shops.tsx
 // Chèn lại toàn bộ mã nguồn của file đã tích hợp nút bấm và Modal ActionReasonModal
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
@@ -617,7 +617,7 @@ export default function Shops() {
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `cd web/admin-web && npm run test`
+Run: `cd website/admin && pnpm test`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**

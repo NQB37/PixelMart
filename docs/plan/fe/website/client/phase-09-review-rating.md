@@ -10,7 +10,7 @@
 
 ## Global Constraints
 
-- Client web portal is located at `web/client-web/`
+- Client web portal is located at `website/client/`
 - Tech Stack: Next.js 15 (App Router), React 19, Tailwind CSS (v4), TypeScript, Zustand
 - No placeholder code in the plan: write actual implementations, imports, types, test cases, and commands.
 - Use Vietnamese for descriptions and explanations, and English for code and commands.
@@ -21,8 +21,8 @@
 ### Task 9.1: Write Review Form with Star Rating and Image Upload
 
 **Files:**
-- Create: `web/client-web/features/product/components/WriteReviewForm.tsx`
-- Test: `web/client-web/features/product/__tests__/WriteReviewForm.test.tsx`
+- Create: `website/client/features/product/components/WriteReviewForm.tsx`
+- Test: `website/client/features/product/__tests__/WriteReviewForm.test.tsx`
 
 **Interfaces:**
 - Consumes: Product ID
@@ -30,7 +30,7 @@
 
 - [ ] **Step 1: Write the failing test**
 Tạo file test kiểm thử chọn số sao và validate bình luận trống:
-Create: `web/client-web/features/product/__tests__/WriteReviewForm.test.tsx`
+Create: `website/client/features/product/__tests__/WriteReviewForm.test.tsx`
 ```tsx
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
@@ -38,7 +38,7 @@ import WriteReviewForm from '../components/WriteReviewForm';
 
 describe('WriteReviewForm Component', () => {
   it('shows error when comment is empty on submit', async () => {
-    const handleSuccess = jest.fn();
+    const handleSuccess = vi.fn();
     render(<WriteReviewForm productId="p1" onSuccess={handleSuccess} />);
     
     const submitBtn = screen.getByRole('button', { name: 'Gửi đánh giá' });
@@ -54,14 +54,14 @@ describe('WriteReviewForm Component', () => {
 - [ ] **Step 2: Run test to verify it fails**
 Run:
 ```bash
-cd /home/nquocbao37/Code/PixelMart/web/client-web
-npm run test
+cd /home/nquocbao37/Code/PixelMart/website/client
+pnpm test
 ```
 Expected: FAIL do chưa tạo component `WriteReviewForm.tsx`.
 
 - [ ] **Step 3: Write minimal implementation**
 Tạo component WriteReviewForm:
-Create: `web/client-web/features/product/components/WriteReviewForm.tsx`
+Create: `website/client/features/product/components/WriteReviewForm.tsx`
 ```tsx
 'use client';
 
@@ -69,7 +69,7 @@ import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { api } from '@pixelmart/shared-web';
+import { api } from '@/lib/api';
 
 const reviewSchema = z.object({
   rating: z.number().min(1, 'Chưa chọn điểm đánh giá').max(5),
@@ -191,8 +191,8 @@ export default function WriteReviewForm({ productId, onSuccess }: WriteReviewFor
 - [ ] **Step 4: Run test to verify it passes**
 Run:
 ```bash
-cd /home/nquocbao37/Code/PixelMart/web/client-web
-npm run test
+cd /home/nquocbao37/Code/PixelMart/website/client
+pnpm test
 ```
 Expected: PASS WriteReviewForm.test.tsx
 
@@ -200,7 +200,7 @@ Expected: PASS WriteReviewForm.test.tsx
 Run:
 ```bash
 git add features/product/components/WriteReviewForm.tsx features/product/__tests__/WriteReviewForm.test.tsx
-git commit -m "feat(client-web): construct WriteReviewForm component with star selection and file uploader"
+git commit -m "feat(client): construct WriteReviewForm component with star selection and file uploader"
 ```
 
 ---
@@ -208,8 +208,8 @@ git commit -m "feat(client-web): construct WriteReviewForm component with star s
 ### Task 9.2: Product Reviews List Component
 
 **Files:**
-- Create: `web/client-web/features/product/components/ProductReviewsList.tsx`
-- Test: `web/client-web/features/product/__tests__/ProductReviewsList.test.tsx`
+- Create: `website/client/features/product/components/ProductReviewsList.tsx`
+- Test: `website/client/features/product/__tests__/ProductReviewsList.test.tsx`
 
 **Interfaces:**
 - Consumes: List of reviews objects
@@ -217,7 +217,7 @@ git commit -m "feat(client-web): construct WriteReviewForm component with star s
 
 - [ ] **Step 1: Write the failing test**
 Tạo file test kiểm tra khả năng render danh sách review:
-Create: `web/client-web/features/product/__tests__/ProductReviewsList.test.tsx`
+Create: `website/client/features/product/__tests__/ProductReviewsList.test.tsx`
 ```tsx
 import React from 'react';
 import { render, screen } from '@testing-library/react';
@@ -239,14 +239,14 @@ describe('ProductReviewsList Component', () => {
 - [ ] **Step 2: Run test to verify it fails**
 Run:
 ```bash
-cd /home/nquocbao37/Code/PixelMart/web/client-web
-npm run test
+cd /home/nquocbao37/Code/PixelMart/website/client
+pnpm test
 ```
 Expected: FAIL do chưa tạo component `ProductReviewsList.tsx`.
 
 - [ ] **Step 3: Write minimal implementation**
 Tạo component ProductReviewsList:
-Create: `web/client-web/features/product/components/ProductReviewsList.tsx`
+Create: `website/client/features/product/components/ProductReviewsList.tsx`
 ```tsx
 import React from 'react';
 
@@ -302,8 +302,8 @@ export default function ProductReviewsList({ reviews }: { reviews: Review[] }) {
 - [ ] **Step 4: Run test to verify it passes**
 Run:
 ```bash
-cd /home/nquocbao37/Code/PixelMart/web/client-web
-npm run test
+cd /home/nquocbao37/Code/PixelMart/website/client
+pnpm test
 ```
 Expected: PASS ProductReviewsList.test.tsx
 
@@ -311,7 +311,7 @@ Expected: PASS ProductReviewsList.test.tsx
 Run:
 ```bash
 git add features/product/components/ProductReviewsList.tsx features/product/__tests__/ProductReviewsList.test.tsx
-git commit -m "feat(client-web): implement ProductReviewsList component to render client ratings"
+git commit -m "feat(client): implement ProductReviewsList component to render client ratings"
 ```
 
 ---

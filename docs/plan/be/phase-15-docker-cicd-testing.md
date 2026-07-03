@@ -81,7 +81,7 @@ CMD ["node", "dist/server.js"]
 
 > **Multi-stage build:** Stage 1 có devDependencies (~500MB), Stage 2 chỉ có production deps (~200MB). Image giảm ~60%.
 
-#### `infra/docker/Dockerfile.client-web`:
+#### `infra/docker/Dockerfile.client`:
 
 ```dockerfile
 # === STAGE 1: Build ===
@@ -92,30 +92,30 @@ WORKDIR /app
 # Copy workspace configs and package.json files
 COPY pnpm-lock.yaml* ./
 COPY package.json ./
-COPY web/pnpm-workspace.yaml ./web/
-COPY web/shared/package.json ./web/shared/
-COPY web/client-web/package.json ./web/client-web/
+COPY website/pnpm-workspace.yaml ./website/
+COPY website/client/components/shared/package.json ./website/client/components/shared/
+COPY website/client/package.json ./website/client/
 
 # Install dependencies
 RUN pnpm install --frozen-lockfile
 
 # Copy source code
-COPY web/shared ./web/shared
-COPY web/client-web ./web/client-web
+COPY website/client/components/shared ./website/client/components/shared
+COPY website/client ./website/client
 
-# Build client-web
+# Build client
 ARG NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
-RUN pnpm --filter client-web build
+RUN pnpm --filter client build
 
 # === STAGE 2: Production ===
 FROM node:20-alpine AS production
 WORKDIR /app
 
 # Copy built files
-COPY --from=builder /app/web/client-web/.next/standalone ./
-COPY --from=builder /app/web/client-web/.next/static ./web/client-web/.next/static
-COPY --from=builder /app/web/client-web/public ./web/client-web/public
+COPY --from=builder /app/website/client/.next/standalone ./
+COPY --from=builder /app/website/client/.next/static ./website/client/.next/static
+COPY --from=builder /app/website/client/public ./website/client/public
 
 HEALTHCHECK --interval=30s --timeout=3s \
   CMD wget -qO- http://localhost:3000 || exit 1
@@ -126,12 +126,12 @@ USER nodejs
 EXPOSE 3000
 ENV PORT 3000
 
-CMD ["node", "web/client-web/server.js"]
+CMD ["node", "website/client/server.js"]
 ```
 
-> Cần thêm `output: 'standalone'` vào `next.config.ts` của `client-web` để sử dụng standalone output.
+> Cần thêm `output: 'standalone'` vào `next.config.ts` của `client` để sử dụng standalone output.
 
-#### `infra/docker/Dockerfile.seller-web`:
+#### `infra/docker/Dockerfile.seller`:
 
 ```dockerfile
 # === STAGE 1: Build ===
@@ -141,25 +141,25 @@ WORKDIR /app
 
 COPY pnpm-lock.yaml* ./
 COPY package.json ./
-COPY web/pnpm-workspace.yaml ./web/
-COPY web/shared/package.json ./web/shared/
-COPY web/seller-web/package.json ./web/seller-web/
+COPY website/pnpm-workspace.yaml ./website/
+COPY website/client/components/shared/package.json ./website/client/components/shared/
+COPY website/seller/package.json ./website/seller/
 
 RUN pnpm install --frozen-lockfile
 
-COPY web/shared ./web/shared
-COPY web/seller-web ./web/seller-web
+COPY website/client/components/shared ./website/client/components/shared
+COPY website/seller ./website/seller
 
-RUN pnpm --filter seller-web build
+RUN pnpm --filter seller build
 
 # === STAGE 2: Production with Nginx ===
 FROM nginx:1.25-alpine AS production
-COPY --from=builder /app/web/seller-web/dist /usr/share/nginx/html
+COPY --from=builder /app/website/seller/dist /usr/share/nginx/html
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
 ```
 
-#### `infra/docker/Dockerfile.admin-web`:
+#### `infra/docker/Dockerfile.admin`:
 
 ```dockerfile
 # === STAGE 1: Build ===
@@ -169,20 +169,20 @@ WORKDIR /app
 
 COPY pnpm-lock.yaml* ./
 COPY package.json ./
-COPY web/pnpm-workspace.yaml ./web/
-COPY web/shared/package.json ./web/shared/
-COPY web/admin-web/package.json ./web/admin-web/
+COPY website/pnpm-workspace.yaml ./website/
+COPY website/client/components/shared/package.json ./website/client/components/shared/
+COPY website/admin/package.json ./website/admin/
 
 RUN pnpm install --frozen-lockfile
 
-COPY web/shared ./web/shared
-COPY web/admin-web ./web/admin-web
+COPY website/client/components/shared ./website/client/components/shared
+COPY website/admin ./website/admin
 
-RUN pnpm --filter admin-web build
+RUN pnpm --filter admin build
 
 # === STAGE 2: Production with Nginx ===
 FROM nginx:1.25-alpine AS production
-COPY --from=builder /app/web/admin-web/dist /usr/share/nginx/html
+COPY --from=builder /app/website/admin/dist /usr/share/nginx/html
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
 ```

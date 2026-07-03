@@ -10,7 +10,7 @@
 
 ## Global Constraints
 
-- Client web portal is located at `web/client-web/`
+- Client web portal is located at `website/client/`
 - Tech Stack: Next.js 15 (App Router), React 19, Tailwind CSS (v4), TypeScript, Zustand
 - No placeholder code in the plan: write actual implementations, imports, types, test cases, and commands.
 - Use Vietnamese for descriptions and explanations, and English for code and commands.
@@ -21,8 +21,8 @@
 ### Task 14.1: Google Font Optimization & next/image Configuration
 
 **Files:**
-- Modify: `web/client-web/app/\[locale\]/layout.tsx`, `web/client-web/next.config.ts`
-- Test: `web/client-web/__tests__/optimization-settings.test.tsx`
+- Modify: `website/client/app/\[locale\]/layout.tsx`, `website/client/next.config.ts`
+- Test: `website/client/__tests__/optimization-settings.test.tsx`
 
 **Interfaces:**
 - Consumes: Google Fonts API
@@ -30,7 +30,7 @@
 
 - [ ] **Step 1: Write the failing test**
 Tạo file test kiểm tra cấu hình nạp font và cấu hình ảnh từ Cloudinary:
-Create: `web/client-web/__tests__/optimization-settings.test.tsx`
+Create: `website/client/__tests__/optimization-settings.test.tsx`
 ```tsx
 import nextConfig from '../next.config';
 
@@ -47,14 +47,14 @@ describe('Next.js Config Optimization Checks', () => {
 - [ ] **Step 2: Run test to verify it fails**
 Run:
 ```bash
-cd /home/nquocbao37/Code/PixelMart/web/client-web
-npm run test
+cd /home/nquocbao37/Code/PixelMart/website/client
+pnpm test
 ```
 Expected: FAIL nếu `next.config.ts` chưa được cập nhật chính xác cấu hình remotePatterns.
 
 - [ ] **Step 3: Write minimal implementation**
-Cập nhật font Inter trong `web/client-web/app/[locale]/layout.tsx`:
-Modify: `web/client-web/app/\[locale\]/layout.tsx` (Target the top import section and font class setup)
+Cập nhật font Inter trong `website/client/app/[locale]/layout.tsx`:
+Modify: `website/client/app/\[locale\]/layout.tsx` (Target the top import section and font class setup)
 Replace the layout structure:
 ```tsx
 import React from 'react';
@@ -95,8 +95,8 @@ export default async function LocaleLayout({
 }
 ```
 
-Cập nhật config Remote Pattern hình ảnh trong `web/client-web/next.config.ts`:
-Modify: `web/client-web/next.config.ts` (Target the entire NextConfig definition)
+Cập nhật config Remote Pattern hình ảnh trong `website/client/next.config.ts`:
+Modify: `website/client/next.config.ts` (Target the entire NextConfig definition)
 Replace with:
 ```typescript
 import type { NextConfig } from "next";
@@ -120,8 +120,8 @@ export default nextConfig;
 - [ ] **Step 4: Run test to verify it passes**
 Run:
 ```bash
-cd /home/nquocbao37/Code/PixelMart/web/client-web
-npm run test
+cd /home/nquocbao37/Code/PixelMart/website/client
+pnpm test
 ```
 Expected: PASS optimization-settings.test.tsx
 
@@ -129,7 +129,7 @@ Expected: PASS optimization-settings.test.tsx
 Run:
 ```bash
 git add app/\[locale\]/layout.tsx next.config.ts __tests__/optimization-settings.test.tsx
-git commit -m "perf(client-web): optimize Google fonts loading and limit remote images pattern check"
+git commit -m "perf(client): optimize Google fonts loading and limit remote images pattern check"
 ```
 
 ---
@@ -137,9 +137,9 @@ git commit -m "perf(client-web): optimize Google fonts loading and limit remote 
 ### Task 14.2: Code Splitting with Dynamic Imports (next/dynamic)
 
 **Files:**
-- Create: `web/client-web/components/HeavyChart.tsx`
-- Modify: `web/client-web/app/(storefront)/products/\[slug\]/page.tsx:32-60`
-- Test: `web/client-web/__tests__/dynamic-imports.test.tsx`
+- Create: `website/client/components/HeavyChart.tsx`
+- Modify: `website/client/app/(public)/products/\[slug\]/page.tsx:32-60`
+- Test: `website/client/__tests__/dynamic-imports.test.tsx`
 
 **Interfaces:**
 - Consumes: Custom components
@@ -147,7 +147,7 @@ git commit -m "perf(client-web): optimize Google fonts loading and limit remote 
 
 - [ ] **Step 1: Write the failing test**
 Tạo file test kiểm thử render của component load động bằng lazy import:
-Create: `web/client-web/__tests__/dynamic-imports.test.tsx`
+Create: `website/client/__tests__/dynamic-imports.test.tsx`
 ```tsx
 import React from 'react';
 import { render, screen } from '@testing-library/react';
@@ -168,14 +168,14 @@ describe('Dynamic Imports Performance Tuning', () => {
 - [ ] **Step 2: Run test to verify it fails**
 Run:
 ```bash
-cd /home/nquocbao37/Code/PixelMart/web/client-web
-npm run test
+cd /home/nquocbao37/Code/PixelMart/website/client
+pnpm test
 ```
 Expected: FAIL do chưa tạo component `HeavyChart.tsx` để import.
 
 - [ ] **Step 3: Write minimal implementation**
 Tạo component HeavyChart:
-Create: `web/client-web/components/HeavyChart.tsx`
+Create: `website/client/components/HeavyChart.tsx`
 ```tsx
 import React from 'react';
 
@@ -190,7 +190,7 @@ export default function HeavyChart() {
 ```
 
 Cập nhật `products/[slug]/page.tsx` để load động thành phần WriteReviewForm hoặc HeavyChart:
-Modify: `web/client-web/app/(storefront)/products/\[slug\]/page.tsx:32-60` (Target bottom JSX structure where dynamic component is embedded)
+Modify: `website/client/app/(public)/products/\[slug\]/page.tsx:32-60` (Target bottom JSX structure where dynamic component is embedded)
 Replace part of the detail page with dynamic imports support:
 ```tsx
 import dynamic from 'next/dynamic';
@@ -205,8 +205,8 @@ const DynamicHeavyChart = dynamic(() => import('../../../../components/HeavyChar
 - [ ] **Step 4: Run test to verify it passes**
 Run:
 ```bash
-cd /home/nquocbao37/Code/PixelMart/web/client-web
-npm run test
+cd /home/nquocbao37/Code/PixelMart/website/client
+pnpm test
 ```
 Expected: PASS dynamic-imports.test.tsx
 
@@ -214,7 +214,7 @@ Expected: PASS dynamic-imports.test.tsx
 Run:
 ```bash
 git add components/HeavyChart.tsx app/\(storefront\)/products/\[slug\]/page.tsx __tests__/dynamic-imports.test.tsx
-git commit -m "perf(client-web): setup dynamic lazy load code splitting for heavy components"
+git commit -m "perf(client): setup dynamic lazy load code splitting for heavy components"
 ```
 
 ---

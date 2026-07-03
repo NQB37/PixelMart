@@ -12,8 +12,8 @@
 
 - Node.js version >= 18
 - Package manager: pnpm
-- Toàn bộ source code của seller-web nằm trong thư mục `web/seller-web/`
-- Sử dụng Path Alias `@/` trỏ tới `web/seller-web/src`
+- Toàn bộ source code của seller nằm trong thư mục `website/seller/`
+- Sử dụng Path Alias `@/` trỏ tới `website/seller/src`
 - TDD: Mọi component/helper phải viết test trước khi code minimal implementation
 - Không sử dụng code placeholder (ví dụ: `// TODO`, `/* code here */`). Toàn bộ code trong plan phải hoạt động được.
 
@@ -24,16 +24,16 @@
 ### Task 1: Cấu hình Axios Client & Auth Provider State
 
 **Files:**
-- Create: `web/seller-web/src/utils/api.ts`
-- Create: `web/seller-web/src/context/AuthContext.tsx`
-- Create: `web/seller-web/src/__tests__/authContext.test.tsx`
+- Create: `website/seller/src/utils/api.ts`
+- Create: `website/seller/src/context/AuthContext.tsx`
+- Create: `website/seller/src/__tests__/authContext.test.tsx`
 
 **Interfaces:**
 - Consumes: None
 - Produces: `AuthContext` cung cấp `user`, `login`, `logout` và axios instance `api` để gọi backend API.
 
 - [ ] **Step 1: Write the failing test**
-Create: `web/seller-web/src/__tests__/authContext.test.tsx`
+Create: `website/seller/src/__tests__/authContext.test.tsx`
 ```typescript
 import React, { useContext } from 'react';
 import { render, screen, act } from '@testing-library/react';
@@ -66,12 +66,12 @@ describe('AuthContext & AuthProvider', () => {
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
-Run: `pnpm --filter seller-web test run`
+Run: `pnpm --filter seller test run`
 Expected: FAIL do `AuthContext` và `AuthProvider` chưa tồn tại.
 
 - [ ] **Step 3: Write minimal implementation**
 Tạo file Axios instance:
-Create: `web/seller-web/src/utils/api.ts`
+Create: `website/seller/src/utils/api.ts`
 ```typescript
 import axios from 'axios';
 
@@ -85,7 +85,7 @@ export const api = axios.create({
 ```
 
 Tạo file AuthContext và AuthProvider:
-Create: `web/seller-web/src/context/AuthContext.tsx`
+Create: `website/seller/src/context/AuthContext.tsx`
 ```typescript
 import React, { createContext, useState, useEffect } from 'react';
 
@@ -154,13 +154,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 ```
 
 - [ ] **Step 4: Run test to verify it passes**
-Run: `pnpm --filter seller-web test run`
+Run: `pnpm --filter seller test run`
 Expected: PASS 1/1 (authContext.test.tsx)
 
 - [ ] **Step 5: Commit**
 ```bash
-git add web/seller-web/src/utils/api.ts web/seller-web/src/context/AuthContext.tsx web/seller-web/src/__tests__/authContext.test.tsx
-git commit -m "feat(seller-web): add API client and AuthContext state provider"
+git add website/seller/src/utils/api.ts website/seller/src/context/AuthContext.tsx website/seller/src/__tests__/authContext.test.tsx
+git commit -m "feat(seller): add API client and AuthContext state provider"
 ```
 
 ---
@@ -168,15 +168,15 @@ git commit -m "feat(seller-web): add API client and AuthContext state provider"
 ### Task 2: Xây dựng màn hình đăng nhập (Login Screen)
 
 **Files:**
-- Create: `web/seller-web/src/pages/Login.tsx`
-- Create: `web/seller-web/src/__tests__/login.test.tsx`
+- Create: `website/seller/src/pages/Login.tsx`
+- Create: `website/seller/src/__tests__/login.test.tsx`
 
 **Interfaces:**
 - Consumes: `AuthContext` từ Task 1.
 - Produces: Component `Login` UI chứa form nhập, validate cơ bản và xử lý gửi request đăng nhập.
 
 - [ ] **Step 1: Write the failing test**
-Create: `web/seller-web/src/__tests__/login.test.tsx`
+Create: `website/seller/src/__tests__/login.test.tsx`
 ```typescript
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
@@ -208,11 +208,11 @@ describe('Login Component', () => {
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
-Run: `pnpm --filter seller-web test run`
+Run: `pnpm --filter seller test run`
 Expected: FAIL vì `pages/Login.tsx` chưa được tạo.
 
 - [ ] **Step 3: Write minimal implementation**
-Create: `web/seller-web/src/pages/Login.tsx`
+Create: `website/seller/src/pages/Login.tsx`
 ```typescript
 import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -310,13 +310,13 @@ export default function Login() {
 ```
 
 - [ ] **Step 4: Run test to verify it passes**
-Run: `pnpm --filter seller-web test run`
+Run: `pnpm --filter seller test run`
 Expected: PASS cả test login và auth context.
 
 - [ ] **Step 5: Commit**
 ```bash
-git add web/seller-web/src/pages/Login.tsx web/seller-web/src/__tests__/login.test.tsx
-git commit -m "feat(seller-web): implement Login Screen and validation behavior"
+git add website/seller/src/pages/Login.tsx website/seller/src/__tests__/login.test.tsx
+git commit -m "feat(seller): implement Login Screen and validation behavior"
 ```
 
 ---
@@ -324,17 +324,17 @@ git commit -m "feat(seller-web): implement Login Screen and validation behavior"
 ### Task 3: Xây dựng Route Guard & Trang Từ Chối Truy Cập (403)
 
 **Files:**
-- Create: `web/seller-web/src/components/auth/ProtectedRoute.tsx`
-- Create: `web/seller-web/src/pages/Forbidden.tsx`
-- Modify: `web/seller-web/src/main.tsx`
-- Create: `web/seller-web/src/__tests__/guards.test.tsx`
+- Create: `website/seller/src/components/auth/ProtectedRoute.tsx`
+- Create: `website/seller/src/pages/Forbidden.tsx`
+- Modify: `website/seller/src/main.tsx`
+- Create: `website/seller/src/__tests__/guards.test.tsx`
 
 **Interfaces:**
 - Consumes: `AuthContext` và trang `Login` từ Task 2.
 - Produces: `ProtectedRoute` bảo vệ các route nhạy cảm; chuyển hướng user không hợp lệ về `/login` hoặc hiển thị màn hình `/403` cấm truy cập.
 
 - [ ] **Step 1: Write the failing test**
-Create: `web/seller-web/src/__tests__/guards.test.tsx`
+Create: `website/seller/src/__tests__/guards.test.tsx`
 ```typescript
 import React from 'react';
 import { render, screen } from '@testing-library/react';
@@ -368,12 +368,12 @@ describe('ProtectedRoute Guard', () => {
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
-Run: `pnpm --filter seller-web test run`
+Run: `pnpm --filter seller test run`
 Expected: FAIL vì `ProtectedRoute` chưa được tạo và chưa có trang `Forbidden.tsx`.
 
 - [ ] **Step 3: Write minimal implementation**
 Tạo trang cấm truy cập:
-Create: `web/seller-web/src/pages/Forbidden.tsx`
+Create: `website/seller/src/pages/Forbidden.tsx`
 ```typescript
 import React from 'react';
 import { Link } from 'react-router-dom';
@@ -393,7 +393,7 @@ export default function Forbidden() {
 ```
 
 Tạo component ProtectedRoute:
-Create: `web/seller-web/src/components/auth/ProtectedRoute.tsx`
+Create: `website/seller/src/components/auth/ProtectedRoute.tsx`
 ```typescript
 import React, { useContext } from 'react';
 import { Navigate } from 'react-router-dom';
@@ -432,7 +432,7 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
 ```
 
 Cập nhật `main.tsx` để bảo vệ các trang Dashboard & Orders:
-Modify: `web/seller-web/src/main.tsx`
+Modify: `website/seller/src/main.tsx`
 ```typescript
 import React from 'react';
 import ReactDOM from 'react-dom/client';
@@ -483,13 +483,13 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 ```
 
 - [ ] **Step 4: Run test to verify it passes**
-Run: `pnpm --filter seller-web test run`
+Run: `pnpm --filter seller test run`
 Expected: PASS tất cả các tests bao gồm guards test.
 
 - [ ] **Step 5: Commit**
 ```bash
-git add web/seller-web/src/components/auth/ProtectedRoute.tsx web/seller-web/src/pages/Forbidden.tsx web/seller-web/src/main.tsx web/seller-web/src/__tests__/guards.test.tsx
-git commit -m "feat(seller-web): protect seller endpoints using ProtectedRoute and add 403 Forbidden page"
+git add website/seller/src/components/auth/ProtectedRoute.tsx website/seller/src/pages/Forbidden.tsx website/seller/src/main.tsx website/seller/src/__tests__/guards.test.tsx
+git commit -m "feat(seller): protect seller endpoints using ProtectedRoute and add 403 Forbidden page"
 ```
 
 ---

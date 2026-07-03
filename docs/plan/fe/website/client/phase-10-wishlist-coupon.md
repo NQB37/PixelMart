@@ -10,7 +10,7 @@
 
 ## Global Constraints
 
-- Client web portal is located at `web/client-web/`
+- Client web portal is located at `website/client/`
 - Tech Stack: Next.js 15 (App Router), React 19, Tailwind CSS (v4), TypeScript, Zustand
 - No placeholder code in the plan: write actual implementations, imports, types, test cases, and commands.
 - Use Vietnamese for descriptions and explanations, and English for code and commands.
@@ -21,8 +21,8 @@
 ### Task 10.1: Wishlist Heart Icon Toggle and Dashboard Page
 
 **Files:**
-- Create: `web/client-web/features/wishlist/components/WishlistToggle.tsx`, `web/client-web/app/(storefront)/wishlist/page.tsx`
-- Test: `web/client-web/features/wishlist/__tests__/WishlistToggle.test.tsx`
+- Create: `website/client/features/wishlist/components/WishlistToggle.tsx`, `website/client/app/(public)/wishlist/page.tsx`
+- Test: `website/client/features/wishlist/__tests__/WishlistToggle.test.tsx`
 
 **Interfaces:**
 - Consumes: Product ID
@@ -30,16 +30,16 @@
 
 - [ ] **Step 1: Write the failing test**
 Tạo file test kiểm tra thay đổi icon trái tim dựa trên status wishlist:
-Create: `web/client-web/features/wishlist/__tests__/WishlistToggle.test.tsx`
+Create: `website/client/features/wishlist/__tests__/WishlistToggle.test.tsx`
 ```tsx
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import WishlistToggle from '../components/WishlistToggle';
 
 // Mock shared-web
-jest.mock('@pixelmart/shared-web', () => ({
+vi.mock('@/lib/api', () => ({
   api: {
-    post: jest.fn().mockResolvedValue({
+    post: vi.fn().mockResolvedValue({
       data: {
         success: true,
         inWishlist: true,
@@ -66,19 +66,19 @@ describe('WishlistToggle Component', () => {
 - [ ] **Step 2: Run test to verify it fails**
 Run:
 ```bash
-cd /home/nquocbao37/Code/PixelMart/web/client-web
-npm run test
+cd /home/nquocbao37/Code/PixelMart/website/client
+pnpm test
 ```
 Expected: FAIL do chưa tạo component `WishlistToggle.tsx`.
 
 - [ ] **Step 3: Write minimal implementation**
 Tạo Component WishlistToggle:
-Create: `web/client-web/features/wishlist/components/WishlistToggle.tsx`
+Create: `website/client/features/wishlist/components/WishlistToggle.tsx`
 ```tsx
 'use client';
 
 import React, { useState } from 'react';
-import { api } from '@pixelmart/shared-web';
+import { api } from '@/lib/api';
 
 interface WishlistToggleProps {
   productId: string;
@@ -117,14 +117,14 @@ export default function WishlistToggle({ productId, initialStatus }: WishlistTog
 }
 ```
 
-Tạo page `web/client-web/app/(storefront)/wishlist/page.tsx`:
-Create: `web/client-web/app/(storefront)/wishlist/page.tsx`
+Tạo page `website/client/app/(public)/wishlist/page.tsx`:
+Create: `website/client/app/(public)/wishlist/page.tsx`
 ```tsx
 'use client';
 
 import React, { useEffect, useState } from 'react';
 import ProductCard, { Product } from '../../features/product/components/ProductCard';
-import { api } from '@pixelmart/shared-web';
+import { api } from '@/lib/api';
 
 export default function WishlistPage() {
   const [items, setItems] = useState<Product[]>([]);
@@ -165,8 +165,8 @@ export default function WishlistPage() {
 - [ ] **Step 4: Run test to verify it passes**
 Run:
 ```bash
-cd /home/nquocbao37/Code/PixelMart/web/client-web
-npm run test
+cd /home/nquocbao37/Code/PixelMart/website/client
+pnpm test
 ```
 Expected: PASS WishlistToggle.test.tsx
 
@@ -174,7 +174,7 @@ Expected: PASS WishlistToggle.test.tsx
 Run:
 ```bash
 git add features/wishlist/components/WishlistToggle.tsx app/\(storefront\)/wishlist/page.tsx features/wishlist/__tests__/WishlistToggle.test.tsx
-git commit -m "feat(client-web): implement Wishlist heart toggle icon and list board page"
+git commit -m "feat(client): implement Wishlist heart toggle icon and list board page"
 ```
 
 ---
@@ -182,9 +182,9 @@ git commit -m "feat(client-web): implement Wishlist heart toggle icon and list b
 ### Task 10.2: Checkout Discount Coupon Input
 
 **Files:**
-- Create: `web/client-web/features/checkout/components/CouponInput.tsx`
-- Modify: `web/client-web/features/checkout/components/CheckoutForm.tsx:28-52`
-- Test: `web/client-web/features/checkout/__tests__/CouponInput.test.tsx`
+- Create: `website/client/features/checkout/components/CouponInput.tsx`
+- Modify: `website/client/features/checkout/components/CheckoutForm.tsx:28-52`
+- Test: `website/client/features/checkout/__tests__/CouponInput.test.tsx`
 
 **Interfaces:**
 - Consumes: API endpoints `/coupons/validate`
@@ -192,16 +192,16 @@ git commit -m "feat(client-web): implement Wishlist heart toggle icon and list b
 
 - [ ] **Step 1: Write the failing test**
 Tạo file test kiểm tra nhập mã coupon và nhận phản hồi thành công/thất bại:
-Create: `web/client-web/features/checkout/__tests__/CouponInput.test.tsx`
+Create: `website/client/features/checkout/__tests__/CouponInput.test.tsx`
 ```tsx
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import CouponInput from '../components/CouponInput';
 
 // Mock API
-jest.mock('@pixelmart/shared-web', () => ({
+vi.mock('@/lib/api', () => ({
   api: {
-    post: jest.fn().mockResolvedValue({
+    post: vi.fn().mockResolvedValue({
       data: {
         success: true,
         data: {
@@ -215,7 +215,7 @@ jest.mock('@pixelmart/shared-web', () => ({
 
 describe('CouponInput Component', () => {
   it('applies coupon code and triggers callback on success', async () => {
-    const handleApply = jest.fn();
+    const handleApply = vi.fn();
     render(<CouponInput totalAmount={500000} onApplyCoupon={handleApply} />);
     
     const input = screen.getByPlaceholderText('Nhập mã giảm giá');
@@ -235,19 +235,19 @@ describe('CouponInput Component', () => {
 - [ ] **Step 2: Run test to verify it fails**
 Run:
 ```bash
-cd /home/nquocbao37/Code/PixelMart/web/client-web
-npm run test
+cd /home/nquocbao37/Code/PixelMart/website/client
+pnpm test
 ```
 Expected: FAIL do chưa tạo component `CouponInput.tsx`.
 
 - [ ] **Step 3: Write minimal implementation**
 Tạo Component CouponInput:
-Create: `web/client-web/features/checkout/components/CouponInput.tsx`
+Create: `website/client/features/checkout/components/CouponInput.tsx`
 ```tsx
 'use client';
 
 import React, { useState } from 'react';
-import { api } from '@pixelmart/shared-web';
+import { api } from '@/lib/api';
 
 interface CouponInputProps {
   totalAmount: number;
@@ -302,7 +302,7 @@ export default function CouponInput({ totalAmount, onApplyCoupon }: CouponInputP
 ```
 
 Cập nhật `CheckoutForm.tsx` để tích hợp `CouponInput`:
-Modify: `web/client-web/features/checkout/components/CheckoutForm.tsx:28-52` (Target the form submission modification for coupon code)
+Modify: `website/client/features/checkout/components/CheckoutForm.tsx:28-52` (Target the form submission modification for coupon code)
 Replace the handleSubmit section:
 ```typescript
   const [couponCode, setCouponCode] = React.useState('');
@@ -339,8 +339,8 @@ Replace the handleSubmit section:
 - [ ] **Step 4: Run test to verify it passes**
 Run:
 ```bash
-cd /home/nquocbao37/Code/PixelMart/web/client-web
-npm run test
+cd /home/nquocbao37/Code/PixelMart/website/client
+pnpm test
 ```
 Expected: PASS CouponInput.test.tsx
 
@@ -348,7 +348,7 @@ Expected: PASS CouponInput.test.tsx
 Run:
 ```bash
 git add features/checkout/components/CouponInput.tsx features/checkout/components/CheckoutForm.tsx features/checkout/__tests__/CouponInput.test.tsx
-git commit -m "feat(client-web): integrate CouponInput coupon codes validation inside checkout form flow"
+git commit -m "feat(client): integrate CouponInput coupon codes validation inside checkout form flow"
 ```
 
 ---

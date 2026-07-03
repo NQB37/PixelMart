@@ -10,7 +10,7 @@
 
 ## Global Constraints
 
-- Client web portal is located at `web/client-web/`
+- Client web portal is located at `website/client/`
 - Tech Stack: Next.js 15 (App Router), React 19, Tailwind CSS (v4), TypeScript, Zustand
 - No placeholder code in the plan: write actual implementations, imports, types, test cases, and commands.
 - Use Vietnamese for descriptions and explanations, and English for code and commands.
@@ -21,8 +21,8 @@
 ### Task 13.1: next-intl Setup and Dictionary Files
 
 **Files:**
-- Create: `web/client-web/messages/vi.json`, `web/client-web/messages/en.json`, `web/client-web/i18n/request.ts`
-- Test: `web/client-web/__tests__/i18n-dict.test.ts`
+- Create: `website/client/messages/vi.json`, `website/client/messages/en.json`, `website/client/i18n/request.ts`
+- Test: `website/client/__tests__/i18n-dict.test.ts`
 
 **Interfaces:**
 - Consumes: JSON Translation files
@@ -30,7 +30,7 @@
 
 - [ ] **Step 1: Write the failing test**
 Tạo file test kiểm tra sự tồn tại và cấu trúc bản dịch của vi.json và en.json:
-Create: `web/client-web/__tests__/i18n-dict.test.ts`
+Create: `website/client/__tests__/i18n-dict.test.ts`
 ```typescript
 import viJson from '../messages/vi.json';
 import enJson from '../messages/en.json';
@@ -47,8 +47,8 @@ describe('i18n Translation Dictionary', () => {
 - [ ] **Step 2: Run test to verify it fails**
 Run:
 ```bash
-cd /home/nquocbao37/Code/PixelMart/web/client-web
-npm run test
+cd /home/nquocbao37/Code/PixelMart/website/client
+pnpm test
 ```
 Expected: FAIL do chưa tạo các file JSON trong thư mục `messages/`.
 
@@ -56,12 +56,12 @@ Expected: FAIL do chưa tạo các file JSON trong thư mục `messages/`.
 Cài đặt `next-intl`:
 Run:
 ```bash
-cd /home/nquocbao37/Code/PixelMart/web/client-web
+cd /home/nquocbao37/Code/PixelMart/website/client
 pnpm install next-intl
 ```
 
 Tạo file messages/vi.json:
-Create: `web/client-web/messages/vi.json`
+Create: `website/client/messages/vi.json`
 ```json
 {
   "common": {
@@ -73,7 +73,7 @@ Create: `web/client-web/messages/vi.json`
 ```
 
 Tạo file messages/en.json:
-Create: `web/client-web/messages/en.json`
+Create: `website/client/messages/en.json`
 ```json
 {
   "common": {
@@ -84,8 +84,8 @@ Create: `web/client-web/messages/en.json`
 }
 ```
 
-Tạo config `web/client-web/i18n/request.ts`:
-Create: `web/client-web/i18n/request.ts`
+Tạo config `website/client/i18n/request.ts`:
+Create: `website/client/i18n/request.ts`
 ```typescript
 import { getRequestConfig } from 'next-intl/server';
 
@@ -101,8 +101,8 @@ export default getRequestConfig(async ({ requestLocale }) => {
 - [ ] **Step 4: Run test to verify it passes**
 Run:
 ```bash
-cd /home/nquocbao37/Code/PixelMart/web/client-web
-npm run test
+cd /home/nquocbao37/Code/PixelMart/website/client
+pnpm test
 ```
 Expected: PASS i18n-dict.test.ts
 
@@ -110,7 +110,7 @@ Expected: PASS i18n-dict.test.ts
 Run:
 ```bash
 git add messages/vi.json messages/en.json i18n/request.ts __tests__/i18n-dict.test.ts
-git commit -m "feat(client-web): integrate next-intl configuration and localization translations"
+git commit -m "feat(client): integrate next-intl configuration and localization translations"
 ```
 
 ---
@@ -118,9 +118,9 @@ git commit -m "feat(client-web): integrate next-intl configuration and localizat
 ### Task 13.2: Middleware Locale Detection & App Router Wrapping
 
 **Files:**
-- Modify: `web/client-web/middleware.ts:1-24`
-- Create: `web/client-web/app/[locale]/layout.tsx`
-- Test: `web/client-web/__tests__/i18n-middleware.test.ts`
+- Modify: `website/client/middleware.ts:1-24`
+- Create: `website/client/app/[locale]/layout.tsx`
+- Test: `website/client/__tests__/i18n-middleware.test.ts`
 
 **Interfaces:**
 - Consumes: NextRequest middleware context
@@ -128,7 +128,7 @@ git commit -m "feat(client-web): integrate next-intl configuration and localizat
 
 - [ ] **Step 1: Write the failing test**
 Tạo file test kiểm tra khả năng redirect locale mặc định:
-Create: `web/client-web/__tests__/i18n-middleware.test.ts`
+Create: `website/client/__tests__/i18n-middleware.test.ts`
 ```typescript
 import { NextRequest } from 'next/server';
 import { middleware } from '../middleware';
@@ -149,14 +149,14 @@ describe('i18n Middleware Redirection', () => {
 - [ ] **Step 2: Run test to verify it fails**
 Run:
 ```bash
-cd /home/nquocbao37/Code/PixelMart/web/client-web
-npm run test
+cd /home/nquocbao37/Code/PixelMart/website/client
+pnpm test
 ```
 Expected: FAIL vì `middleware.ts` chưa được cấu hình để chuyển hướng i18n.
 
 - [ ] **Step 3: Write minimal implementation**
-Cập nhật `web/client-web/middleware.ts` kết hợp cả i18n và auth guarding:
-Modify: `web/client-web/middleware.ts:1-24` (Target the entire middleware file content to support combined routing logic)
+Cập nhật `website/client/middleware.ts` kết hợp cả i18n và auth guarding:
+Modify: `website/client/middleware.ts:1-24` (Target the entire middleware file content to support combined routing logic)
 Replace with:
 ```typescript
 import { NextResponse } from 'next/server';
@@ -195,7 +195,7 @@ export const config = {
 ```
 
 Tạo Root layout mới bên trong `[locale]`:
-Create: `web/client-web/app/[locale]/layout.tsx`
+Create: `website/client/app/[locale]/layout.tsx`
 ```tsx
 import React from 'react';
 import { NextIntlClientProvider } from 'next-intl';
@@ -231,8 +231,8 @@ export default async function LocaleLayout({
 - [ ] **Step 4: Run test to verify it passes**
 Run:
 ```bash
-cd /home/nquocbao37/Code/PixelMart/web/client-web
-npm run test
+cd /home/nquocbao37/Code/PixelMart/website/client
+pnpm test
 ```
 Expected: PASS i18n-middleware.test.ts
 
@@ -240,7 +240,7 @@ Expected: PASS i18n-middleware.test.ts
 Run:
 ```bash
 git add middleware.ts app/\[locale\]/layout.tsx __tests__/i18n-middleware.test.ts
-git commit -m "feat(client-web): integrate locale detection middleware and wrap app with next-intl provider"
+git commit -m "feat(client): integrate locale detection middleware and wrap app with next-intl provider"
 ```
 
 ---

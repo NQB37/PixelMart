@@ -10,7 +10,7 @@
 
 ## Global Constraints
 
-- Client web portal is located at `web/client-web/`
+- Client web portal is located at `website/client/`
 - Tech Stack: Next.js 15 (App Router), React 19, Tailwind CSS (v4), TypeScript, Zustand
 - No placeholder code in the plan: write actual implementations, imports, types, test cases, and commands.
 - Use Vietnamese for descriptions and explanations, and English for code and commands.
@@ -21,18 +21,18 @@
 ### Task 3.1: Zustand Auth Store & Auth Provider
 
 **Files:**
-- Create: `web/client-web/stores/authStore.ts`, `web/client-web/providers/AuthProvider.tsx`
-- Test: `web/client-web/__tests__/authStore.test.ts`
+- Create: `website/client/features/auth/stores/auth.store.ts`, `website/client/providers/AuthProvider.tsx`
+- Test: `website/client/__tests__/authStore.test.ts`
 
 **Interfaces:**
-- Consumes: `@pixelmart/shared-web` (api client)
+- Consumes: `@/lib/api` (api client)
 - Produces: `useAuthStore` Hook quản lý thông tin đăng nhập, token, và hàm check trạng thái auth.
 
 - [ ] **Step 1: Write the failing test**
 Tạo file test kiểm tra trạng thái login/logout của authStore:
-Create: `web/client-web/__tests__/authStore.test.ts`
+Create: `website/client/__tests__/authStore.test.ts`
 ```typescript
-import { useAuthStore } from '../stores/authStore';
+import { useAuthStore } from '../features/auth/stores/auth.store';
 
 describe('Auth Store (Zustand)', () => {
   beforeEach(() => {
@@ -78,8 +78,8 @@ describe('Auth Store (Zustand)', () => {
 - [ ] **Step 2: Run test to verify it fails**
 Run:
 ```bash
-cd /home/nquocbao37/Code/PixelMart/web/client-web
-npm run test
+cd /home/nquocbao37/Code/PixelMart/website/client
+pnpm test
 ```
 Expected: FAIL do store `authStore.ts` chưa được tạo hoặc import lỗi.
 
@@ -87,12 +87,12 @@ Expected: FAIL do store `authStore.ts` chưa được tạo hoặc import lỗi.
 Cài đặt zustand:
 Run:
 ```bash
-cd /home/nquocbao37/Code/PixelMart/web/client-web
+cd /home/nquocbao37/Code/PixelMart/website/client
 pnpm install zustand
 ```
 
 Tạo Zustand Auth Store:
-Create: `web/client-web/stores/authStore.ts`
+Create: `website/client/features/auth/stores/auth.store.ts`
 ```typescript
 import { create } from 'zustand';
 
@@ -130,14 +130,14 @@ export const useAuthStore = create<AuthState>((set) => ({
 }));
 ```
 
-Tạo `web/client-web/providers/AuthProvider.tsx`:
-Create: `web/client-web/providers/AuthProvider.tsx`
+Tạo `website/client/providers/AuthProvider.tsx`:
+Create: `website/client/providers/AuthProvider.tsx`
 ```tsx
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { useAuthStore } from '../stores/authStore';
-import { api } from '@pixelmart/shared-web';
+import { useAuthStore } from '../features/auth/stores/auth.store';
+import { api } from '@/lib/api';
 
 const AuthContext = createContext<{ isLoading: boolean }>({ isLoading: true });
 
@@ -181,16 +181,16 @@ export const useAuth = () => useContext(AuthContext);
 - [ ] **Step 4: Run test to verify it passes**
 Run:
 ```bash
-cd /home/nquocbao37/Code/PixelMart/web/client-web
-npm run test
+cd /home/nquocbao37/Code/PixelMart/website/client
+pnpm test
 ```
 Expected: PASS authStore.test.ts
 
 - [ ] **Step 5: Commit**
 Run:
 ```bash
-git add stores/authStore.ts providers/AuthProvider.tsx __tests__/authStore.test.ts
-git commit -m "feat(client-web): implement Zustand authStore and React AuthProvider wrapper"
+git add features/auth/stores/auth.store.ts providers/AuthProvider.tsx __tests__/authStore.test.ts
+git commit -m "feat(client): implement Zustand authStore and React AuthProvider wrapper"
 ```
 
 ---
@@ -198,8 +198,8 @@ git commit -m "feat(client-web): implement Zustand authStore and React AuthProvi
 ### Task 3.2: Client-side Login & Register UI Pages with Form Validation
 
 **Files:**
-- Create: `web/client-web/app/(auth)/login/page.tsx`, `web/client-web/app/(auth)/register/page.tsx`
-- Test: `web/client-web/__tests__/auth-pages.test.tsx`
+- Create: `website/client/app/(auth)/login/page.tsx`, `website/client/app/(auth)/register/page.tsx`
+- Test: `website/client/__tests__/auth-pages.test.tsx`
 
 **Interfaces:**
 - Consumes: `useAuthStore`
@@ -207,7 +207,7 @@ git commit -m "feat(client-web): implement Zustand authStore and React AuthProvi
 
 - [ ] **Step 1: Write the failing test**
 Tạo file test kiểm tra các trường input trong Form Đăng nhập & Đăng ký:
-Create: `web/client-web/__tests__/auth-pages.test.tsx`
+Create: `website/client/__tests__/auth-pages.test.tsx`
 ```tsx
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
@@ -215,10 +215,10 @@ import LoginPage from '../app/(auth)/login/page';
 import RegisterPage from '../app/(auth)/register/page';
 
 // Mock useRouter
-jest.mock('next/navigation', () => ({
+vi.mock('next/navigation', () => ({
   useRouter() {
     return {
-      push: jest.fn(),
+      push: vi.fn(),
     };
   },
 }));
@@ -258,8 +258,8 @@ describe('Auth Pages UI', () => {
 - [ ] **Step 2: Run test to verify it fails**
 Run:
 ```bash
-cd /home/nquocbao37/Code/PixelMart/web/client-web
-npm run test
+cd /home/nquocbao37/Code/PixelMart/website/client
+pnpm test
 ```
 Expected: FAIL vì chưa có file `login/page.tsx` và `register/page.tsx`.
 
@@ -267,12 +267,12 @@ Expected: FAIL vì chưa có file `login/page.tsx` và `register/page.tsx`.
 Cài đặt validation dependencies:
 Run:
 ```bash
-cd /home/nquocbao37/Code/PixelMart/web/client-web
+cd /home/nquocbao37/Code/PixelMart/website/client
 pnpm install react-hook-form @hookform/resolvers zod
 ```
 
 Tạo LoginPage:
-Create: `web/client-web/app/(auth)/login/page.tsx`
+Create: `website/client/app/(auth)/login/page.tsx`
 ```tsx
 'use client';
 
@@ -282,8 +282,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { api } from '@pixelmart/shared-web';
-import { useAuthStore } from '../../../stores/authStore';
+import { api } from '@/lib/api';
+import { useAuthStore } from '../../../features/auth/stores/auth.store';
 
 const loginSchema = z.object({
   email: z.string().email('Email không hợp lệ'),
@@ -351,7 +351,7 @@ export default function LoginPage() {
 ```
 
 Tạo RegisterPage:
-Create: `web/client-web/app/(auth)/register/page.tsx`
+Create: `website/client/app/(auth)/register/page.tsx`
 ```tsx
 'use client';
 
@@ -361,7 +361,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { api } from '@pixelmart/shared-web';
+import { api } from '@/lib/api';
 
 const registerSchema = z.object({
   name: z.string().min(1, 'Họ và tên là bắt buộc'),
@@ -457,8 +457,8 @@ export default function RegisterPage() {
 - [ ] **Step 4: Run test to verify it passes**
 Run:
 ```bash
-cd /home/nquocbao37/Code/PixelMart/web/client-web
-npm run test
+cd /home/nquocbao37/Code/PixelMart/website/client
+pnpm test
 ```
 Expected: PASS auth-pages.test.tsx
 
@@ -466,7 +466,7 @@ Expected: PASS auth-pages.test.tsx
 Run:
 ```bash
 git add app/\(auth\)/login/page.tsx app/\(auth\)/register/page.tsx __tests__/auth-pages.test.tsx
-git commit -m "feat(client-web): design responsive login/register UI pages with Zod validation rules"
+git commit -m "feat(client): design responsive login/register UI pages with Zod validation rules"
 ```
 
 ---
@@ -474,8 +474,8 @@ git commit -m "feat(client-web): design responsive login/register UI pages with 
 ### Task 3.3: Next.js Middleware Route Guards
 
 **Files:**
-- Create: `web/client-web/middleware.ts`
-- Test: `web/client-web/__tests__/middleware.test.ts`
+- Create: `website/client/middleware.ts`
+- Test: `website/client/__tests__/middleware.test.ts`
 
 **Interfaces:**
 - Consumes: NextRequest, NextResponse
@@ -483,15 +483,15 @@ git commit -m "feat(client-web): design responsive login/register UI pages with 
 
 - [ ] **Step 1: Write the failing test**
 Tạo file test mô phỏng request để verify middleware:
-Create: `web/client-web/__tests__/middleware.test.ts`
+Create: `website/client/__tests__/middleware.test.ts`
 ```typescript
 import { NextRequest, NextResponse } from 'next/server';
 import { middleware } from '../middleware';
 
-jest.mock('next/server', () => ({
+vi.mock('next/server', () => ({
   NextResponse: {
-    next: jest.fn().mockReturnValue({ status: 'next' }),
-    redirect: jest.fn().mockImplementation((url) => ({ status: 'redirect', to: url.toString() })),
+    next: vi.fn().mockReturnValue({ status: 'next' }),
+    redirect: vi.fn().mockImplementation((url) => ({ status: 'redirect', to: url.toString() })),
   },
 }));
 
@@ -520,14 +520,14 @@ describe('Next.js Route Guard Middleware', () => {
 - [ ] **Step 2: Run test to verify it fails**
 Run:
 ```bash
-cd /home/nquocbao37/Code/PixelMart/web/client-web
-npm run test
+cd /home/nquocbao37/Code/PixelMart/website/client
+pnpm test
 ```
 Expected: FAIL vì file `middleware.ts` chưa được viết.
 
 - [ ] **Step 3: Write minimal implementation**
 Tạo Middleware Route Guard:
-Create: `web/client-web/middleware.ts`
+Create: `website/client/middleware.ts`
 ```typescript
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
@@ -558,8 +558,8 @@ export const config = {
 - [ ] **Step 4: Run test to verify it passes**
 Run:
 ```bash
-cd /home/nquocbao37/Code/PixelMart/web/client-web
-npm run test
+cd /home/nquocbao37/Code/PixelMart/website/client
+pnpm test
 ```
 Expected: PASS middleware.test.ts
 
@@ -567,7 +567,7 @@ Expected: PASS middleware.test.ts
 Run:
 ```bash
 git add middleware.ts __tests__/middleware.test.ts
-git commit -m "feat(client-web): implement middleware route guard protection for private routes"
+git commit -m "feat(client): implement middleware route guard protection for private routes"
 ```
 
 ---

@@ -22,12 +22,12 @@
 
 ```
 PixelMart/
-├── web/                        # 🌐 [Web Space] - Workspace chứa các trang Web (Vite/Next.js)
+├── website/                        # 🌐 [Web Space] - Workspace chứa các trang Web (Vite/Next.js)
 │   ├── pnpm-workspace.yaml     # Workspace config cho web
 │   ├── shared/                 # Thư viện UI & utils dùng chung cho web
-│   ├── client-web/             # Next.js App - Buyer Storefront
-│   ├── seller-web/             # React + Vite SPA - Seller Dashboard
-│   └── admin-web/              # React + Vite SPA - Admin Dashboard
+│   ├── client/             # Next.js App - Buyer Storefront
+│   ├── seller/             # React + Vite SPA - Seller Dashboard
+│   └── admin/              # React + Vite SPA - Admin Dashboard
 ├── mobile/                     # 📱 [Mobile Space] - Workspace chứa các ứng dụng di động Expo
 │   ├── pnpm-workspace.yaml     # Workspace config cho mobile
 │   ├── shared/                 # Thư viện component & logic dùng chung cho mobile
@@ -63,7 +63,7 @@ PixelMart/
 
 | Thư mục     | Lý do                                                                                                                                  |
 | ----------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| `web/`      | Gom nhóm các trang web, dùng pnpm Workspace cục bộ để chia sẻ UI component & utils giữa Buyer, Seller và Admin mà không cần copy code. |
+| `website/`  | Gom nhóm các trang web, dùng pnpm Workspace cục bộ để chia sẻ UI component & utils giữa Buyer, Seller và Admin mà không cần copy code. |
 | `mobile/`   | Gom nhóm các ứng dụng di động Expo, dùng pnpm Workspace cục bộ để chia sẻ React Native components & logic.                             |
 | `server/`   | Cô lập Backend monolith, có thể phát triển và deploy độc lập.                                                                          |
 | `services/` | Chỉ xuất hiện khi chuyển sang microservices (Phase 15+)                                                                                |
@@ -301,15 +301,15 @@ server/
 
 ## 3. Web Space — Workspace Structure
 
-> Các dự án Web nằm dưới thư mục `web/`, sử dụng pnpm Workspace cục bộ để quản lý dependencies và chia sẻ UI/logic.
-> Bao gồm 1 gói dùng chung (`shared/`), 1 app Next.js cho khách hàng (`client-web/`), và 2 app React + Vite cho Kênh người bán/Quản trị (`seller-web/`, `admin-web/`).
+> Các dự án Web nằm dưới thư mục `website/`, sử dụng pnpm Workspace cục bộ để quản lý dependencies và chia sẻ UI/logic.
+> Bao gồm 1 gói dùng chung (`shared/`), 1 app Next.js cho khách hàng (`client/`), và 2 app React + Vite cho Kênh người bán/Quản trị (`seller/`, `admin/`).
 
 ```
-web/
+website/
 ├── pnpm-workspace.yaml # Định nghĩa workspace cục bộ cho web
 │
 ├── shared/ # 📦 Gói UI và logic dùng chung cho Web
-│ ├── package.json # Tên package: @pixelmart/shared-web
+│ ├── package.json # Tên package: @pixelmart/website/client
 │ ├── tsconfig.json # Cấu hình TypeScript cho shared module
 │ └── src/
 │ ├── index.ts # Entry point để export mọi components & utils
@@ -319,7 +319,7 @@ web/
 │ ├── hooks/ # 🎣 Custom React hooks dùng chung (useAuth, useLocalStorage...)
 │ └── utils/ # ⚙️ Axios instance (api client), zod validation schemas, formatters
 │
-├── client-web/ # 🛍️ Buyer Storefront (Next.js 15+ App Router)
+├── client/ # 🛍️ Buyer Storefront (Next.js 15+ App Router)
 │ ├── app/ # App router chứa layouts và pages của Buyer
 │ │ ├── layout.tsx # Layout chung (Header & Footer)
 │ │ ├── page.tsx # Trang chủ "/"
@@ -328,9 +328,9 @@ web/
 │ │ └── checkout/ # Thanh toán "/checkout"
 │ ├── public/ # Các file tĩnh (logo, banners...)
 │ ├── tailwind.config.ts
-│ └── package.json # Khai báo dependency: "@pixelmart/shared-web": "workspace:_"
+│ └── package.json # Khai báo dependency: "@pixelmart/website/client": "workspace:_"
 │
-├── seller-web/ # 🏪 Seller Dashboard (React + Vite + TS SPA)
+├── seller/ # 🏪 Seller Dashboard (React + Vite + TS SPA)
 │ ├── src/
 │ │ ├── main.tsx # Entry point của React app
 │ │ ├── App.tsx # Router & layouts chính cho Seller
@@ -338,23 +338,23 @@ web/
 │ │ └── assets/ # Ảnh, icons dùng riêng cho Seller
 │ ├── index.html
 │ ├── vite.config.ts
-│ └── package.json # Khai báo dependency: "@pixelmart/shared-web": "workspace:_"
+│ └── package.json # Khai báo dependency: "@pixelmart/website/client": "workspace:_"
 │
-└── admin-web/ # 👑 Admin Panel (React + Vite + TS SPA)
+└── admin/ # 👑 Admin Panel (React + Vite + TS SPA)
 ├── src/
 │ ├── main.tsx # Entry point
 │ ├── App.tsx # Router & layouts chính cho Admin
 │ └── pages/ # Quản lý users, phê duyệt shop, báo cáo doanh thu
 ├── index.html
 ├── vite.config.ts
-└── package.json # Khai báo dependency: "@pixelmart/shared-web": "workspace:\*"
+└── package.json # Khai báo dependency: "@pixelmart/website/client": "workspace:\*"
 
 ```
 
 ### Kiến trúc Chia sẻ Code
 
 - **Cơ chế Import:** Các app con import UI/logic từ package shared bằng cú pháp clean:
-  `import { Button } from '@pixelmart/shared-web/components/ui/button'` hoặc `import { api } from '@pixelmart/shared-web/utils/api'`.
+  `import { Button } from '@pixelmart/website/clientsite/components/ui/button'` hoặc `import { api } from '@pixelmart/website/clientsite/utils/api'`.
 - **Đồng bộ CSS (Tailwind v4):** Trong các dự án con, cấu hình Tailwind CSS quét mã nguồn từ thư mục shared để biên dịch các class tiện ích:
   ```css
   @import "tailwindcss";
@@ -927,7 +927,7 @@ import { authService } from "./auth.service";
 
 ```
 PixelMart/
-├── web/             ← Web Workspace (Next.js + Vite)
+├── website/             ← Web Workspace (Next.js + Vite)
 ├── mobile/          ← Mobile Workspace (Expo)
 ├── server/          ← Backend MONOLITH (Express + Prisma + PostgreSQL)
 ├── docs/
@@ -938,7 +938,7 @@ PixelMart/
 
 ```
 PixelMart/
-├── web/             ← Web Workspace (Next.js + Vite) — KHÔNG ĐỔI
+├── website/             ← Web Workspace (Next.js + Vite) — KHÔNG ĐỔI
 ├── mobile/          ← Mobile Workspace (Expo) — KHÔNG ĐỔI
 ├── server/          ← DEPRECATED (giữ để reference)
 ├── services/        ← MỚI: Các microservices

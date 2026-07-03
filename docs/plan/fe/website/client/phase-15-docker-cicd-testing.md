@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Docker hóa ứng dụng Next.js client-web phục vụ deploy production, tích hợp GitHub Actions CI tự động chạy lint/build, và triển khai bộ kiểm thử tự động E2E bằng Playwright.
+**Goal:** Docker hóa ứng dụng Next.js client phục vụ deploy production, tích hợp GitHub Actions CI tự động chạy lint/build, và triển khai bộ kiểm thử tự động E2E bằng Playwright.
 
 **Architecture:** Sử dụng kỹ thuật Multi-stage Dockerfile kết hợp với tính năng `output: 'standalone'` của Next.js giúp giảm dung lượng image của Node.js container chỉ còn dưới 150MB. File workflow của GitHub Actions lắng nghe sự kiện push/PR để kích hoạt bộ build kiểm thử. Playwright được cấu hình chạy headless test luồng đăng nhập của người dùng.
 
@@ -10,7 +10,7 @@
 
 ## Global Constraints
 
-- Client web portal is located at `web/client-web/`
+- Client web portal is located at `website/client/`
 - Tech Stack: Next.js 15 (App Router), React 19, Tailwind CSS (v4), TypeScript, Zustand
 - No placeholder code in the plan: write actual implementations, imports, types, test cases, and commands.
 - Use Vietnamese for descriptions and explanations, and English for code and commands.
@@ -21,9 +21,9 @@
 ### Task 15.1: Multi-stage Dockerfile with Standalone Build Output
 
 **Files:**
-- Create: `web/client-web/Dockerfile`, `web/client-web/.dockerignore`
-- Modify: `web/client-web/next.config.ts`
-- Test: `web/client-web/__tests__/docker-config.test.ts`
+- Create: `website/client/Dockerfile`, `website/client/.dockerignore`
+- Modify: `website/client/next.config.ts`
+- Test: `website/client/__tests__/docker-config.test.ts`
 
 **Interfaces:**
 - Consumes: Next.js build bundle
@@ -31,7 +31,7 @@
 
 - [ ] **Step 1: Write the failing test**
 Tạo file test xác nhận config output standalone đã được khai báo trong next.config.ts:
-Create: `web/client-web/__tests__/docker-config.test.ts`
+Create: `website/client/__tests__/docker-config.test.ts`
 ```typescript
 import nextConfig from '../next.config';
 
@@ -45,14 +45,14 @@ describe('Next.js Docker Production Config', () => {
 - [ ] **Step 2: Run test to verify it fails**
 Run:
 ```bash
-cd /home/nquocbao37/Code/PixelMart/web/client-web
-npm run test
+cd /home/nquocbao37/Code/PixelMart/website/client
+pnpm test
 ```
 Expected: FAIL do config `output: 'standalone'` chưa được định nghĩa trong `next.config.ts`.
 
 - [ ] **Step 3: Write minimal implementation**
-Cập nhật config output trong `web/client-web/next.config.ts`:
-Modify: `web/client-web/next.config.ts` (Target the NextConfig attributes)
+Cập nhật config output trong `website/client/next.config.ts`:
+Modify: `website/client/next.config.ts` (Target the NextConfig attributes)
 Replace with:
 ```typescript
 import type { NextConfig } from "next";
@@ -74,8 +74,8 @@ const nextConfig: NextConfig = {
 export default nextConfig;
 ```
 
-Tạo file `web/client-web/.dockerignore`:
-Create: `web/client-web/.dockerignore`
+Tạo file `website/client/.dockerignore`:
+Create: `website/client/.dockerignore`
 ```dockerignore
 node_modules
 .next
@@ -87,8 +87,8 @@ Dockerfile
 .github
 ```
 
-Tạo Dockerfile cho `client-web`:
-Create: `web/client-web/Dockerfile`
+Tạo Dockerfile cho `client`:
+Create: `website/client/Dockerfile`
 ```dockerfile
 # Stage 1: Build source code
 FROM node:20-alpine AS builder
@@ -120,8 +120,8 @@ CMD ["node", "server.js"]
 - [ ] **Step 4: Run test to verify it passes**
 Run:
 ```bash
-cd /home/nquocbao37/Code/PixelMart/web/client-web
-npm run test
+cd /home/nquocbao37/Code/PixelMart/website/client
+pnpm test
 ```
 Expected: PASS docker-config.test.ts
 
@@ -129,7 +129,7 @@ Expected: PASS docker-config.test.ts
 Run:
 ```bash
 git add next.config.ts Dockerfile .dockerignore __tests__/docker-config.test.ts
-git commit -m "feat(client-web): add Dockerfile configurations and set standalone nextjs output mode"
+git commit -m "feat(client): add Dockerfile configurations and set standalone nextjs output mode"
 ```
 
 ---
@@ -216,13 +216,13 @@ jobs:
 
       - name: Lint check
         run: |
-          cd web/client-web
+          cd website/client
           pnpm run lint --pass-with-no-tests
 
       - name: Run unit test suite
         run: |
-          cd web/client-web
-          pnpm run test
+          cd website/client
+          ppnpm test
 ```
 
 - [ ] **Step 4: Run test to verify it passes**
@@ -244,8 +244,8 @@ git commit -m "ci(github): establish GitHub Actions workflow automation for clie
 ### Task 15.3: Playwright End-to-End Test Script
 
 **Files:**
-- Create: `web/client-web/playwright.config.ts`, `web/client-web/e2e/auth-flow.spec.ts`
-- Test: `web/client-web/__tests__/playwright-config.test.ts`
+- Create: `website/client/playwright.config.ts`, `website/client/e2e/auth-flow.spec.ts`
+- Test: `website/client/__tests__/playwright-config.test.ts`
 
 **Interfaces:**
 - Consumes: Playwright testing API
@@ -253,7 +253,7 @@ git commit -m "ci(github): establish GitHub Actions workflow automation for clie
 
 - [ ] **Step 1: Write the failing test**
 Tạo file test kiểm định config của Playwright:
-Create: `web/client-web/__tests__/playwright-config.test.ts`
+Create: `website/client/__tests__/playwright-config.test.ts`
 ```typescript
 import playwrightConfig from '../playwright.config';
 
@@ -267,8 +267,8 @@ describe('Playwright Configuration', () => {
 - [ ] **Step 2: Run test to verify it fails**
 Run:
 ```bash
-cd /home/nquocbao37/Code/PixelMart/web/client-web
-npm run test
+cd /home/nquocbao37/Code/PixelMart/website/client
+pnpm test
 ```
 Expected: FAIL do chưa tạo file `playwright.config.ts`.
 
@@ -276,12 +276,12 @@ Expected: FAIL do chưa tạo file `playwright.config.ts`.
 Cài đặt Playwright:
 Run:
 ```bash
-cd /home/nquocbao37/Code/PixelMart/web/client-web
+cd /home/nquocbao37/Code/PixelMart/website/client
 pnpm install -D @playwright/test
 ```
 
-Tạo config `web/client-web/playwright.config.ts`:
-Create: `web/client-web/playwright.config.ts`
+Tạo config `website/client/playwright.config.ts`:
+Create: `website/client/playwright.config.ts`
 ```typescript
 import { defineConfig, devices } from '@playwright/test';
 
@@ -308,7 +308,7 @@ export default defineConfig({
 ```
 
 Tạo file test E2E login:
-Create: `web/client-web/e2e/auth-flow.spec.ts`
+Create: `website/client/e2e/auth-flow.spec.ts`
 ```typescript
 import { test, expect } from '@playwright/test';
 
@@ -328,8 +328,8 @@ test.describe('Buyer Authentication Flow E2E', () => {
 - [ ] **Step 4: Run test to verify it passes**
 Run:
 ```bash
-cd /home/nquocbao37/Code/PixelMart/web/client-web
-npm run test
+cd /home/nquocbao37/Code/PixelMart/website/client
+pnpm test
 ```
 Expected: PASS playwright-config.test.ts
 
@@ -350,7 +350,7 @@ git commit -m "test(e2e): configure playwright and script dynamic auth flow vali
 3. **Playwright test không có mock hoặc setup test DB**: Chạy E2E test tạo data rác trực tiếp lên DB thật của production. Luôn cấu hình môi trường test biệt lập.
 
 ### Checklist Cuối Phase
-- [ ] Build thành công Docker image `docker build -t client-web .` không lỗi compile.
+- [ ] Build thành công Docker image `docker build -t client .` không lỗi compile.
 - [ ] File `.github/workflows/client-ci.yml` được parse cú pháp chính xác.
 - [ ] Chạy local playwright check `npx playwright test` vượt qua test case xác thực đăng nhập.
 - [ ] Bộ test suite hoàn tất.

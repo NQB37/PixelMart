@@ -8,7 +8,7 @@
 
 #### **📝 Các Task Nhỏ & Lý Do Chia Task**
 
-- **Task 1: Setup cấu trúc thư mục Workspace cục bộ (web/, mobile/) tách biệt với backend (server/), cài đặt TypeScript, pnpm Workspace, và Linter (ESLint, Prettier).**
+- **Task 1: Setup cấu trúc thư mục Workspace cục bộ (website/, mobile/) tách biệt với backend (server/), cài đặt TypeScript, pnpm Workspace, và Linter (ESLint, Prettier).**
   - _Tại sao?:_ Code sạch và chuẩn hóa ngay từ ngày đầu tiên giúp em không mất thời gian refactor (sửa code) sau này khi dự án phình to.
 - **Task 2: Thiết kế mô hình ERD (Entity Relationship Diagram) cho 5 bảng cơ bản trên giấy hoặc công cụ vẽ (dbdiagram.io).**
   - _Tại sao?:_ Tư duy trước khi code. Em cần nhìn rõ mối quan hệ 1-nhiều (Category - Product) và nhiều-nhiều (Order - Product thông qua OrderItem) trước khi gõ lệnh tạo bảng.

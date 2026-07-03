@@ -10,7 +10,7 @@
 
 ## Global Constraints
 
-- Client web portal is located at `web/client-web/`
+- Client web portal is located at `website/client/`
 - Tech Stack: Next.js 15 (App Router), React 19, Tailwind CSS (v4), TypeScript, Zustand
 - No placeholder code in the plan: write actual implementations, imports, types, test cases, and commands.
 - Use Vietnamese for descriptions and explanations, and English for code and commands.
@@ -21,26 +21,26 @@
 ### Task 4.1: Multi-step Shop Registration Wizard Form
 
 **Files:**
-- Create: `web/client-web/features/shop/components/RegisterShopWizard.tsx`, `web/client-web/app/(storefront)/shop/register/page.tsx`
-- Test: `web/client-web/features/shop/__tests__/RegisterShopWizard.test.tsx`
+- Create: `website/client/features/shop/components/RegisterShopWizard.tsx`, `website/client/app/(public)/shop/register/page.tsx`
+- Test: `website/client/features/shop/__tests__/RegisterShopWizard.test.tsx`
 
 **Interfaces:**
-- Consumes: `@pixelmart/shared-web` (api client for endpoints `/shops/register`)
+- Consumes: `@/lib/api` (api client for endpoints `/shops/register`)
 - Produces: Thành phần giao diện RegisterShopWizard cho phép Buyer nhập thông tin đa bước với validate chặt chẽ.
 
 - [ ] **Step 1: Write the failing test**
 Tạo file test kiểm tra hoạt động của Wizard: chuyển bước, validate dữ liệu đầu vào.
-Create: `web/client-web/features/shop/__tests__/RegisterShopWizard.test.tsx`
+Create: `website/client/features/shop/__tests__/RegisterShopWizard.test.tsx`
 ```tsx
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import RegisterShopWizard from '../components/RegisterShopWizard';
 
 // Mock useRouter
-jest.mock('next/navigation', () => ({
+vi.mock('next/navigation', () => ({
   useRouter() {
     return {
-      push: jest.fn(),
+      push: vi.fn(),
     };
   },
 }));
@@ -79,14 +79,14 @@ describe('Shop Registration Wizard', () => {
 - [ ] **Step 2: Run test to verify it fails**
 Run:
 ```bash
-cd /home/nquocbao37/Code/PixelMart/web/client-web
-npm run test
+cd /home/nquocbao37/Code/PixelMart/website/client
+pnpm test
 ```
 Expected: FAIL do component `RegisterShopWizard.tsx` chưa được tạo.
 
 - [ ] **Step 3: Write minimal implementation**
 Tạo component RegisterShopWizard:
-Create: `web/client-web/features/shop/components/RegisterShopWizard.tsx`
+Create: `website/client/features/shop/components/RegisterShopWizard.tsx`
 ```tsx
 'use client';
 
@@ -95,7 +95,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useRouter } from 'next/navigation';
-import { api } from '@pixelmart/shared-web';
+import { api } from '@/lib/api';
 
 const shopSchema = z.object({
   shopName: z.string().min(1, 'Tên cửa hàng là bắt buộc'),
@@ -298,8 +298,8 @@ export default function RegisterShopWizard() {
 }
 ```
 
-Tạo page `web/client-web/app/(storefront)/shop/register/page.tsx`:
-Create: `web/client-web/app/(storefront)/shop/register/page.tsx`
+Tạo page `website/client/app/(public)/shop/register/page.tsx`:
+Create: `website/client/app/(public)/shop/register/page.tsx`
 ```tsx
 import React from 'react';
 import RegisterShopWizard from '../../../../features/shop/components/RegisterShopWizard';
@@ -322,8 +322,8 @@ export default function RegisterShopPage() {
 - [ ] **Step 4: Run test to verify it passes**
 Run:
 ```bash
-cd /home/nquocbao37/Code/PixelMart/web/client-web
-npm run test
+cd /home/nquocbao37/Code/PixelMart/website/client
+pnpm test
 ```
 Expected: PASS RegisterShopWizard.test.tsx
 
@@ -331,7 +331,7 @@ Expected: PASS RegisterShopWizard.test.tsx
 Run:
 ```bash
 git add features/shop/components/RegisterShopWizard.tsx app/\(storefront\)/shop/register/page.tsx features/shop/__tests__/RegisterShopWizard.test.tsx
-git commit -m "feat(client-web): implement multi-step Shop Registration wizard UI with custom steps validation"
+git commit -m "feat(client): implement multi-step Shop Registration wizard UI with custom steps validation"
 ```
 
 ---

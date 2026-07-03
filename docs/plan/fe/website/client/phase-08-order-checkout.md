@@ -10,7 +10,7 @@
 
 ## Global Constraints
 
-- Client web portal is located at `web/client-web/`
+- Client web portal is located at `website/client/`
 - Tech Stack: Next.js 15 (App Router), React 19, Tailwind CSS (v4), TypeScript, Zustand
 - No placeholder code in the plan: write actual implementations, imports, types, test cases, and commands.
 - Use Vietnamese for descriptions and explanations, and English for code and commands.
@@ -21,8 +21,8 @@
 ### Task 8.1: Checkout Form and Payment Method Selector
 
 **Files:**
-- Create: `web/client-web/features/checkout/components/CheckoutForm.tsx`, `web/client-web/app/(storefront)/checkout/page.tsx`
-- Test: `web/client-web/features/checkout/__tests__/CheckoutForm.test.tsx`
+- Create: `website/client/features/checkout/components/CheckoutForm.tsx`, `website/client/app/(public)/checkout/page.tsx`
+- Test: `website/client/features/checkout/__tests__/CheckoutForm.test.tsx`
 
 **Interfaces:**
 - Consumes: Zustand `cartStore` items list
@@ -30,17 +30,17 @@
 
 - [ ] **Step 1: Write the failing test**
 Tạo file test kiểm thử validation địa chỉ và kích hoạt submit đơn hàng:
-Create: `web/client-web/features/checkout/__tests__/CheckoutForm.test.tsx`
+Create: `website/client/features/checkout/__tests__/CheckoutForm.test.tsx`
 ```tsx
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import CheckoutForm from '../components/CheckoutForm';
 
 // Mock useRouter
-jest.mock('next/navigation', () => ({
+vi.mock('next/navigation', () => ({
   useRouter() {
     return {
-      push: jest.fn(),
+      push: vi.fn(),
     };
   },
 }));
@@ -62,14 +62,14 @@ describe('Checkout Form', () => {
 - [ ] **Step 2: Run test to verify it fails**
 Run:
 ```bash
-cd /home/nquocbao37/Code/PixelMart/web/client-web
-npm run test
+cd /home/nquocbao37/Code/PixelMart/website/client
+pnpm test
 ```
 Expected: FAIL do chưa tạo component `CheckoutForm.tsx`.
 
 - [ ] **Step 3: Write minimal implementation**
 Tạo component CheckoutForm:
-Create: `web/client-web/features/checkout/components/CheckoutForm.tsx`
+Create: `website/client/features/checkout/components/CheckoutForm.tsx`
 ```tsx
 'use client';
 
@@ -78,7 +78,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useCartStore } from '../../stores/cartStore';
-import { api } from '@pixelmart/shared-web';
+import { api } from '@/lib/api';
 
 const checkoutSchema = z.object({
   recipientName: z.string().min(1, 'Họ tên người nhận là bắt buộc'),
@@ -206,8 +206,8 @@ export default function CheckoutForm() {
 }
 ```
 
-Tạo page `web/client-web/app/(storefront)/checkout/page.tsx`:
-Create: `web/client-web/app/(storefront)/checkout/page.tsx`
+Tạo page `website/client/app/(public)/checkout/page.tsx`:
+Create: `website/client/app/(public)/checkout/page.tsx`
 ```tsx
 import React from 'react';
 import CheckoutForm from '../../../features/checkout/components/CheckoutForm';
@@ -232,8 +232,8 @@ export default function CheckoutPage() {
 - [ ] **Step 4: Run test to verify it passes**
 Run:
 ```bash
-cd /home/nquocbao37/Code/PixelMart/web/client-web
-npm run test
+cd /home/nquocbao37/Code/PixelMart/website/client
+pnpm test
 ```
 Expected: PASS CheckoutForm.test.tsx
 
@@ -241,7 +241,7 @@ Expected: PASS CheckoutForm.test.tsx
 Run:
 ```bash
 git add features/checkout/components/CheckoutForm.tsx app/\(storefront\)/checkout/page.tsx features/checkout/__tests__/CheckoutForm.test.tsx
-git commit -m "feat(client-web): develop CheckoutForm with delivery address validation and payment strategies integration"
+git commit -m "feat(client): develop CheckoutForm with delivery address validation and payment strategies integration"
 ```
 
 ---
@@ -249,8 +249,8 @@ git commit -m "feat(client-web): develop CheckoutForm with delivery address vali
 ### Task 8.2: Payment Return Hook and Handler Page
 
 **Files:**
-- Create: `web/client-web/app/(storefront)/checkout/payment-return/page.tsx`
-- Test: `web/client-web/app/(storefront)/checkout/payment-return/__tests__/PaymentReturn.test.tsx`
+- Create: `website/client/app/(public)/checkout/payment-return/page.tsx`
+- Test: `website/client/app/(public)/checkout/payment-return/__tests__/PaymentReturn.test.tsx`
 
 **Interfaces:**
 - Consumes: URL query parameters
@@ -258,16 +258,16 @@ git commit -m "feat(client-web): develop CheckoutForm with delivery address vali
 
 - [ ] **Step 1: Write the failing test**
 Tạo file test kiểm tra render thông tin thanh toán thành công hay thất bại dựa trên searchParams:
-Create: `web/client-web/app/(storefront)/checkout/payment-return/__tests__/PaymentReturn.test.tsx`
+Create: `website/client/app/(public)/checkout/payment-return/__tests__/PaymentReturn.test.tsx`
 ```tsx
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import PaymentReturnPage from '../page';
 
 // Mock shared-web
-jest.mock('@pixelmart/shared-web', () => ({
+vi.mock('@/lib/api', () => ({
   api: {
-    get: jest.fn().mockResolvedValue({
+    get: vi.fn().mockResolvedValue({
       data: {
         success: true,
         message: 'Thanh toán thành công',
@@ -290,18 +290,18 @@ describe('Payment Return Page', () => {
 - [ ] **Step 2: Run test to verify it fails**
 Run:
 ```bash
-cd /home/nquocbao37/Code/PixelMart/web/client-web
-npm run test
+cd /home/nquocbao37/Code/PixelMart/website/client
+pnpm test
 ```
 Expected: FAIL do chưa tạo page `payment-return/page.tsx`.
 
 - [ ] **Step 3: Write minimal implementation**
-Tạo page `web/client-web/app/(storefront)/checkout/payment-return/page.tsx`:
-Create: `web/client-web/app/(storefront)/checkout/payment-return/page.tsx`
+Tạo page `website/client/app/(public)/checkout/payment-return/page.tsx`:
+Create: `website/client/app/(public)/checkout/payment-return/page.tsx`
 ```tsx
 import React from 'react';
 import Link from 'next/link';
-import { api } from '@pixelmart/shared-web';
+import { api } from '@/lib/api';
 
 interface Props {
   searchParams: Promise<{ [key: string]: string | undefined }>;
@@ -359,8 +359,8 @@ export default async function PaymentReturnPage({ searchParams }: Props) {
 - [ ] **Step 4: Run test to verify it passes**
 Run:
 ```bash
-cd /home/nquocbao37/Code/PixelMart/web/client-web
-npm run test
+cd /home/nquocbao37/Code/PixelMart/website/client
+pnpm test
 ```
 Expected: PASS PaymentReturn.test.tsx
 
@@ -368,7 +368,7 @@ Expected: PASS PaymentReturn.test.tsx
 Run:
 ```bash
 git add app/\(storefront\)/checkout/payment-return/page.tsx app/\(storefront\)/checkout/payment-return/__tests__/PaymentReturn.test.tsx
-git commit -m "feat(client-web): implement VNPAY/Stripe return handler verification page"
+git commit -m "feat(client): implement VNPAY/Stripe return handler verification page"
 ```
 
 ---
@@ -376,8 +376,8 @@ git commit -m "feat(client-web): implement VNPAY/Stripe return handler verificat
 ### Task 8.3: Order History Page
 
 **Files:**
-- Create: `web/client-web/app/(storefront)/orders/page.tsx`, `web/client-web/features/order/components/OrderHistoryList.tsx`
-- Test: `web/client-web/features/order/__tests__/OrderHistoryList.test.tsx`
+- Create: `website/client/app/(public)/orders/page.tsx`, `website/client/features/order/components/OrderHistoryList.tsx`
+- Test: `website/client/features/order/__tests__/OrderHistoryList.test.tsx`
 
 **Interfaces:**
 - Consumes: Backend API `/orders`
@@ -385,7 +385,7 @@ git commit -m "feat(client-web): implement VNPAY/Stripe return handler verificat
 
 - [ ] **Step 1: Write the failing test**
 Tạo file test kiểm tra khả năng render danh sách đơn hàng:
-Create: `web/client-web/features/order/__tests__/OrderHistoryList.test.tsx`
+Create: `website/client/features/order/__tests__/OrderHistoryList.test.tsx`
 ```tsx
 import React from 'react';
 import { render, screen } from '@testing-library/react';
@@ -407,14 +407,14 @@ describe('OrderHistoryList Component', () => {
 - [ ] **Step 2: Run test to verify it fails**
 Run:
 ```bash
-cd /home/nquocbao37/Code/PixelMart/web/client-web
-npm run test
+cd /home/nquocbao37/Code/PixelMart/website/client
+pnpm test
 ```
 Expected: FAIL do chưa tạo component `OrderHistoryList.tsx`.
 
 - [ ] **Step 3: Write minimal implementation**
 Tạo Component OrderHistoryList:
-Create: `web/client-web/features/order/components/OrderHistoryList.tsx`
+Create: `website/client/features/order/components/OrderHistoryList.tsx`
 ```tsx
 import React from 'react';
 
@@ -451,14 +451,14 @@ export default function OrderHistoryList({ orders }: { orders: Order[] }) {
 }
 ```
 
-Tạo page `web/client-web/app/(storefront)/orders/page.tsx`:
-Create: `web/client-web/app/(storefront)/orders/page.tsx`
+Tạo page `website/client/app/(public)/orders/page.tsx`:
+Create: `website/client/app/(public)/orders/page.tsx`
 ```tsx
 'use client';
 
 import React, { useEffect, useState } from 'react';
 import OrderHistoryList, { Order } from '../../../features/order/components/OrderHistoryList';
-import { api } from '@pixelmart/shared-web';
+import { api } from '@/lib/api';
 
 export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -493,8 +493,8 @@ export default function OrdersPage() {
 - [ ] **Step 4: Run test to verify it passes**
 Run:
 ```bash
-cd /home/nquocbao37/Code/PixelMart/web/client-web
-npm run test
+cd /home/nquocbao37/Code/PixelMart/website/client
+pnpm test
 ```
 Expected: PASS OrderHistoryList.test.tsx
 
@@ -502,7 +502,7 @@ Expected: PASS OrderHistoryList.test.tsx
 Run:
 ```bash
 git add app/\(storefront\)/orders/page.tsx features/order/components/OrderHistoryList.tsx features/order/__tests__/OrderHistoryList.test.tsx
-git commit -m "feat(client-web): construct OrderHistoryList dashboard page for registered buyers"
+git commit -m "feat(client): construct OrderHistoryList dashboard page for registered buyers"
 ```
 
 ---

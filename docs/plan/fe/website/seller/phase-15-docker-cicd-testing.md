@@ -22,17 +22,17 @@
 ### Task 1: Thiết lập Dockerfile Multi-stage & Cấu hình Nginx Web Server
 
 **Files:**
-- Create: `infra/docker/Dockerfile.seller-web`
-- Create: `infra/nginx/seller-web.conf`
-- Create: `web/seller-web/src/__tests__/docker.test.ts`
+- Create: `infra/docker/Dockerfile.seller`
+- Create: `infra/nginx/seller.conf`
+- Create: `website/seller/src/__tests__/docker.test.ts`
 
 **Interfaces:**
 - Consumes: Bản build build-output (dist) từ Phase 1.
-- Produces: Docker image `pixelmart-seller-web:latest` chạy trên cổng 80, tự động chuyển tiếp mọi request về index.html.
+- Produces: Docker image `pixelmart-seller:latest` chạy trên cổng 80, tự động chuyển tiếp mọi request về index.html.
 
 - [ ] **Step 1: Write the failing test**
 Để kiểm tra cấu hình Dockerfile có hợp lệ và sẵn sàng build, ta viết unit test kiểm tra sự tồn tại của file cấu hình.
-Create: `web/seller-web/src/__tests__/docker.test.ts`
+Create: `website/seller/src/__tests__/docker.test.ts`
 ```typescript
 import { describe, it, expect } from 'vitest';
 import * as fs from 'fs';
@@ -41,8 +41,8 @@ import * as path from 'path';
 describe('Docker Configuration Files Check', () => {
   it('verifies Dockerfile and Nginx configuration files exist', () => {
     // Đường dẫn tuyệt đối kiểm tra sự tồn tại của config
-    const dockerfilePath = path.resolve(__dirname, '../../../../infra/docker/Dockerfile.seller-web');
-    const nginxPath = path.resolve(__dirname, '../../../../infra/nginx/seller-web.conf');
+    const dockerfilePath = path.resolve(__dirname, '../../../../infra/docker/Dockerfile.seller');
+    const nginxPath = path.resolve(__dirname, '../../../../infra/nginx/seller.conf');
 
     expect(fs.existsSync(dockerfilePath)).toBe(true);
     expect(fs.existsSync(nginxPath)).toBe(true);
@@ -51,12 +51,12 @@ describe('Docker Configuration Files Check', () => {
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
-Run: `pnpm --filter seller-web test run`
+Run: `pnpm --filter seller test run`
 Expected: FAIL vì các file cấu hình Docker/Nginx chưa được tạo.
 
 - [ ] **Step 3: Write minimal implementation**
 Tạo thư mục hạ tầng và file config Nginx:
-Create: `infra/nginx/seller-web.conf`
+Create: `infra/nginx/seller.conf`
 ```nginx
 server {
     listen 80;
@@ -75,8 +75,8 @@ server {
 }
 ```
 
-Tạo Dockerfile cho seller-web (Multi-stage build tối ưu size):
-Create: `infra/docker/Dockerfile.seller-web`
+Tạo Dockerfile cho seller (Multi-stage build tối ưu size):
+Create: `infra/docker/Dockerfile.seller`
 ```dockerfile
 # === STAGE 1: Build ===
 FROM node:20-alpine AS builder
@@ -90,26 +90,26 @@ COPY pnpm-lock.yaml* ./
 COPY package.json ./
 COPY web/pnpm-workspace.yaml ./web/
 COPY web/shared/package.json ./web/shared/
-COPY web/seller-web/package.json ./web/seller-web/
+COPY website/seller/package.json ./website/seller/
 
 # Cài đặt dependencies cho workspace
 RUN pnpm install --frozen-lockfile
 
 # Copy source code liên quan
 COPY web/shared ./web/shared
-COPY web/seller-web ./web/seller-web
+COPY website/seller ./website/seller
 
 # Build bundle tĩnh
-RUN pnpm --filter seller-web build
+RUN pnpm --filter seller build
 
 # === STAGE 2: Serve ===
 FROM nginx:alpine
 
 # Copy file cấu hình Nginx SPA fallback
-COPY infra/nginx/seller-web.conf /etc/nginx/conf.d/default.conf
+COPY infra/nginx/seller.conf /etc/nginx/conf.d/default.conf
 
 # Copy build assets từ builder stage
-COPY --from=builder /app/web/seller-web/dist /usr/share/nginx/html
+COPY --from=builder /app/website/seller/dist /usr/share/nginx/html
 
 EXPOSE 80
 
@@ -117,13 +117,13 @@ CMD ["nginx", "-g", "daemon off;"]
 ```
 
 - [ ] **Step 4: Run test to verify it passes**
-Run: `pnpm --filter seller-web test run`
+Run: `pnpm --filter seller test run`
 Expected: PASS 1/1 (docker.test.ts)
 
 - [ ] **Step 5: Commit**
 ```bash
-git add infra/docker/Dockerfile.seller-web infra/nginx/seller-web.conf web/seller-web/src/__tests__/docker.test.ts
-git commit -m "feat(seller-web): add Multi-stage Dockerfile and Nginx SPA fallback configurations"
+git add infra/docker/Dockerfile.seller infra/nginx/seller.conf website/seller/src/__tests__/docker.test.ts
+git commit -m "feat(seller): add Multi-stage Dockerfile and Nginx SPA fallback configurations"
 ```
 
 ---
@@ -131,9 +131,9 @@ git commit -m "feat(seller-web): add Multi-stage Dockerfile and Nginx SPA fallba
 ### Task 2: Cài đặt và cấu hình Cypress E2E Test Suite
 
 **Files:**
-- Create: `web/seller-web/cypress.config.ts`
-- Create: `web/seller-web/cypress/support/e2e.ts`
-- Create: `web/seller-web/cypress/e2e/auth.cy.ts`
+- Create: `website/seller/cypress.config.ts`
+- Create: `website/seller/cypress/support/e2e.ts`
+- Create: `website/seller/cypress/e2e/auth.cy.ts`
 
 **Interfaces:**
 - Consumes: Dự án chạy local ở cổng 5173 (Vite dev server) hoặc 80 (Docker container).
@@ -141,7 +141,7 @@ git commit -m "feat(seller-web): add Multi-stage Dockerfile and Nginx SPA fallba
 
 - [ ] **Step 1: Write the failing test**
 Viết kịch bản kiểm thử E2E Cypress giả lập lỗi trước.
-Create: `web/seller-web/cypress/e2e/auth.cy.ts`
+Create: `website/seller/cypress/e2e/auth.cy.ts`
 ```typescript
 describe('Seller Login E2E Test Flow', () => {
   it('should display error message on wrong password', () => {
@@ -168,15 +168,15 @@ describe('Seller Login E2E Test Flow', () => {
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
-Run: `pnpm --filter seller-web exec cypress run`
+Run: `pnpm --filter seller exec cypress run`
 Expected: FAIL vì thư viện cypress chưa được cài đặt và config file chưa khai báo.
 
 - [ ] **Step 3: Write minimal implementation**
 Cài đặt Cypress làm Dev Dependency cho app:
-Run: `pnpm --filter seller-web add -D cypress`
+Run: `pnpm --filter seller add -D cypress`
 
 Tạo file config Cypress:
-Create: `web/seller-web/cypress.config.ts`
+Create: `website/seller/cypress.config.ts`
 ```typescript
 import { defineConfig } from 'cypress';
 
@@ -194,20 +194,20 @@ export default defineConfig({
 ```
 
 Tạo file hỗ trợ Cypress:
-Create: `web/seller-web/cypress/support/e2e.ts`
+Create: `website/seller/cypress/support/e2e.ts`
 ```typescript
 // Support file rỗng
 ```
 
 - [ ] **Step 4: Run test to verify it passes**
-Đảm bảo Vite dev server đang chạy local: `pnpm --filter seller-web dev` (ở terminal phụ)
-Run: `pnpm --filter seller-web exec cypress run`
+Đảm bảo Vite dev server đang chạy local: `pnpm --filter seller dev` (ở terminal phụ)
+Run: `pnpm --filter seller exec cypress run`
 Expected: PASS cả 2 test cases trong `auth.cy.ts`.
 
 - [ ] **Step 5: Commit**
 ```bash
-git add web/seller-web/cypress.config.ts web/seller-web/cypress/support/e2e.ts web/seller-web/cypress/e2e/auth.cy.ts
-git commit -m "feat(seller-web): install Cypress and write initial E2E login flow tests"
+git add website/seller/cypress.config.ts website/seller/cypress/support/e2e.ts website/seller/cypress/e2e/auth.cy.ts
+git commit -m "feat(seller): install Cypress and write initial E2E login flow tests"
 ```
 
 ---
@@ -223,7 +223,7 @@ git commit -m "feat(seller-web): install Cypress and write initial E2E login flo
 
 - [ ] **Step 1: Write the failing test**
 Để kiểm tra workflow có cấu trúc hợp lệ, ta viết test case kiểm tra cú pháp YAML của file.
-Modify: `web/seller-web/src/__tests__/docker.test.ts:1-35`
+Modify: `website/seller/src/__tests__/docker.test.ts:1-35`
 ```typescript
 import { describe, it, expect } from 'vitest';
 import * as fs from 'fs';
@@ -242,7 +242,7 @@ describe('CI/CD Config Check', () => {
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
-Run: `pnpm --filter seller-web test run`
+Run: `pnpm --filter seller test run`
 Expected: FAIL vì file `.github/workflows/seller-ci.yml` chưa tồn tại.
 
 - [ ] **Step 3: Write minimal implementation**
@@ -280,31 +280,31 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Run ESLint check
-        run: pnpm --filter seller-web lint
+        run: pnpm --filter seller lint
 
       - name: Run Vitest Unit Tests
-        run: pnpm --filter seller-web test run
+        run: pnpm --filter seller test run
 
       - name: Build Vite App
-        run: pnpm --filter seller-web build
+        run: pnpm --filter seller build
 
       - name: Run Cypress E2E tests headless
         uses: cypress-io/github-action@v6
         with:
-          working-directory: web/seller-web
+          working-directory: website/seller
           start: pnpm dev
           wait-on: 'http://localhost:5173'
 ```
 *(Lưu ý: Để tránh lỗi lint trong dự án khi chạy GitHub Actions, hãy chắc chắn lệnh `npm run lint` hoặc `pnpm lint` đã được cấu hình trỏ vào eslint. Do ta chưa thiết lập ESLint quá nghiêm ngặt, ta cấu hình script `lint` tạm thời trả ra exit 0 hoặc trỏ đến eslint có sẵn)*
 
 - [ ] **Step 4: Run test to verify it passes**
-Run: `pnpm --filter seller-web test run`
+Run: `pnpm --filter seller test run`
 Expected: PASS toàn bộ các test cases.
 
 - [ ] **Step 5: Commit**
 ```bash
-git add .github/workflows/seller-ci.yml web/seller-web/src/__tests__/docker.test.ts
-git commit -m "feat(seller-web): add GitHub Actions workflow config for integration test pipeline"
+git add .github/workflows/seller-ci.yml website/seller/src/__tests__/docker.test.ts
+git commit -m "feat(seller): add GitHub Actions workflow config for integration test pipeline"
 ```
 
 ---
@@ -312,7 +312,7 @@ git commit -m "feat(seller-web): add GitHub Actions workflow config for integrat
 ## 🏁 Phase Checklist & Common Fresher Errors
 
 ### 📋 Phase Complete Checklist
-1. Có file `Dockerfile.seller-web` phục vụ quá trình đóng gói container ứng dụng.
+1. Có file `Dockerfile.seller` phục vụ quá trình đóng gói container ứng dụng.
 2. File cấu hình Nginx xử lý chuẩn route fallback `try_files` phục vụ Single Page App.
 3. Kịch bản Cypress mô tả chuẩn và chạy thành công cả 2 kịch bản E2E: sai mật khẩu & đăng nhập thành công.
 4. Môi trường E2E test có cấu hình chạy headless thông qua lệnh CLI `cypress run` phục vụ môi trường CI.

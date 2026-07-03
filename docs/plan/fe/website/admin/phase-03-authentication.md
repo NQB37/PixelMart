@@ -10,7 +10,7 @@
 
 ## Global Constraints
 
-- Thư mục làm việc: `web/admin-web/`
+- Thư mục làm việc: `website/admin/`
 - Endpoint API Backend cho login: `/api/v1/auth/login` (POST, nhận `email` và `password`, trả về JWT token và thông tin user).
 - Quyền truy cập: Chỉ cho phép người dùng có vai trò `ADMIN` (trong mảng `roles`) đi qua route bảo vệ. Các role khác (như `CUSTOMER` hoặc `SELLER`) sẽ bị chặn và hiển thị thông báo Access Denied.
 - Không sử dụng code placeholder hay các ghi chú TBD/TODO trong code triển khai chính thức.
@@ -22,9 +22,9 @@
 ### Task 3.1: Xây dựng AuthProvider & Axios Interceptor
 
 **Files:**
-- Create: `web/admin-web/src/context/AuthContext.tsx`
-- Create: `web/admin-web/src/services/api.ts`
-- Create: `web/admin-web/src/__tests__/AuthContext.test.tsx`
+- Create: `website/admin/src/context/AuthContext.tsx`
+- Create: `website/admin/src/services/api.ts`
+- Create: `website/admin/src/__tests__/AuthContext.test.tsx`
 
 **Interfaces:**
 - Consumes: `/api/v1/auth/login` (Backend endpoint)
@@ -38,7 +38,7 @@
 - [ ] **Step 1: Write the failing test**
 
 ```typescript
-// web/admin-web/src/__tests__/AuthContext.test.tsx
+// website/admin/src/__tests__/AuthContext.test.tsx
 import React from 'react';
 import { render, screen, act } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
@@ -102,13 +102,13 @@ describe('AuthContext & Provider', () => {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `cd web/admin-web && npm run test`
+Run: `cd website/admin && pnpm test`
 Expected: FAIL với lỗi không tìm thấy module `../context/AuthContext`.
 
 - [ ] **Step 3: Write minimal implementation**
 
 ```typescript
-// web/admin-web/src/services/api.ts
+// website/admin/src/services/api.ts
 import axios from 'axios';
 
 const api = axios.create({
@@ -136,7 +136,7 @@ export default api;
 ```
 
 ```typescript
-// web/admin-web/src/context/AuthContext.tsx
+// website/admin/src/context/AuthContext.tsx
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import api from '../services/api';
 
@@ -209,7 +209,7 @@ export function useAuth() {
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `cd web/admin-web && npm run test`
+Run: `cd website/admin && pnpm test`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -224,9 +224,9 @@ git commit -m "feat(admin): implement AuthProvider state management and axios ap
 ### Task 3.2: Phát triển Trang Đăng Nhập (Login Page)
 
 **Files:**
-- Create: `web/admin-web/src/pages/Login.tsx`
-- Create: `web/admin-web/src/__tests__/Login.test.tsx`
-- Modify: `web/admin-web/src/App.tsx`
+- Create: `website/admin/src/pages/Login.tsx`
+- Create: `website/admin/src/__tests__/Login.test.tsx`
+- Modify: `website/admin/src/App.tsx`
 
 **Interfaces:**
 - Consumes: `useAuth` hook
@@ -235,7 +235,7 @@ git commit -m "feat(admin): implement AuthProvider state management and axios ap
 - [ ] **Step 1: Write the failing test**
 
 ```typescript
-// web/admin-web/src/__tests__/Login.test.tsx
+// website/admin/src/__tests__/Login.test.tsx
 import React from 'react';
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
@@ -290,13 +290,13 @@ describe('Login Page', () => {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `cd web/admin-web && npm run test`
+Run: `cd website/admin && pnpm test`
 Expected: FAIL với lỗi không tìm thấy component `Login`.
 
 - [ ] **Step 3: Write minimal implementation**
 
 ```typescript
-// web/admin-web/src/pages/Login.tsx
+// website/admin/src/pages/Login.tsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -400,7 +400,7 @@ export default function Login() {
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `cd web/admin-web && npm run test`
+Run: `cd website/admin && pnpm test`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -415,9 +415,9 @@ git commit -m "feat(admin): build Admin Login view layout and setup form submiss
 ### Task 3.3: Xây dựng ProtectedRoute Guard
 
 **Files:**
-- Create: `web/admin-web/src/components/auth/ProtectedRoute.tsx`
-- Create: `web/admin-web/src/__tests__/ProtectedRoute.test.tsx`
-- Modify: `web/admin-web/src/App.tsx`
+- Create: `website/admin/src/components/auth/ProtectedRoute.tsx`
+- Create: `website/admin/src/__tests__/ProtectedRoute.test.tsx`
+- Modify: `website/admin/src/App.tsx`
 
 **Interfaces:**
 - Consumes: `useAuth` hook
@@ -426,7 +426,7 @@ git commit -m "feat(admin): build Admin Login view layout and setup form submiss
 - [ ] **Step 1: Write the failing test**
 
 ```typescript
-// web/admin-web/src/__tests__/ProtectedRoute.test.tsx
+// website/admin/src/__tests__/ProtectedRoute.test.tsx
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
@@ -493,13 +493,13 @@ describe('ProtectedRoute', () => {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `cd web/admin-web && npm run test`
+Run: `cd website/admin && pnpm test`
 Expected: FAIL với lỗi không tìm thấy `ProtectedRoute` component.
 
 - [ ] **Step 3: Write minimal implementation**
 
 ```typescript
-// web/admin-web/src/components/auth/ProtectedRoute.tsx
+// website/admin/src/components/auth/ProtectedRoute.tsx
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -543,7 +543,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
 ```
 
 ```typescript
-// web/admin-web/src/App.tsx
+// website/admin/src/App.tsx
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
@@ -607,7 +607,7 @@ export default function App() {
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `cd web/admin-web && npm run test`
+Run: `cd website/admin && pnpm test`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**

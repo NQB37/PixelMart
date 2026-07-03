@@ -12,8 +12,8 @@
 
 - Node.js version >= 18
 - Package manager: pnpm
-- Toàn bộ source code của seller-web nằm trong thư mục `web/seller-web/`
-- Sử dụng Path Alias `@/` trỏ tới `web/seller-web/src`
+- Toàn bộ source code của seller nằm trong thư mục `website/seller/`
+- Sử dụng Path Alias `@/` trỏ tới `website/seller/src`
 - TDD: Mọi component/helper phải viết test trước khi code minimal implementation
 - Không sử dụng code placeholder (ví dụ: `// TODO`, `/* code here */`). Toàn bộ code trong plan phải hoạt động được.
 
@@ -24,15 +24,15 @@
 ### Task 1: Viết hàm tiện ích tính Tích Descartes (Cartesian Product Helper)
 
 **Files:**
-- Create: `web/seller-web/src/utils/cartesian.ts`
-- Create: `web/seller-web/src/__tests__/cartesian.test.ts`
+- Create: `website/seller/src/utils/cartesian.ts`
+- Create: `website/seller/src/__tests__/cartesian.test.ts`
 
 **Interfaces:**
 - Consumes: None (Pure Utility)
 - Produces: Hàm `cartesianProduct(arrays: string[][]): string[][]` trả về mảng các tổ hợp.
 
 - [ ] **Step 1: Write the failing test**
-Create: `web/seller-web/src/__tests__/cartesian.test.ts`
+Create: `website/seller/src/__tests__/cartesian.test.ts`
 ```typescript
 import { describe, it, expect } from 'vitest';
 import { cartesianProduct } from '../utils/cartesian';
@@ -55,11 +55,11 @@ describe('cartesianProduct utility', () => {
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
-Run: `pnpm --filter seller-web test run`
+Run: `pnpm --filter seller test run`
 Expected: FAIL vì `utils/cartesian.ts` chưa được định nghĩa.
 
 - [ ] **Step 3: Write minimal implementation**
-Create: `web/seller-web/src/utils/cartesian.ts`
+Create: `website/seller/src/utils/cartesian.ts`
 ```typescript
 export function cartesianProduct(arrays: string[][]): string[][] {
   if (arrays.length === 0) return [];
@@ -80,13 +80,13 @@ export function cartesianProduct(arrays: string[][]): string[][] {
 ```
 
 - [ ] **Step 4: Run test to verify it passes**
-Run: `pnpm --filter seller-web test run`
+Run: `pnpm --filter seller test run`
 Expected: PASS 1/1 (cartesian.test.ts)
 
 - [ ] **Step 5: Commit**
 ```bash
-git add web/seller-web/src/utils/cartesian.ts web/seller-web/src/__tests__/cartesian.test.ts
-git commit -m "feat(seller-web): implement cartesian product helper with comprehensive unit test"
+git add website/seller/src/utils/cartesian.ts website/seller/src/__tests__/cartesian.test.ts
+git commit -m "feat(seller): implement cartesian product helper with comprehensive unit test"
 ```
 
 ---
@@ -94,15 +94,15 @@ git commit -m "feat(seller-web): implement cartesian product helper with compreh
 ### Task 2: Xây dựng Component Quản lý Thuộc tính (Attribute Selector)
 
 **Files:**
-- Create: `web/seller-web/src/components/products/AttributeSelector.tsx`
-- Create: `web/seller-web/src/__tests__/attributeSelector.test.tsx`
+- Create: `website/seller/src/components/products/AttributeSelector.tsx`
+- Create: `website/seller/src/__tests__/attributeSelector.test.tsx`
 
 **Interfaces:**
 - Consumes: None.
 - Produces: Giao diện thêm nhóm thuộc tính (ví dụ: Size) và danh sách các tag giá trị tương ứng (ví dụ: M, L, XL).
 
 - [ ] **Step 1: Write the failing test**
-Create: `web/seller-web/src/__tests__/attributeSelector.test.tsx`
+Create: `website/seller/src/__tests__/attributeSelector.test.tsx`
 ```typescript
 import React from 'react';
 import { render, screen } from '@testing-library/react';
@@ -121,11 +121,11 @@ describe('AttributeSelector Component', () => {
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
-Run: `pnpm --filter seller-web test run`
+Run: `pnpm --filter seller test run`
 Expected: FAIL vì component `AttributeSelector` chưa tồn tại.
 
 - [ ] **Step 3: Write minimal implementation**
-Create: `web/seller-web/src/components/products/AttributeSelector.tsx`
+Create: `website/seller/src/components/products/AttributeSelector.tsx`
 ```typescript
 import React, { useState } from 'react';
 import { Plus, X } from 'lucide-react';
@@ -270,13 +270,13 @@ export default function AttributeSelector({ attributes, onChange }: AttributeSel
 ```
 
 - [ ] **Step 4: Run test to verify it passes**
-Run: `pnpm --filter seller-web test run`
+Run: `pnpm --filter seller test run`
 Expected: PASS cả attribute selector test.
 
 - [ ] **Step 5: Commit**
 ```bash
-git add web/seller-web/src/components/products/AttributeSelector.tsx web/seller-web/src/__tests__/attributeSelector.test.tsx
-git commit -m "feat(seller-web): add AttributeSelector UI component to edit multi-value properties"
+git add website/seller/src/components/products/AttributeSelector.tsx website/seller/src/__tests__/attributeSelector.test.tsx
+git commit -m "feat(seller): add AttributeSelector UI component to edit multi-value properties"
 ```
 
 ---
@@ -284,16 +284,16 @@ git commit -m "feat(seller-web): add AttributeSelector UI component to edit mult
 ### Task 3: Phát sinh Danh sách Biến thể & Form nhập thông số giá, kho
 
 **Files:**
-- Create: `web/seller-web/src/components/products/VariantsTable.tsx`
-- Create: `web/seller-web/src/__tests__/variantsTable.test.tsx`
-- Modify: `web/seller-web/src/pages/ProductForm.tsx`
+- Create: `website/seller/src/components/products/VariantsTable.tsx`
+- Create: `website/seller/src/__tests__/variantsTable.test.tsx`
+- Modify: `website/seller/src/pages/ProductForm.tsx`
 
 **Interfaces:**
 - Consumes: Hàm `cartesianProduct` từ Task 1 và danh sách Attributes từ Task 2.
 - Produces: Danh sách các variant sinh ra, cho phép người bán cấu hình giá, số lượng kho, SKU cho từng biến thể cụ thể trước khi lưu.
 
 - [ ] **Step 1: Write the failing test**
-Create: `web/seller-web/src/__tests__/variantsTable.test.tsx`
+Create: `website/seller/src/__tests__/variantsTable.test.tsx`
 ```typescript
 import React from 'react';
 import { render, screen } from '@testing-library/react';
@@ -321,12 +321,12 @@ describe('VariantsTable cartesian mapper', () => {
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
-Run: `pnpm --filter seller-web test run`
+Run: `pnpm --filter seller test run`
 Expected: FAIL vì `VariantsTable` chưa được tạo.
 
 - [ ] **Step 3: Write minimal implementation**
 Tạo file VariantsTable:
-Create: `web/seller-web/src/components/products/VariantsTable.tsx`
+Create: `website/seller/src/components/products/VariantsTable.tsx`
 ```typescript
 import React, { useEffect } from 'react';
 import { cartesianProduct } from '../../utils/cartesian';
@@ -449,13 +449,13 @@ export default function VariantsTable({ attributes, variants, onChange, baseSku,
 Cập nhật `ProductForm.tsx` tích hợp cả `AttributeSelector` lẫn `VariantsTable` bên dưới thông số chính.
 
 - [ ] **Step 4: Run test to verify it passes**
-Run: `pnpm --filter seller-web test run`
+Run: `pnpm --filter seller test run`
 Expected: PASS tất cả 13 tests.
 
 - [ ] **Step 5: Commit**
 ```bash
-git add web/seller-web/src/components/products/VariantsTable.tsx web/seller-web/src/pages/ProductForm.tsx web/seller-web/src/__tests__/variantsTable.test.tsx
-git commit -m "feat(seller-web): add VariantsTable Cartesian combinations list and wire into ProductForm"
+git add website/seller/src/components/products/VariantsTable.tsx website/seller/src/pages/ProductForm.tsx website/seller/src/__tests__/variantsTable.test.tsx
+git commit -m "feat(seller): add VariantsTable Cartesian combinations list and wire into ProductForm"
 ```
 
 ---

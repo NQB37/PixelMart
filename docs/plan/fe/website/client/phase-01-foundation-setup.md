@@ -2,15 +2,15 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Khởi tạo dự án Next.js 15 cho client-web, liên kết với workspace `@pixelmart/shared-web` và dựng bố cục cơ bản (Header, Footer, Container) với cấu hình styling Tailwind CSS v4.
+**Goal:** Khởi tạo dự án Next.js 15 cho client, liên kết với workspace `@/lib/api` và dựng bố cục cơ bản (Header, Footer, Container) với cấu hình styling Tailwind CSS v4.
 
-**Architecture:** Sử dụng Next.js App Router làm khung chính. Tạo route group `(storefront)` để nhóm các trang của Buyer có chung Header và Footer. Sử dụng pnpm workspace để import trực tiếp các tiện ích từ `@pixelmart/shared-web`.
+**Architecture:** Sử dụng Next.js App Router làm khung chính. Tạo route group `(public)` để nhóm các trang của Buyer có chung Header và Footer. Sử dụng pnpm workspace để import trực tiếp các tiện ích từ `@/lib/api`.
 
 **Tech Stack:** Next.js 15 (App Router), React 19, Tailwind CSS (v4), TypeScript, Jest, React Testing Library.
 
 ## Global Constraints
 
-- Client web portal is located at `web/client-web/`
+- Client web portal is located at `website/client/`
 - Tech Stack: Next.js 15 (App Router), React 19, Tailwind CSS (v4), TypeScript, Zustand
 - No placeholder code in the plan: write actual implementations, imports, types, test cases, and commands.
 - Use Vietnamese for descriptions and explanations, and English for code and commands.
@@ -21,8 +21,8 @@
 ### Task 1.1: Next.js 15 Template Setup & Test Environment Configuration
 
 **Files:**
-- Create: `web/client-web/package.json`, `web/client-web/tsconfig.json`, `web/client-web/next.config.ts`, `web/client-web/jest.config.ts`, `web/client-web/jest.setup.ts`
-- Test: `web/client-web/__tests__/smoke.test.tsx`
+- Create: `website/client/package.json`, `website/client/tsconfig.json`, `website/client/next.config.ts`, `website/client/vitest.config.ts`, `website/client/vitest.config.ts`
+- Test: `website/client/__tests__/smoke.test.tsx`
 
 **Interfaces:**
 - Consumes: None
@@ -30,7 +30,7 @@
 
 - [ ] **Step 1: Write the failing test**
 Tạo file test cơ bản để xác nhận môi trường test chạy được:
-Create: `web/client-web/__tests__/smoke.test.tsx`
+Create: `website/client/__tests__/smoke.test.tsx`
 ```tsx
 import React from 'react';
 import { render, screen } from '@testing-library/react';
@@ -47,17 +47,17 @@ describe('Next.js Client-Web Smoke Test', () => {
 - [ ] **Step 2: Run test to verify it fails**
 Run:
 ```bash
-cd /home/nquocbao37/Code/PixelMart/web/client-web
-npx jest
+cd /home/nquocbao37/Code/PixelMart/website/client
+pnpm test
 ```
 Expected: FAIL với lỗi không tìm thấy package Jest, Testing Library hoặc `@testing-library/jest-dom/matchers`.
 
 - [ ] **Step 3: Write minimal implementation**
-Tạo `web/client-web/package.json` với dependencies cần thiết:
-Create: `web/client-web/package.json`
+Tạo `website/client/package.json` với dependencies cần thiết:
+Create: `website/client/package.json`
 ```json
 {
-  "name": "client-web",
+  "name": "client",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -71,7 +71,7 @@ Create: `web/client-web/package.json`
     "next": "^15.1.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "@pixelmart/shared-web": "workspace:*"
+    "@/lib/api": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",
@@ -79,16 +79,16 @@ Create: `web/client-web/package.json`
     "@types/react-dom": "^19.0.0",
     "typescript": "^5.4.0",
     "jest": "^29.7.0",
-    "jest-environment-jsdom": "^29.7.0",
+    "jsdom": "^29.7.0",
     "@testing-library/react": "^16.1.0",
     "@testing-library/jest-dom": "^6.6.3",
-    "ts-jest": "^29.2.5"
+    "vitest": "^29.2.5"
   }
 }
 ```
 
-Tạo `web/client-web/tsconfig.json`:
-Create: `web/client-web/tsconfig.json`
+Tạo `website/client/tsconfig.json`:
+Create: `website/client/tsconfig.json`
 ```json
 {
   "compilerOptions": {
@@ -120,8 +120,8 @@ Create: `web/client-web/tsconfig.json`
 }
 ```
 
-Tạo `web/client-web/next.config.ts`:
-Create: `web/client-web/next.config.ts`
+Tạo `website/client/next.config.ts`:
+Create: `website/client/next.config.ts`
 ```typescript
 import type { NextConfig } from "next";
 
@@ -140,8 +140,8 @@ const nextConfig: NextConfig = {
 export default nextConfig;
 ```
 
-Tạo `web/client-web/jest.config.ts`:
-Create: `web/client-web/jest.config.ts`
+Tạo `website/client/vitest.config.ts`:
+Create: `website/client/vitest.config.ts`
 ```typescript
 import type { Config } from 'jest';
 import nextJest from 'next/jest.js';
@@ -153,17 +153,17 @@ const createJestConfig = nextJest({
 const config: Config = {
   coverageProvider: 'v8',
   testEnvironment: 'jsdom',
-  setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
+  setupFilesAfterEnv: ['<rootDir>/vitest.config.ts'],
   transform: {
-    '^.+\\.(t|j)sx?$': 'ts-jest',
+    '^.+\\.(t|j)sx?$': 'vitest',
   },
 };
 
 export default createJestConfig(config);
 ```
 
-Tạo `web/client-web/jest.setup.ts`:
-Create: `web/client-web/jest.setup.ts`
+Tạo `website/client/vitest.config.ts`:
+Create: `website/client/vitest.config.ts`
 ```typescript
 import '@testing-library/jest-dom';
 ```
@@ -178,16 +178,16 @@ pnpm install
 - [ ] **Step 4: Run test to verify it passes**
 Run:
 ```bash
-cd /home/nquocbao37/Code/PixelMart/web/client-web
-npm run test
+cd /home/nquocbao37/Code/PixelMart/website/client
+pnpm test
 ```
 Expected: PASS smoke.test.tsx
 
 - [ ] **Step 5: Commit**
 Run:
 ```bash
-git add package.json tsconfig.json next.config.ts jest.config.ts jest.setup.ts __tests__/smoke.test.tsx
-git commit -m "feat(client-web): setup Next.js 15 template and Jest testing environment"
+git add package.json tsconfig.json next.config.ts vitest.config.ts vitest.config.ts __tests__/smoke.test.tsx
+git commit -m "feat(client): setup Next.js 15 template and Jest testing environment"
 ```
 
 ---
@@ -195,20 +195,20 @@ git commit -m "feat(client-web): setup Next.js 15 template and Jest testing envi
 ### Task 1.2: Workspace Linking and Tailwind CSS v4 Configuration
 
 **Files:**
-- Create: `web/client-web/styles/globals.css`
-- Test: `web/client-web/__tests__/tailwind.test.tsx`
+- Create: `website/client/styles/globals.css`
+- Test: `website/client/__tests__/tailwind.test.tsx`
 
 **Interfaces:**
-- Consumes: `@pixelmart/shared-web`
+- Consumes: `@/lib/api`
 - Produces: Các biến style CSS và config Tailwind v4 hoạt động trong toàn bộ project.
 
 - [ ] **Step 1: Write the failing test**
-Tạo file test kiểm tra xem các class CSS của Tailwind hoặc `@pixelmart/shared-web` có được compile và dùng đúng CSS class:
-Create: `web/client-web/__tests__/tailwind.test.tsx`
+Tạo file test kiểm tra xem các class CSS của Tailwind hoặc `@/lib/api` có được compile và dùng đúng CSS class:
+Create: `website/client/__tests__/tailwind.test.tsx`
 ```tsx
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { MockButton } from '@pixelmart/shared-web';
+import { PixelButton } from '@/components/shared/PixelButton';
 
 describe('Tailwind Workspace Integration', () => {
   it('imports MockButton from shared package and matches styled appearance', () => {
@@ -222,14 +222,14 @@ describe('Tailwind Workspace Integration', () => {
 - [ ] **Step 2: Run test to verify it fails**
 Run:
 ```bash
-cd /home/nquocbao37/Code/PixelMart/web/client-web
-npm run test
+cd /home/nquocbao37/Code/PixelMart/website/client
+pnpm test
 ```
-Expected: FAIL vì `@pixelmart/shared-web` chưa được pnpm link đúng cách hoặc thiếu styles.
+Expected: FAIL vì `@/lib/api` chưa được pnpm link đúng cách hoặc thiếu styles.
 
 - [ ] **Step 3: Write minimal implementation**
-Cập nhật `web/client-web/styles/globals.css` cấu hình Tailwind CSS v4 kết hợp thư viện:
-Create: `web/client-web/styles/globals.css`
+Cập nhật `website/client/styles/globals.css` cấu hình Tailwind CSS v4 kết hợp thư viện:
+Create: `website/client/styles/globals.css`
 ```css
 @import "tailwindcss";
 
@@ -253,8 +253,8 @@ pnpm install
 - [ ] **Step 4: Run test to verify it passes**
 Run:
 ```bash
-cd /home/nquocbao37/Code/PixelMart/web/client-web
-npm run test
+cd /home/nquocbao37/Code/PixelMart/website/client
+pnpm test
 ```
 Expected: PASS tailwind.test.tsx
 
@@ -262,7 +262,7 @@ Expected: PASS tailwind.test.tsx
 Run:
 ```bash
 git add styles/globals.css __tests__/tailwind.test.tsx
-git commit -m "feat(client-web): setup globals.css with Tailwind v4 theme and shared components link"
+git commit -m "feat(client): setup globals.css with Tailwind v4 theme and shared components link"
 ```
 
 ---
@@ -270,8 +270,8 @@ git commit -m "feat(client-web): setup globals.css with Tailwind v4 theme and sh
 ### Task 1.3: Core Storefront Layout (Header, Footer, and Layout Shell)
 
 **Files:**
-- Create: `web/client-web/app/layout.tsx`, `web/client-web/app/(storefront)/layout.tsx`, `web/client-web/app/(storefront)/page.tsx`, `web/client-web/components/layout/Header.tsx`, `web/client-web/components/layout/Footer.tsx`
-- Test: `web/client-web/__tests__/layout.test.tsx`
+- Create: `website/client/app/layout.tsx`, `website/client/app/(public)/layout.tsx`, `website/client/app/(public)/page.tsx`, `website/client/components/layout/Header.tsx`, `website/client/components/layout/Footer.tsx`
+- Test: `website/client/__tests__/layout.test.tsx`
 
 **Interfaces:**
 - Consumes: Styles từ globals.css
@@ -279,11 +279,11 @@ git commit -m "feat(client-web): setup globals.css with Tailwind v4 theme and sh
 
 - [ ] **Step 1: Write the failing test**
 Tạo file test kiểm tra sự xuất hiện của Header, Footer và nội dung chính trên trang chủ storefront:
-Create: `web/client-web/__tests__/layout.test.tsx`
+Create: `website/client/__tests__/layout.test.tsx`
 ```tsx
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import Page from '../app/(storefront)/page';
+import Page from '../app/(public)/page';
 import Header from '../components/layout/Header';
 import Footer from '../components/layout/Footer';
 
@@ -309,14 +309,14 @@ describe('Storefront Layout Components', () => {
 - [ ] **Step 2: Run test to verify it fails**
 Run:
 ```bash
-cd /home/nquocbao37/Code/PixelMart/web/client-web
-npm run test
+cd /home/nquocbao37/Code/PixelMart/website/client
+pnpm test
 ```
 Expected: FAIL do các components và file page chưa được tạo.
 
 - [ ] **Step 3: Write minimal implementation**
-Tạo `web/client-web/components/layout/Header.tsx`:
-Create: `web/client-web/components/layout/Header.tsx`
+Tạo `website/client/components/layout/Header.tsx`:
+Create: `website/client/components/layout/Header.tsx`
 ```tsx
 import React from 'react';
 import Link from 'next/link';
@@ -352,8 +352,8 @@ export default function Header() {
 }
 ```
 
-Tạo `web/client-web/components/layout/Footer.tsx`:
-Create: `web/client-web/components/layout/Footer.tsx`
+Tạo `website/client/components/layout/Footer.tsx`:
+Create: `website/client/components/layout/Footer.tsx`
 ```tsx
 import React from 'react';
 
@@ -376,8 +376,8 @@ export default function Footer() {
 }
 ```
 
-Tạo `web/client-web/app/(storefront)/page.tsx`:
-Create: `web/client-web/app/(storefront)/page.tsx`
+Tạo `website/client/app/(public)/page.tsx`:
+Create: `website/client/app/(public)/page.tsx`
 ```tsx
 import React from 'react';
 
@@ -397,8 +397,8 @@ export default function Page() {
 }
 ```
 
-Tạo `web/client-web/app/layout.tsx`:
-Create: `web/client-web/app/layout.tsx`
+Tạo `website/client/app/layout.tsx`:
+Create: `website/client/app/layout.tsx`
 ```tsx
 import React from 'react';
 import './styles/globals.css';
@@ -423,8 +423,8 @@ export default function RootLayout({
 }
 ```
 
-Tạo `web/client-web/app/(storefront)/layout.tsx`:
-Create: `web/client-web/app/(storefront)/layout.tsx`
+Tạo `website/client/app/(public)/layout.tsx`:
+Create: `website/client/app/(public)/layout.tsx`
 ```tsx
 import React from 'react';
 import Header from '../../components/layout/Header';
@@ -450,8 +450,8 @@ export default function StorefrontLayout({
 - [ ] **Step 4: Run test to verify it passes**
 Run:
 ```bash
-cd /home/nquocbao37/Code/PixelMart/web/client-web
-npm run test
+cd /home/nquocbao37/Code/PixelMart/website/client
+pnpm test
 ```
 Expected: PASS layout.test.tsx
 
@@ -459,7 +459,7 @@ Expected: PASS layout.test.tsx
 Run:
 ```bash
 git add app/layout.tsx app/\(storefront\)/layout.tsx app/\(storefront\)/page.tsx components/layout/Header.tsx components/layout/Footer.tsx __tests__/layout.test.tsx
-git commit -m "feat(client-web): implement core storefront header, footer, and page layout shell"
+git commit -m "feat(client): implement core storefront header, footer, and page layout shell"
 ```
 
 ---
@@ -474,6 +474,6 @@ git commit -m "feat(client-web): implement core storefront header, footer, and p
 
 ### Checklist Cuối Phase
 - [ ] Ổn định monorepo web workspace: `pnpm install` chạy mượt mà tại thư mục `web/`.
-- [ ] Next.js app chạy tốt trên cổng mặc định: `pnpm --filter client-web dev` tại cổng `http://localhost:3000`.
+- [ ] Next.js app chạy tốt trên cổng mặc định: `pnpm --filter client dev` tại cổng `http://localhost:3000`.
 - [ ] Header và Footer xuất hiện chuẩn xác và responsive trên Desktop / Mobile.
 - [ ] Toàn bộ bộ test suite: `smoke.test.tsx`, `tailwind.test.tsx`, `layout.test.tsx` đều PASS 100%.

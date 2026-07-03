@@ -10,7 +10,7 @@
 
 ## Global Constraints
 
-- Client web portal is located at `web/client-web/`
+- Client web portal is located at `website/client/`
 - Tech Stack: Next.js 15 (App Router), React 19, Tailwind CSS (v4), TypeScript, Zustand
 - No placeholder code in the plan: write actual implementations, imports, types, test cases, and commands.
 - Use Vietnamese for descriptions and explanations, and English for code and commands.
@@ -21,8 +21,8 @@
 ### Task 7.1: Zustand Cart Store with local storage Persistence
 
 **Files:**
-- Create: `web/client-web/stores/cartStore.ts`
-- Test: `web/client-web/__tests__/cartStore.test.ts`
+- Create: `website/client/stores/cartStore.ts`
+- Test: `website/client/__tests__/cartStore.test.ts`
 
 **Interfaces:**
 - Consumes: Product model structure
@@ -30,7 +30,7 @@
 
 - [ ] **Step 1: Write the failing test**
 Tạo file test kiểm thử thêm, xóa, cập nhật số lượng giỏ hàng:
-Create: `web/client-web/__tests__/cartStore.test.ts`
+Create: `website/client/__tests__/cartStore.test.ts`
 ```typescript
 import { useCartStore } from '../stores/cartStore';
 
@@ -110,14 +110,14 @@ describe('Cart Store (Zustand + Persist)', () => {
 - [ ] **Step 2: Run test to verify it fails**
 Run:
 ```bash
-cd /home/nquocbao37/Code/PixelMart/web/client-web
-npm run test
+cd /home/nquocbao37/Code/PixelMart/website/client
+pnpm test
 ```
 Expected: FAIL do store `cartStore.ts` chưa được định nghĩa.
 
 - [ ] **Step 3: Write minimal implementation**
 Tạo Zustand Cart Store có Persist:
-Create: `web/client-web/stores/cartStore.ts`
+Create: `website/client/stores/cartStore.ts`
 ```typescript
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
@@ -180,8 +180,8 @@ export const useCartStore = create<CartState>()(
 - [ ] **Step 4: Run test to verify it passes**
 Run:
 ```bash
-cd /home/nquocbao37/Code/PixelMart/web/client-web
-npm run test
+cd /home/nquocbao37/Code/PixelMart/website/client
+pnpm test
 ```
 Expected: PASS cartStore.test.ts
 
@@ -189,7 +189,7 @@ Expected: PASS cartStore.test.ts
 Run:
 ```bash
 git add stores/cartStore.ts __tests__/cartStore.test.ts
-git commit -m "feat(client-web): develop Zustand cartStore with localStorage persistence support"
+git commit -m "feat(client): develop Zustand cartStore with localStorage persistence support"
 ```
 
 ---
@@ -197,8 +197,8 @@ git commit -m "feat(client-web): develop Zustand cartStore with localStorage per
 ### Task 7.2: Cart Merging Logic upon Login
 
 **Files:**
-- Create: `web/client-web/services/cart.service.ts`
-- Test: `web/client-web/__tests__/cart-sync.test.ts`
+- Create: `website/client/services/cart.service.ts`
+- Test: `website/client/__tests__/cart-sync.test.ts`
 
 **Interfaces:**
 - Consumes: API endpoints `/cart/merge`, Zustand `cartStore` and `authStore`
@@ -206,15 +206,15 @@ git commit -m "feat(client-web): develop Zustand cartStore with localStorage per
 
 - [ ] **Step 1: Write the failing test**
 Tạo file test kiểm tra xem service có gọi API gộp giỏ hàng và cập nhật lại state của store hay không:
-Create: `web/client-web/__tests__/cart-sync.test.ts`
+Create: `website/client/__tests__/cart-sync.test.ts`
 ```typescript
 import { mergeCartAfterLogin } from '../services/cart.service';
 import { useCartStore } from '../stores/cartStore';
 
 // Mock the API client
-jest.mock('@pixelmart/shared-web', () => ({
+vi.mock('@/lib/api', () => ({
   api: {
-    post: jest.fn().mockResolvedValue({
+    post: vi.fn().mockResolvedValue({
       data: {
         success: true,
         data: [
@@ -246,16 +246,16 @@ describe('Cart Synchronization Service', () => {
 - [ ] **Step 2: Run test to verify it fails**
 Run:
 ```bash
-cd /home/nquocbao37/Code/PixelMart/web/client-web
-npm run test
+cd /home/nquocbao37/Code/PixelMart/website/client
+pnpm test
 ```
 Expected: FAIL do chưa tạo file `cart.service.ts` chứa hàm merge.
 
 - [ ] **Step 3: Write minimal implementation**
 Tạo Cart Service:
-Create: `web/client-web/services/cart.service.ts`
+Create: `website/client/services/cart.service.ts`
 ```typescript
-import { api } from '@pixelmart/shared-web';
+import { api } from '@/lib/api';
 import { useCartStore } from '../stores/cartStore';
 
 export async function mergeCartAfterLogin() {
@@ -283,8 +283,8 @@ export async function mergeCartAfterLogin() {
 - [ ] **Step 4: Run test to verify it passes**
 Run:
 ```bash
-cd /home/nquocbao37/Code/PixelMart/web/client-web
-npm run test
+cd /home/nquocbao37/Code/PixelMart/website/client
+pnpm test
 ```
 Expected: PASS cart-sync.test.ts
 
@@ -292,7 +292,7 @@ Expected: PASS cart-sync.test.ts
 Run:
 ```bash
 git add services/cart.service.ts __tests__/cart-sync.test.ts
-git commit -m "feat(client-web): implement backend merge cart logic upon user login"
+git commit -m "feat(client): implement backend merge cart logic upon user login"
 ```
 
 ---

@@ -10,7 +10,7 @@
 
 ## Global Constraints
 
-- Thư mục làm việc: `web/admin-web/`
+- Thư mục làm việc: `website/admin/`
 - Tệp cấu hình Nginx phải đảm bảo redirect tất cả các yêu cầu không khớp với file tĩnh về `index.html` (tránh lỗi 404 khi admin F5 tải lại trang ở các đường dẫn như `/admin/users`).
 - Cypress phải kiểm thử thành công ít nhất hai kịch bản: Đăng nhập thành công và Thực hiện block/unblock người dùng.
 - Không sử dụng code placeholder hay các ghi chú TBD/TODO trong code triển khai chính thức.
@@ -22,18 +22,18 @@
 ### Task 15.1: Thiết lập Dockerfile & Cấu hình Nginx
 
 **Files:**
-- Create: `web/admin-web/Dockerfile`
-- Create: `web/admin-web/nginx.conf`
-- Create: `web/admin-web/.dockerignore`
+- Create: `website/admin/Dockerfile`
+- Create: `website/admin/nginx.conf`
+- Create: `website/admin/.dockerignore`
 
 **Interfaces:**
-- Consumes: Static build assets của Vite (`web/admin-web/dist/`)
+- Consumes: Static build assets của Vite (`website/admin/dist/`)
 - Produces: Docker image hoạt động trên môi trường sản xuất với cấu hình Nginx tối ưu.
 
 - [ ] **Step 1: Write the failing test**
 
 *(Vì Docker build kiểm thử bằng CLI, test case thất bại của bước này là chưa thể tìm thấy file cấu hình hoặc container không thể khởi chạy)*
-Run: `docker build -t pixelmart-admin-test web/admin-web/`
+Run: `docker build -t pixelmart-admin-test website/admin/`
 Expected: FAIL với lỗi không tìm thấy `Dockerfile` trong thư mục chỉ định.
 
 - [ ] **Step 2: Run test to verify it fails**
@@ -43,7 +43,7 @@ Expected: FAIL với lỗi không tìm thấy `Dockerfile` trong thư mục ch�
 - [ ] **Step 3: Write minimal implementation**
 
 ```dockerfile
-# web/admin-web/Dockerfile
+# website/admin/Dockerfile
 # Stage 1: Build React application
 FROM node:18-alpine AS builder
 WORKDIR /app
@@ -61,7 +61,7 @@ CMD ["nginx", "-g", "daemon off;"]
 ```
 
 ```nginx
-# web/admin-web/nginx.conf
+# website/admin/nginx.conf
 server {
     listen 80;
     server_name localhost;
@@ -89,7 +89,7 @@ server {
 ```
 
 ```
-# web/admin-web/.dockerignore
+# website/admin/.dockerignore
 node_modules
 dist
 .git
@@ -101,13 +101,13 @@ cypress.config.ts
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `docker build -t pixelmart-admin-test web/admin-web/`
+Run: `docker build -t pixelmart-admin-test website/admin/`
 Expected: PASS, Docker image được dựng thành công mà không có lỗi. Có thể chạy test container qua `docker run -d -p 8080:80 pixelmart-admin-test` và truy cập `http://localhost:8080` để kiểm tra.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add web/admin-web/Dockerfile web/admin-web/nginx.conf web/admin-web/.dockerignore
+git add website/admin/Dockerfile website/admin/nginx.conf website/admin/.dockerignore
 git commit -m "feat(admin): dockerize admin portal using multi-stage build and nginx config"
 ```
 
@@ -119,7 +119,7 @@ git commit -m "feat(admin): dockerize admin portal using multi-stage build and n
 - Create: `.github/workflows/admin-ci.yml`
 
 **Interfaces:**
-- Consumes: Mọi commit đẩy lên GitHub branch `main` hoặc Pull Request liên quan đến thư mục `web/admin-web/`
+- Consumes: Mọi commit đẩy lên GitHub branch `main` hoặc Pull Request liên quan đến thư mục `website/admin/`
 - Produces: Pipeline chạy tự động: Kiểm tra định dạng (Linting) -> Chạy Unit test (Vitest) -> Biên dịch thử nghiệm (Vite Build).
 
 - [ ] **Step 1: Write the failing test**
@@ -142,12 +142,12 @@ on:
   push:
     branches: [ main ]
     paths:
-      - 'web/admin-web/**'
+      - 'website/admin/**'
       - '.github/workflows/admin-ci.yml'
   pull_request:
     branches: [ main ]
     paths:
-      - 'web/admin-web/**'
+      - 'website/admin/**'
 
 jobs:
   build-and-test:
@@ -155,7 +155,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: web/admin-web
+        working-directory: website/admin
 
     steps:
       - name: Checkout repository
@@ -166,7 +166,7 @@ jobs:
         with:
           node-version: 18
           cache: 'npm'
-          cache-dependency-path: web/admin-web/package-lock.json
+          cache-dependency-path: website/admin/package-lock.json
 
       - name: Install dependencies
         run: npm ci
@@ -176,13 +176,13 @@ jobs:
         continue-on-error: false
 
       - name: Run Component Tests
-        run: npm run test
+        run: pnpm test
 
       - name: Build Application
         run: npm run build
 ```
 
-*(Lưu ý: Đảm bảo thêm script `"lint": "eslint src --ext .ts,.tsx"` vào `package.json` của `web/admin-web` nếu chưa có)*
+*(Lưu ý: Đảm bảo thêm script `"lint": "eslint src --ext .ts,.tsx"` vào `package.json` của `website/admin` nếu chưa có)*
 
 - [ ] **Step 4: Run test to verify it passes**
 
@@ -201,10 +201,10 @@ git commit -m "ci(admin): establish GitHub Actions workflow for linting, testing
 ### Task 15.3: Cài đặt Kiểm Thử E2E tự động bằng Cypress
 
 **Files:**
-- Create: `web/admin-web/cypress.config.ts`
-- Create: `web/admin-web/cypress/support/e2e.ts`
-- Create: `web/admin-web/cypress/e2e/admin_flow.cy.ts`
-- Modify: `web/admin-web/package.json` (thêm dependencies cypress & script chạy test)
+- Create: `website/admin/cypress.config.ts`
+- Create: `website/admin/cypress/support/e2e.ts`
+- Create: `website/admin/cypress/e2e/admin_flow.cy.ts`
+- Modify: `website/admin/package.json` (thêm dependencies cypress & script chạy test)
 
 **Interfaces:**
 - Consumes: React App chạy trên localhost (Dev server hoặc Docker container) và Mock backend endpoints
@@ -213,7 +213,7 @@ git commit -m "ci(admin): establish GitHub Actions workflow for linting, testing
 - [ ] **Step 1: Write the failing test**
 
 ```typescript
-// web/admin-web/cypress/e2e/admin_flow.cy.ts
+// website/admin/cypress/e2e/admin_flow.cy.ts
 describe('Admin Portal E2E Flow', () => {
   it('allows logging in and toggling a user block status', () => {
     cy.visit('/admin/login');
@@ -238,12 +238,12 @@ describe('Admin Portal E2E Flow', () => {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `cd web/admin-web && npx cypress run --spec cypress/e2e/admin_flow.cy.ts`
+Run: `cd website/admin && npx cypress run --spec cypress/e2e/admin_flow.cy.ts`
 Expected: FAIL do Cypress chưa được cài đặt hoặc dev server chưa khởi chạy.
 
 - [ ] **Step 3: Write minimal implementation**
 
-Cập nhật package.json của `web/admin-web` để thêm script và devDependencies:
+Cập nhật package.json của `website/admin` để thêm script và devDependencies:
 ```json
 // Thêm vào "scripts"
 "cypress:open": "cypress open",
@@ -252,7 +252,7 @@ Cập nhật package.json của `web/admin-web` để thêm script và devDepend
 Cài đặt cypress qua CLI: `npm install -D cypress`
 
 ```typescript
-// web/admin-web/cypress.config.ts
+// website/admin/cypress.config.ts
 import { defineConfig } from 'cypress';
 
 export default defineConfig({
@@ -270,14 +270,14 @@ export default defineConfig({
 ```
 
 ```typescript
-// web/admin-web/cypress/support/e2e.ts
+// website/admin/cypress/support/e2e.ts
 // Import commands.js using ES2015 syntax:
 import './commands';
 ```
 
-Tạo file trống `web/admin-web/cypress/support/commands.ts` để tránh lỗi import:
+Tạo file trống `website/admin/cypress/support/commands.ts` để tránh lỗi import:
 ```typescript
-// web/admin-web/cypress/support/commands.ts
+// website/admin/cypress/support/commands.ts
 // Place custom Cypress commands here (empty for now)
 ```
 
@@ -290,7 +290,7 @@ Expected: PASS, Cypress tự động hóa các hành động nhập form, chuy�
 - [ ] **Step 5: Commit**
 
 ```bash
-git add web/admin-web/cypress.config.ts web/admin-web/cypress/ web/admin-web/package.json
+git add website/admin/cypress.config.ts website/admin/cypress/ website/admin/package.json
 git commit -m "test(admin): install cypress and build core end-to-end admin user flows"
 ```
 

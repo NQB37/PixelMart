@@ -10,7 +10,7 @@
 
 ## Global Constraints
 
-- Thư mục làm việc: `web/admin-web/`
+- Thư mục làm việc: `website/admin/`
 - API Endpoints:
   - Thống kê Dashboard: `GET /api/v1/admin/stats` (Trả về: `{ totalRevenue: number, totalOrders: number, revenueChart: Array<{ date: string, revenue: number }>, ordersChart: Array<{ date: string, orders: number }> }`)
   - Danh sách người dùng: `GET /api/v1/admin/users?page=1&limit=10`
@@ -24,8 +24,8 @@
 ### Task 11.1: Phát triển Biểu đồ Thống kê Dashboard (Recharts Widgets)
 
 **Files:**
-- Create: `web/admin-web/src/pages/Dashboard.tsx`
-- Create: `web/admin-web/src/__tests__/Dashboard.test.tsx`
+- Create: `website/admin/src/pages/Dashboard.tsx`
+- Create: `website/admin/src/__tests__/Dashboard.test.tsx`
 
 **Interfaces:**
 - Consumes: `GET /api/v1/admin/stats` (Backend API)
@@ -34,7 +34,7 @@
 - [ ] **Step 1: Write the failing test**
 
 ```typescript
-// web/admin-web/src/__tests__/Dashboard.test.tsx
+// website/admin/src/__tests__/Dashboard.test.tsx
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -99,13 +99,13 @@ describe('Dashboard Component', () => {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `cd web/admin-web && npm run test`
+Run: `cd website/admin && pnpm test`
 Expected: FAIL với lỗi không tìm thấy module `Dashboard` hoặc chưa render được số liệu từ API mock.
 
 - [ ] **Step 3: Write minimal implementation**
 
 ```typescript
-// web/admin-web/src/pages/Dashboard.tsx
+// website/admin/src/pages/Dashboard.tsx
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import { DollarSign, ShoppingBag, TrendingUp, RefreshCw } from 'lucide-react';
@@ -251,7 +251,7 @@ export default function Dashboard() {
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `cd web/admin-web && npm run test`
+Run: `cd website/admin && pnpm test`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -266,9 +266,9 @@ git commit -m "feat(admin): design Admin Dashboard statistics charts with Rechar
 ### Task 11.2: Thiết kế Grid Danh Sách Users & Nút Khóa/Mở Khóa (Block/Unblock)
 
 **Files:**
-- Create: `web/admin-web/src/pages/Users.tsx`
-- Create: `web/admin-web/src/__tests__/Users.test.tsx`
-- Modify: `web/admin-web/src/App.tsx` (mapping path `/admin/users` tới component `Users`)
+- Create: `website/admin/src/pages/Users.tsx`
+- Create: `website/admin/src/__tests__/Users.test.tsx`
+- Modify: `website/admin/src/App.tsx` (mapping path `/admin/users` tới component `Users`)
 
 **Interfaces:**
 - Consumes:
@@ -279,7 +279,7 @@ git commit -m "feat(admin): design Admin Dashboard statistics charts with Rechar
 - [ ] **Step 1: Write the failing test**
 
 ```typescript
-// web/admin-web/src/__tests__/Users.test.tsx
+// website/admin/src/__tests__/Users.test.tsx
 import React from 'react';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -332,13 +332,13 @@ describe('Users Management Component', () => {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `cd web/admin-web && npm run test`
+Run: `cd website/admin && pnpm test`
 Expected: FAIL do component `Users` chưa được định nghĩa.
 
 - [ ] **Step 3: Write minimal implementation**
 
 ```typescript
-// web/admin-web/src/pages/Users.tsx
+// website/admin/src/pages/Users.tsx
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import { UserCheck, UserX, RefreshCw } from 'lucide-react';
@@ -473,13 +473,13 @@ export default function Users() {
 ```
 
 ```typescript
-// web/admin-web/src/App.tsx (Modify routes to use Users page)
+// website/admin/src/App.tsx (Modify routes to use Users page)
 // File is updated by the build pipeline to map "/admin/users" path to the <Users /> component.
 ```
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `cd web/admin-web && npm run test`
+Run: `cd website/admin && pnpm test`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
