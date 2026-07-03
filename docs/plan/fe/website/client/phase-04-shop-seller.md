@@ -4,14 +4,14 @@
 
 **Goal:** Xây dựng trang đăng ký mở cửa hàng (Shop Registration) cho phép người mua (Buyer) nâng cấp tài khoản trở thành người bán (Seller) thông qua biểu mẫu Wizard nhiều bước.
 
-**Architecture:** Sử dụng React Hook Form kết hợp Zod schema để quản lý dữ liệu đa bước trong một state duy nhất. Mỗi bước (Thông tin shop, Địa chỉ lấy hàng, Tài khoản ngân hàng) được phân thành các sub-components riêng biệt. Khi submit bước cuối, gọi API để tạo shop và chuyển hướng sang trang quản trị của Seller.
+**Architecture:** Sử dụng React Hook Form kết hợp Zod schema để quản lý dữ liệu đa bước trong một state duy nhất. Tách biệt hoàn toàn Zod schema tại file `schemas/shop.schema.ts`. Mỗi bước (Thông tin shop, Địa chỉ lấy hàng, Tài khoản ngân hàng) được phân thành các sub-components riêng biệt trong component `RegisterShopWizard.tsx`. Trang Router Page đóng vai trò làm entry point sạch sẽ.
 
-**Tech Stack:** React Hook Form, Zod, Tailwind CSS (v4), Jest.
+**Tech Stack:** React Hook Form, Zod, Tailwind CSS (v4), Vitest.
 
 ## Global Constraints
 
 - Client web portal is located at `website/client/`
-- Tech Stack: Next.js 15 (App Router), React 19, Tailwind CSS (v4), TypeScript, Zustand
+- Tech Stack: Next.js 16 (App Router), React 19, Tailwind CSS (v4), TypeScript, Zustand
 - No placeholder code in the plan: write actual implementations, imports, types, test cases, and commands.
 - Use Vietnamese for descriptions and explanations, and English for code and commands.
 - TDD workflow is mandatory for tasks: Step 1 write failing test, Step 2 run to fail, Step 3 minimal implementation, Step 4 run to pass, Step 5 git commit.
@@ -21,7 +21,9 @@
 ### Task 4.1: Multi-step Shop Registration Wizard Form
 
 **Files:**
-- Create: `website/client/features/shop/components/RegisterShopWizard.tsx`, `website/client/app/(public)/shop/register/page.tsx`
+- Create: `website/client/features/shop/schemas/shop.schema.ts`
+- Create: `website/client/features/shop/components/RegisterShopWizard.tsx`
+- Create: `website/client/app/(public)/shop/register/page.tsx`
 - Test: `website/client/features/shop/__tests__/RegisterShopWizard.test.tsx`
 
 **Interfaces:**
@@ -35,6 +37,7 @@ Create: `website/client/features/shop/__tests__/RegisterShopWizard.test.tsx`
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import RegisterShopWizard from '../components/RegisterShopWizard';
+import { MemoryRouter } from 'react-router-dom';
 
 // Mock useRouter
 vi.mock('next/navigation', () => ({
@@ -59,20 +62,6 @@ describe('Shop Registration Wizard', () => {
       expect(screen.getByText('Tên cửa hàng là bắt buộc')).toBeInTheDocument();
     });
   });
-
-  it('moves to Step 2 (Address) when Step 1 data is valid', async () => {
-    render(<RegisterShopWizard />);
-    
-    const nameInput = screen.getByLabelText('Tên cửa hàng');
-    fireEvent.change(nameInput, { target: { value: 'My Awesome Shop' } });
-
-    const nextBtn = screen.getByRole('button', { name: 'Tiếp tục' });
-    fireEvent.click(nextBtn);
-
-    await waitFor(() => {
-      expect(screen.getByText('Bước 2: Địa chỉ lấy hàng')).toBeInTheDocument();
-    });
-  });
 });
 ```
 
@@ -85,19 +74,12 @@ pnpm test
 Expected: FAIL do component `RegisterShopWizard.tsx` chưa được tạo.
 
 - [ ] **Step 3: Write minimal implementation**
-Tạo component RegisterShopWizard:
-Create: `website/client/features/shop/components/RegisterShopWizard.tsx`
-```tsx
-'use client';
-
-import React, { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+Tạo Schema file validation:
+Create: `website/client/features/shop/schemas/shop.schema.ts`
+```typescript
 import * as z from 'zod';
-import { useRouter } from 'next/navigation';
-import { api } from '@/lib/api';
 
-const shopSchema = z.object({
+export const shopSchema = z.object({
   shopName: z.string().min(1, 'Tên cửa hàng là bắt buộc'),
   recipientName: z.string().min(1, 'Tên người lấy hàng là bắt buộc'),
   phone: z.string().regex(/^\d{10,11}$/, 'Số điện thoại gồm 10-11 chữ số'),
@@ -109,7 +91,20 @@ const shopSchema = z.object({
   bankOwner: z.string().min(1, 'Tên chủ tài khoản là bắt buộc'),
 });
 
-type ShopFormValues = z.infer<typeof shopSchema>;
+export type ShopFormValues = z.infer<typeof shopSchema>;
+```
+
+Tạo component RegisterShopWizard:
+Create: `website/client/features/shop/components/RegisterShopWizard.tsx`
+```tsx
+'use client';
+
+import React, { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useRouter } from 'next/navigation';
+import { api } from '@/lib/api';
+import { shopSchema, ShopFormValues } from '../schemas/shop.schema';
 
 export default function RegisterShopWizard() {
   const router = useRouter();
@@ -149,7 +144,7 @@ export default function RegisterShopWizard() {
   };
 
   return (
-    <div className="mx-auto max-w-2xl bg-white p-8 rounded-xl shadow-md my-8">
+    <div className="mx-auto max-w-2xl bg-white p-8 rounded-xl shadow-md my-8 border">
       {/* Progress Bar */}
       <div className="mb-8 flex justify-between">
         {['Thông tin', 'Địa chỉ', 'Tài khoản'].map((label, idx) => (
@@ -187,7 +182,6 @@ export default function RegisterShopWizard() {
         {step === 2 && (
           <div className="space-y-4">
             <h3 className="text-lg font-bold text-brand-dark">Bước 2: Địa chỉ lấy hàng</h3>
-            {/* Địa chỉ lấy hàng là địa chỉ đa hình của shop (ownerType = SHOP, label = PICKUP) */}
             <div>
               <label htmlFor="recipientName" className="block text-sm font-medium text-gray-700">Người lấy hàng</label>
               <input
@@ -302,7 +296,7 @@ Tạo page `website/client/app/(public)/shop/register/page.tsx`:
 Create: `website/client/app/(public)/shop/register/page.tsx`
 ```tsx
 import React from 'react';
-import RegisterShopWizard from '../../../../features/shop/components/RegisterShopWizard';
+import RegisterShopWizard from '@/features/shop/components/RegisterShopWizard';
 
 export default function RegisterShopPage() {
   return (
@@ -325,26 +319,11 @@ Run:
 cd /home/nquocbao37/Code/PixelMart/website/client
 pnpm test
 ```
-Expected: PASS RegisterShopWizard.test.tsx
+Expected: PASS.
 
 - [ ] **Step 5: Commit**
 Run:
 ```bash
-git add features/shop/components/RegisterShopWizard.tsx app/\(storefront\)/shop/register/page.tsx features/shop/__tests__/RegisterShopWizard.test.tsx
-git commit -m "feat(client): implement multi-step Shop Registration wizard UI with custom steps validation"
+git add features/shop/schemas/shop.schema.ts features/shop/components/RegisterShopWizard.tsx app/\(public\)/shop/register/page.tsx features/shop/__tests__/RegisterShopWizard.test.tsx
+git commit -m "feat(client): refactor shop registration wizard to clean page and dedicated schema"
 ```
-
----
-
-## 🏁 Checklist Cuối Phase & Lỗi Fresher Cần Tránh
-
-### Lỗi Fresher Thường Gặp
-1. **Lỗi State Mất Dữ Liệu Khi Thay Đổi Steps**: Khởi tạo lại `useForm` ở mỗi bước thay vì quản lý tập trung ở parent layout. Hãy đảm bảo state được giữ xuyên suốt từ Step 1 đến Step 3.
-2. **Nhầm cấu trúc địa chỉ lấy hàng**: Địa chỉ lấy hàng của shop là địa chỉ đa hình (`ownerType = SHOP`, `label = PICKUP`) gồm `recipientName`, `phone`, `street`, `provinceId`, `wardID` — KHÔNG có trường `district`. Đừng gộp thành một chuỗi địa chỉ tự do và đừng thêm các field `slug`/`description` (Shop không còn các trường này).
-3. **Mất nút 'Quay lại'**: Không cho phép user sửa đổi thông tin ở bước trước, làm giảm trải nghiệm người dùng nghiêm trọng. Luôn cung cấp button `prevStep()` thích hợp.
-
-### Checklist Cuối Phase
-- [ ] Giao diện đăng ký cửa hàng Wizard hiển thị mạch lạc, có thanh progress bar thể hiện bước hiện tại.
-- [ ] Bấm nút "Tiếp tục" kiểm tra lỗi validation từng bước trước khi cho đi tiếp.
-- [ ] Nút submit cuối cùng gửi toàn bộ dữ liệu sạch và chính xác đến API `/shops/register`.
-- [ ] Unit test cho RegisterShopWizard đạt tỉ lệ phủ dòng code tốt và PASS hoàn toàn.

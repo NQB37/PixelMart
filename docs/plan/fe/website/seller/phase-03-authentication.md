@@ -2,11 +2,16 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Xây dựng màn hình đăng nhập (Login screen) và bộ lọc định tuyến (Route guards) để giới hạn quyền truy cập Kênh người bán chỉ dành cho tài khoản có vai trò `SELLER` hoặc `ADMIN`.
+**Goal:** Xây dựng màn hình đăng nhập (Login screen) và bộ lọc định tuyến (Route guards) bảo vệ Kênh người bán sử dụng cấu trúc Page sạch, tách biệt logic Form, Zod schema và Zustand + TanStack Query hooks.
 
-**Architecture:** Sử dụng React Context để quản lý trạng thái đăng nhập toàn cục (user profile, token). Xây dựng một Axios client wrapper để tự động gửi JWT và xử lý lỗi 401/403. Sử dụng Protected Route component để bảo vệ các tuyến đường nhạy cảm.
+**Architecture:** 
+- Trang `pages/Login.tsx` là routing page sạch sẽ, chỉ import và render `<LoginForm />` component.
+- Validation Schema được tách biệt hoàn toàn tại `features/auth/schemas/auth.schema.ts`.
+- Form Presentation & Logic nằm tại `features/auth/components/LoginForm.tsx`.
+- Quản lý auth state với Zustand `auth.store.ts` và TanStack Query hooks.
+- Protected Route component kiểm tra vai trò người dùng qua mảng: `user.roles.includes('SELLER') || user.roles.includes('ADMIN')`.
 
-**Tech Stack:** React 18, React Router v6, Axios, Lucide React, Vitest, React Testing Library.
+**Tech Stack:** React 18, React Router v6, Zustand, TanStack Query, Axios, Vitest, React Testing Library.
 
 ## Global Constraints
 
@@ -14,60 +19,49 @@
 - Package manager: pnpm
 - Toàn bộ source code của seller nằm trong thư mục `website/seller/`
 - Sử dụng Path Alias `@/` trỏ tới `website/seller/src`
-- TDD: Mọi component/helper phải viết test trước khi code minimal implementation
-- Không sử dụng code placeholder (ví dụ: `// TODO`, `/* code here */`). Toàn bộ code trong plan phải hoạt động được.
+- TDD: Mọi component/helper phải viết test trước khi triển khai.
+- Kiểm tra phân quyền RBAC: User roles là một mảng `roles` (ví dụ: `['SELLER']`). Phải check `user.roles.includes('SELLER')` để cấp quyền.
 
 ---
 
 ## 📋 Task Breakdown
 
-### Task 1: Cấu hình Axios Client & Auth Provider State
+### Task 1: Cấu hình Auth Store & TanStack Query Hooks
 
 **Files:**
 - Create: `website/seller/src/utils/api.ts`
-- Create: `website/seller/src/context/AuthContext.tsx`
-- Create: `website/seller/src/__tests__/authContext.test.tsx`
+- Create: `website/seller/src/features/auth/stores/auth.store.ts`
+- Create: `website/seller/src/features/auth/services/auth.service.ts`
+- Create: `website/seller/src/features/auth/hooks/useLogin.ts`
+- Create: `website/seller/src/features/auth/types/auth.ts`
+- Test: `website/seller/src/features/auth/tests/auth.store.test.ts`
 
 **Interfaces:**
 - Consumes: None
-- Produces: `AuthContext` cung cấp `user`, `login`, `logout` và axios instance `api` để gọi backend API.
+- Produces: `useAuthStore` và `useLogin` mutation hook để gọi API đăng nhập.
 
 - [ ] **Step 1: Write the failing test**
-Create: `website/seller/src/__tests__/authContext.test.tsx`
+Create: `website/seller/src/features/auth/tests/auth.store.test.ts`
 ```typescript
-import React, { useContext } from 'react';
-import { render, screen, act } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
-import { AuthContext, AuthProvider } from '../context/AuthContext';
+import { describe, it, expect, beforeEach } from 'vitest';
+import { useAuthStore } from '../stores/auth.store';
 
-const TestComponent = () => {
-  const auth = useContext(AuthContext);
-  if (!auth) return <div>No Auth Context</div>;
-  return (
-    <div>
-      <span data-testid="user-role">{auth.user?.roles.join(',') || 'GUEST'}</span>
-      <button onClick={() => auth.login('seller@test.com', 'pass123')} data-testid="login-btn">Login</button>
-      <button onClick={auth.logout} data-testid="logout-btn">Logout</button>
-    </div>
-  );
-};
+describe('Seller Auth Store', () => {
+  beforeEach(() => {
+    useAuthStore.setState({ user: null, accessToken: null, isAuthenticated: false });
+  });
 
-describe('AuthContext & AuthProvider', () => {
-  it('provides initial state and allows logging in and out', async () => {
-    render(
-      <AuthProvider>
-        <TestComponent />
-      </AuthProvider>
-    );
-
-    expect(screen.getByTestId('user-role')).toHaveTextContent('GUEST');
+  it('should start with null state', () => {
+    const state = useAuthStore.getState();
+    expect(state.user).toBeNull();
+    expect(state.isAuthenticated).toBe(false);
   });
 });
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
 Run: `pnpm --filter seller test run`
-Expected: FAIL do `AuthContext` và `AuthProvider` chưa tồn tại.
+Expected: FAIL do store `auth.store.ts` chưa tồn tại.
 
 - [ ] **Step 3: Write minimal implementation**
 Tạo file Axios instance:
@@ -84,10 +78,11 @@ export const api = axios.create({
 });
 ```
 
-Tạo file AuthContext và AuthProvider:
-Create: `website/seller/src/context/AuthContext.tsx`
+Tạo Auth Store:
+Create: `website/seller/src/features/auth/stores/auth.store.ts`
 ```typescript
-import React, { createContext, useState, useEffect } from 'react';
+import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
 
 export type Role = 'CUSTOMER' | 'SELLER' | 'ADMIN' | 'DELIVERY_PERSON';
 
@@ -98,159 +93,172 @@ export interface User {
   roles: Role[];
 }
 
-interface AuthContextType {
+interface AuthState {
   user: User | null;
-  loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  logout: () => void;
+  accessToken: string | null;
+  isAuthenticated: boolean;
+  setAuth: (user: User, accessToken: string) => void;
+  clearAuth: () => void;
 }
 
-export const AuthContext = createContext<AuthContextType | null>(null);
-
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const storedUser = localStorage.getItem('seller_user');
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch (e) {
-        localStorage.removeItem('seller_user');
-      }
+export const useAuthStore = create<AuthState>()(
+  persist(
+    (set) => ({
+      user: null,
+      accessToken: null,
+      isAuthenticated: false,
+      setAuth: (user, accessToken) => set({ user, accessToken, isAuthenticated: true }),
+      clearAuth: () => set({ user: null, accessToken: null, isAuthenticated: false }),
+    }),
+    {
+      name: 'seller-user-info',
+      storage: createJSONStorage(() => localStorage),
     }
-    setLoading(false);
-  }, []);
+  )
+);
+```
 
-  const login = async (email: string, password: string) => {
-    // Để phục vụ test và minimal implementation, ta giả lập phản hồi thành công.
-    // Thực tế sẽ gọi API: const res = await api.post('/auth/login', { email, password });
-    if (email === 'seller@test.com' && password === 'pass123') {
-      const mockUser: User = {
-        id: 'usr-1',
-        email,
-        profile: { fullName: 'Nguyễn Văn Seller' },
-        roles: ['SELLER'],
-      };
-      setUser(mockUser);
-      localStorage.setItem('seller_user', JSON.stringify(mockUser));
-    } else {
-      throw new Error('Sai tài khoản hoặc mật khẩu');
-    }
-  };
+Tạo API Service:
+Create: `website/seller/src/features/auth/services/auth.service.ts`
+```typescript
+import { api } from '@/utils/api';
+import { LoginInput, AuthResponse } from '../types/auth';
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem('seller_user');
-  };
+export const authApi = {
+  login: async (data: LoginInput): Promise<AuthResponse> => {
+    const response = await api.post<AuthResponse>('auth/login', data);
+    return response.data;
+  },
+};
+```
 
-  return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
-      {children}
-    </AuthContext.Provider>
-  );
+Tạo Hook useLogin:
+Create: `website/seller/src/features/auth/hooks/useLogin.ts`
+```typescript
+import { useMutation } from '@tanstack/react-query';
+import { authApi } from '../services/auth.service';
+import { useAuthStore } from '../stores/auth.store';
+import { useNavigate } from 'react-router-dom';
+
+export function useLogin() {
+  const setAuth = useAuthStore((state) => state.setAuth);
+  const navigate = useNavigate();
+
+  return useMutation({
+    mutationFn: authApi.login,
+    onSuccess: (res) => {
+      setAuth(res.user, res.accessToken);
+      navigate('/');
+    },
+  });
 }
 ```
 
 - [ ] **Step 4: Run test to verify it passes**
 Run: `pnpm --filter seller test run`
-Expected: PASS 1/1 (authContext.test.tsx)
+Expected: PASS auth.store.test.ts
 
 - [ ] **Step 5: Commit**
 ```bash
-git add website/seller/src/utils/api.ts website/seller/src/context/AuthContext.tsx website/seller/src/__tests__/authContext.test.tsx
-git commit -m "feat(seller): add API client and AuthContext state provider"
+git add website/seller/src/utils/api.ts website/seller/src/features/auth/stores/auth.store.ts website/seller/src/features/auth/hooks/useLogin.ts website/seller/src/features/auth/tests/auth.store.test.ts
+git commit -m "feat(seller): implement auth store and login hook using TanStack Query"
 ```
 
 ---
 
-### Task 2: Xây dựng màn hình đăng nhập (Login Screen)
+### Task 2: Auth Schemas, LoginForm & Clean Login Screen
 
 **Files:**
+- Create: `website/seller/src/features/auth/schemas/auth.schema.ts`
+- Create: `website/seller/src/features/auth/components/LoginForm.tsx`
 - Create: `website/seller/src/pages/Login.tsx`
-- Create: `website/seller/src/__tests__/login.test.tsx`
+- Create: `website/seller/src/features/auth/tests/LoginForm.test.tsx`
 
 **Interfaces:**
-- Consumes: `AuthContext` từ Task 1.
-- Produces: Component `Login` UI chứa form nhập, validate cơ bản và xử lý gửi request đăng nhập.
+- Consumes: `useLogin` mutation hook
+- Produces: `LoginForm` component. Giao diện trang Login cực kỳ sạch sẽ.
 
 - [ ] **Step 1: Write the failing test**
-Create: `website/seller/src/__tests__/login.test.tsx`
+Create: `website/seller/src/features/auth/tests/LoginForm.test.tsx`
 ```typescript
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
-import { AuthContext } from '../context/AuthContext';
-import Login from '../pages/Login';
+import LoginForm from '../components/LoginForm';
 import { MemoryRouter } from 'react-router-dom';
 
-describe('Login Component', () => {
-  it('renders inputs, validation message, and submits email & password', () => {
-    const mockLogin = vi.fn();
+const mockMutate = vi.fn();
+vi.mock('../hooks/useLogin', () => ({
+  useLogin: () => ({
+    mutate: mockMutate,
+    isPending: false,
+    error: null,
+  })
+}));
+
+describe('LoginForm Component', () => {
+  it('renders inputs and triggers login on submit', async () => {
     render(
       <MemoryRouter>
-        <AuthContext.Provider value={{ user: null, loading: false, login: mockLogin, logout: vi.fn() }}>
-          <Login />
-        </AuthContext.Provider>
+        <LoginForm />
       </MemoryRouter>
     );
 
-    expect(screen.getByPlaceholderText('Tên đăng nhập (Email)')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('Mật khẩu')).toBeInTheDocument();
-
+    const emailInput = screen.getByPlaceholderText('Tên đăng nhập (Email)');
+    const passwordInput = screen.getByPlaceholderText('Mật khẩu');
     const submitBtn = screen.getByRole('button', { name: /đăng nhập/i });
+
+    fireEvent.change(emailInput, { target: { value: 'seller@test.com' } });
+    fireEvent.change(passwordInput, { target: { value: 'pass123' } });
     fireEvent.click(submitBtn);
 
-    expect(screen.getByText('Vui lòng nhập đầy đủ thông tin')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(mockMutate).toHaveBeenCalledWith({ email: 'seller@test.com', password: 'pass123' });
+    });
   });
 });
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
 Run: `pnpm --filter seller test run`
-Expected: FAIL vì `pages/Login.tsx` chưa được tạo.
+Expected: FAIL vì các components và schemas chưa tồn tại.
 
 - [ ] **Step 3: Write minimal implementation**
-Create: `website/seller/src/pages/Login.tsx`
+Tạo file validation schema:
+Create: `website/seller/src/features/auth/schemas/auth.schema.ts`
 ```typescript
-import React, { useState, useContext } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { AuthContext } from '../context/AuthContext';
+import * as z from 'zod';
+
+export const loginSchema = z.object({
+  email: z.string().email('Email không hợp lệ'),
+  password: z.string().min(6, 'Mật khẩu phải từ 6 ký tự trở lên'),
+});
+
+export type LoginFormValues = z.infer<typeof loginSchema>;
+```
+
+Tạo Component LoginForm:
+Create: `website/seller/src/features/auth/components/LoginForm.tsx`
+```typescript
+import React, { useState } from 'react';
+import { useLogin } from '../hooks/useLogin';
 import { Lock, Mail, Store } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { loginSchema, LoginFormValues } from '../schemas/auth.schema';
 
-export default function Login() {
-  const auth = useContext(AuthContext);
-  const navigate = useNavigate();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+export default function LoginForm() {
+  const { mutate: login, isPending, error } = useLogin();
+  const { register, handleSubmit, formState: { errors } } = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+  });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-
-    if (!email || !password) {
-      setError('Vui lòng nhập đầy đủ thông tin');
-      return;
-    }
-
-    if (!auth) return;
-
-    setLoading(true);
-    try {
-      await auth.login(email, password);
-      navigate('/');
-    } catch (err: any) {
-      setError(err.message || 'Đăng nhập thất bại');
-    } finally {
-      setLoading(false);
-    }
+  const onSubmit = (data: LoginFormValues) => {
+    login(data);
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 font-sans">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-slate-100 p-8">
         <div className="flex flex-col items-center mb-8">
           <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white mb-3">
@@ -262,11 +270,11 @@ export default function Login() {
 
         {error && (
           <div className="mb-4 p-3 bg-red-50 text-red-600 text-sm rounded-lg border border-red-150">
-            {error}
+            {(error as any)?.response?.data?.message || 'Đăng nhập thất bại'}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
             <label className="block text-sm font-semibold text-slate-700 mb-1">Email</label>
             <div className="relative">
@@ -274,11 +282,11 @@ export default function Login() {
               <input
                 type="email"
                 placeholder="Tên đăng nhập (Email)"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                {...register('email')}
                 className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-slate-800"
               />
             </div>
+            {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email.message}</p>}
           </div>
 
           <div>
@@ -288,19 +296,19 @@ export default function Login() {
               <input
                 type="password"
                 placeholder="Mật khẩu"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                {...register('password')}
                 className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-slate-800"
               />
             </div>
+            {errors.password && <p className="mt-1 text-xs text-red-500">{errors.password.message}</p>}
           </div>
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={isPending}
             className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow transition-all duration-150 disabled:opacity-50"
           >
-            {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
+            {isPending ? 'Đang đăng nhập...' : 'Đăng nhập'}
           </button>
         </form>
       </div>
@@ -309,14 +317,25 @@ export default function Login() {
 }
 ```
 
+Tạo Routing Page cực kỳ sạch sẽ:
+Create: `website/seller/src/pages/Login.tsx`
+```typescript
+import React from 'react';
+import LoginForm from '../features/auth/components/LoginForm';
+
+export default function Login() {
+  return <LoginForm />;
+}
+```
+
 - [ ] **Step 4: Run test to verify it passes**
 Run: `pnpm --filter seller test run`
-Expected: PASS cả test login và auth context.
+Expected: PASS.
 
 - [ ] **Step 5: Commit**
 ```bash
-git add website/seller/src/pages/Login.tsx website/seller/src/__tests__/login.test.tsx
-git commit -m "feat(seller): implement Login Screen and validation behavior"
+git add website/seller/src/features/auth/schemas/auth.schema.ts website/seller/src/features/auth/components/LoginForm.tsx website/seller/src/pages/Login.tsx website/seller/src/features/auth/tests/LoginForm.test.tsx
+git commit -m "feat(seller): refactor login to clean page and dedicated validation schema"
 ```
 
 ---
@@ -330,7 +349,7 @@ git commit -m "feat(seller): implement Login Screen and validation behavior"
 - Create: `website/seller/src/__tests__/guards.test.tsx`
 
 **Interfaces:**
-- Consumes: `AuthContext` và trang `Login` từ Task 2.
+- Consumes: `useAuthStore` from Task 1.
 - Produces: `ProtectedRoute` bảo vệ các route nhạy cảm; chuyển hướng user không hợp lệ về `/login` hoặc hiển thị màn hình `/403` cấm truy cập.
 
 - [ ] **Step 1: Write the failing test**
@@ -340,25 +359,28 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { describe, it, expect, vi } from 'vitest';
-import { AuthContext } from '../context/AuthContext';
+import { useAuthStore } from '../features/auth/stores/auth.store';
 import ProtectedRoute from '../components/auth/ProtectedRoute';
-import Forbidden from '../pages/Forbidden';
+
+vi.mock('../features/auth/stores/auth.store', () => ({
+  useAuthStore: (selector: any) => selector({
+    user: null,
+    isAuthenticated: false,
+  })
+}));
 
 describe('ProtectedRoute Guard', () => {
-  it('redirects unauthorized user to login or show forbidden', () => {
-    // Test case 1: User is null, redirect to Login page
+  it('redirects unauthorized user to login', () => {
     render(
       <MemoryRouter initialEntries={['/protected']}>
-        <AuthContext.Provider value={{ user: null, loading: false, login: vi.fn(), logout: vi.fn() }}>
-          <Routes>
-            <Route path="/login" element={<div>Login Page</div>} />
-            <Route path="/protected" element={
-              <ProtectedRoute allowedRoles={['SELLER']}>
-                <div>Dashboard</div>
-              </ProtectedRoute>
-            } />
-          </Routes>
-        </AuthContext.Provider>
+        <Routes>
+          <Route path="/login" element={<div>Login Page</div>} />
+          <Route path="/protected" element={
+            <ProtectedRoute allowedRoles={['SELLER']}>
+              <div>Dashboard</div>
+            </ProtectedRoute>
+          } />
+        </Routes>
       </MemoryRouter>
     );
 
@@ -380,7 +402,7 @@ import { Link } from 'react-router-dom';
 
 export default function Forbidden() {
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50 text-center p-4">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50 text-center p-4 font-sans">
       <h1 className="text-6xl font-extrabold text-red-600">403</h1>
       <h2 className="mt-4 text-2xl font-bold text-slate-800">Truy cập bị từ chối</h2>
       <p className="mt-2 text-slate-500">Bạn không có quyền truy cập vào khu vực Kênh người bán này.</p>
@@ -395,9 +417,9 @@ export default function Forbidden() {
 Tạo component ProtectedRoute:
 Create: `website/seller/src/components/auth/ProtectedRoute.tsx`
 ```typescript
-import React, { useContext } from 'react';
+import React from 'react';
 import { Navigate } from 'react-router-dom';
-import { AuthContext } from '../../context/AuthContext';
+import { useAuthStore } from '../../features/auth/stores/auth.store';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -405,21 +427,9 @@ interface ProtectedRouteProps {
 }
 
 export default function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
-  const auth = useContext(AuthContext);
+  const { user, isAuthenticated } = useAuthStore();
 
-  if (!auth) return null;
-
-  const { user, loading } = auth;
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="text-slate-600 font-semibold">Đang tải thông tin...</div>
-      </div>
-    );
-  }
-
-  if (!user) {
+  if (!isAuthenticated || !user) {
     return <Navigate to="/login" replace />;
   }
 
@@ -431,7 +441,7 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
 }
 ```
 
-Cập nhật `main.tsx` để bảo vệ các trang Dashboard & Orders:
+Cập nhật `main.tsx` để tích hợp `QueryClientProvider` và `ProtectedRoute`:
 Modify: `website/seller/src/main.tsx`
 ```typescript
 import React from 'react';
@@ -445,11 +455,13 @@ import Forbidden from './pages/Forbidden';
 import NotFound from './pages/NotFound';
 import SellerLayout from './components/layout/SellerLayout';
 import ProtectedRoute from './components/auth/ProtectedRoute';
-import { AuthProvider } from './context/AuthContext';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+const queryClient = new QueryClient();
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <AuthProvider>
+    <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<Login />} />
@@ -477,19 +489,19 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
-    </AuthProvider>
+    </QueryClientProvider>
   </React.StrictMode>
 );
 ```
 
 - [ ] **Step 4: Run test to verify it passes**
 Run: `pnpm --filter seller test run`
-Expected: PASS tất cả các tests bao gồm guards test.
+Expected: PASS tất cả các tests.
 
 - [ ] **Step 5: Commit**
 ```bash
 git add website/seller/src/components/auth/ProtectedRoute.tsx website/seller/src/pages/Forbidden.tsx website/seller/src/main.tsx website/seller/src/__tests__/guards.test.tsx
-git commit -m "feat(seller): protect seller endpoints using ProtectedRoute and add 403 Forbidden page"
+git commit -m "feat(seller): secure seller endpoints using ProtectedRoute and role matching check"
 ```
 
 ---
@@ -497,16 +509,11 @@ git commit -m "feat(seller): protect seller endpoints using ProtectedRoute and a
 ## 🏁 Phase Checklist & Common Fresher Errors
 
 ### 📋 Phase Complete Checklist
-1. Màn hình đăng nhập `/login` có đầy đủ các thẻ input, xử lý lỗi đăng nhập sai tài khoản.
-2. Route guard `ProtectedRoute` tự động chuyển hướng người dùng chưa đăng nhập về `/login`.
-3. Người dùng đăng nhập chỉ có role `CUSTOMER` bị từ chối truy cập và chuyển hướng về trang `/403`.
-4. Người dùng có role `SELLER` hoặc `ADMIN` được phép truy cập vào các dashboard quản lý bình thường.
-5. Thông tin user được lưu vết ở LocalStorage để phục hồi trạng thái khi refresh trình duyệt.
+1. Màn hình đăng nhập `/login` là trang sạch sẽ, chỉ chứa component LoginForm.
+2. Logic validation và schema được tách rời hoàn toàn tại `features/auth/schemas/auth.schema.ts`.
+3. Route guard `ProtectedRoute` tự động chuyển hướng người dùng chưa đăng nhập về `/login`.
+4. Người dùng đăng nhập chỉ có role `CUSTOMER` (không có `SELLER` hoặc `ADMIN` trong `roles`) bị chuyển hướng về trang `/403`.
 
 ### ⚠️ Common Fresher Errors
-- **Error:** Không kiểm tra trạng thái `loading` của Auth Context trước khi chuyển hướng dẫn đến việc người dùng đã đăng nhập vẫn bị đá về trang `/login` chớp nhoáng (flash redirect) do bất đồng bộ load state.
-  - *Fix:* Luôn render màn hình chờ Loading trong `ProtectedRoute` khi `loading === true` trước khi quyết định chuyển hướng.
-- **Error:** Quên thiết lập CORS credentials phía Axios Client (`withCredentials: true`), dẫn đến việc backend không nhận được HttpOnly Cookie (chứa token refresh) của request.
-  - *Fix:* Luôn đính kèm `withCredentials: true` vào cấu hình tạo axios instance.
-- **Error:** Sử dụng thẻ `<a href="...">` thay cho `<Link to="...">` để điều hướng trang 403/Login làm load lại toàn bộ trang và mất trắng trạng thái global state trong bộ nhớ React.
-  - *Fix:* Sử dụng duy nhất thẻ `Link` hoặc `NavLink` của `react-router-dom` cho các liên kết nội bộ.
+1. **Viết validation logic trực tiếp ở Login.tsx**: Hãy chuyển toàn bộ Zod validation và hook calls vào component LoginForm.
+2. **Không đồng bộ role checker theo Array**: Luôn sử dụng `user.roles.includes('SELLER')` để kiểm tra quyền thay vì `user.role === 'SELLER'`.
