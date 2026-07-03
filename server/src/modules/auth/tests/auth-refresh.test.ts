@@ -1,7 +1,9 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import request from "supertest";
+import jwt from "jsonwebtoken";
 import app from "@/app";
 import { prisma } from "@/libs/prisma";
+import { JwtPayload } from "@/utils/jwt";
 
 describe("Auth Refresh Token Integration Tests", () => {
   const cleanupUser = async (email: string) => {
@@ -26,7 +28,11 @@ describe("Auth Refresh Token Integration Tests", () => {
       expect(res.status).toBe(201);
       expect(res.body.success).toBe(true);
       expect(res.body.data.user.email).toBe(email);
+      expect(res.body.data.user.roles).toEqual(["CUSTOMER"]);
       expect(res.body.data.accessToken).toBeDefined();
+
+      const decoded = jwt.decode(res.body.data.accessToken) as JwtPayload;
+      expect(decoded.roles).toEqual(["CUSTOMER"]);
 
       const cookies = res.headers["set-cookie"];
       expect(cookies).toBeDefined();

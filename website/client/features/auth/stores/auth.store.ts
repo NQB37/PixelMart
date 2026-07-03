@@ -2,8 +2,6 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { UserInfo } from "../types/auth";
 
-export type UserRole = "ADMIN" | "CUSTOMER" | "STAFF";
-
 type AuthState = {
   user: UserInfo | null;
   accessToken: string | null;
