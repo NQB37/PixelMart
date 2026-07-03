@@ -1,5 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "@tanstack/react-router";
 import { authApi } from "../services/auth.service";
 import { useAuthStore } from "../stores/auth.store";
 
@@ -11,7 +11,7 @@ export function useLogout() {
     mutationFn: authApi.logout,
     onSuccess: () => {
       clearAuth();
-      navigate("/login", { replace: true });
+      navigate({ to: "/login", replace: true });
     },
   });
 }
