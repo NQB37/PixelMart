@@ -1,14 +1,14 @@
-import { prisma } from "@/libs/prisma";
-import { LoginInput, RegisterInput } from "./auth.validation";
-import { ApiError } from "@/utils/ApiError";
-import { comparePassword, hashPassword } from "@/utils/password";
+import { prisma } from '@/libs/prisma';
+import { LoginInput, RegisterInput } from './auth.validation';
+import { ApiError } from '@/utils/ApiError';
+import { comparePassword, hashPassword } from '@/utils/password';
 import {
   generateAccessToken,
   generateRefreshToken,
   verifyRefreshToken,
-} from "@/utils/jwt";
-import { env } from "@/config/env";
-import { ROLE } from "@/generated/prisma/client";
+} from '@/utils/jwt';
+import { env } from '@/config/env';
+import { ROLE } from '@/generated/prisma/client';
 
 class AuthService {
   public async register(data: RegisterInput) {
@@ -17,7 +17,7 @@ class AuthService {
       where: { email: data.email },
     });
     if (existingUser) {
-      throw ApiError.conflict("Email already exists!");
+      throw ApiError.conflict('Email already exists!');
     }
 
     // Hash password
@@ -71,19 +71,16 @@ class AuthService {
       where: { email: data.email },
       include: { roles: { select: { role: { select: { name: true } } } } },
     });
-    if (!user) {
-      throw ApiError.unauthorized("Invalid credentials");
+
+    // Compare password
+    const isPasswordValid = await comparePassword(data.password, user.password);
+    if (!user || !isPasswordValid) {
+      throw ApiError.unauthorized('Invalid credentials');
     }
 
     // Check active
     if (!user.isActive) {
-      throw ApiError.forbidden("Your account is banned!");
-    }
-
-    // Compare password
-    const isPasswordValid = await comparePassword(data.password, user.password);
-    if (!isPasswordValid) {
-      throw ApiError.unauthorized("Invalid credentials");
+      throw ApiError.forbidden('Your account is banned!');
     }
 
     const roles = user.roles.map((r) => r.role.name);
@@ -122,7 +119,7 @@ class AuthService {
       await prisma.refreshToken.deleteMany({
         where: { userId: payload.userId },
       });
-      throw ApiError.unauthorized("Refresh token not found");
+      throw ApiError.unauthorized('Refresh token not found');
     }
 
     // Delete old refresh token
@@ -135,7 +132,11 @@ class AuthService {
       include: { roles: { select: { role: { select: { name: true } } } } },
     });
     if (!user) {
-      throw ApiError.unauthorized("User not found");
+      throw ApiError.unauthorized('User not found');
+    }
+    if (!user.isActive) {
+      await prisma.refreshToken.deleteMany({ where: { userId: user.id } });
+      throw ApiError.forbidden('Your account is banned!');
     }
 
     const roles = user.roles.map((r) => r.role.name);
@@ -150,7 +151,11 @@ class AuthService {
     return { accessToken, refreshToken };
   }
 
-  private async generateTokenPair(userId: string, email: string, roles: ROLE[]) {
+  private async generateTokenPair(
+    userId: string,
+    email: string,
+    roles: ROLE[],
+  ) {
     const payload = {
       userId,
       email,

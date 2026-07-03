@@ -56,7 +56,7 @@ enum Gender {
 }
 
 model RefreshToken {
-  id        String   @id @default(cuid())
+  id        String   @id @default(uuid())
   userId    String
   token     String   @unique
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -65,7 +65,6 @@ model RefreshToken {
   createdAt DateTime @default(now())
 
   @@index([userId])
-  @@index([token])
   @@map("refresh_tokens")
 }
 
@@ -129,6 +128,7 @@ model RolePermissions {
   permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
 
   @@id([roleId, permissionId])
+  @@index([permissionId])
   @@map("role_permissions")
 }
 
@@ -209,6 +209,8 @@ model DeliveryPerson {
   rejectedReason      String?
   activityStatus      DeliveryActivityStatus @default(OFFLINE)
   status              ShopStatus             @default(ACTIVE)
+  createdAt           DateTime               @default(now())
+  updatedAt           DateTime               @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
