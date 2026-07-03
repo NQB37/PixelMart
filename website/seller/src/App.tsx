@@ -1,38 +1,23 @@
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { RouterProvider } from "@tanstack/react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import ProtectedRoute from "@/components/auth/ProtectedRoute";
-import GuestRoute from "@/components/auth/GuestRoute";
-import Login from "@/pages/Login";
-import Forbidden from "@/pages/Forbidden";
-import Dashboard from "@/pages/Dashboard";
+import { router } from "@/router";
+import { useAuthStore } from "@/features/auth/stores/auth.store";
 
 const queryClient = new QueryClient();
+
+function InnerApp() {
+  const user = useAuthStore((state) => state.user);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+
+  return (
+    <RouterProvider router={router} context={{ auth: { user, isAuthenticated } }} />
+  );
+}
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <Routes>
-          <Route
-            path="/login"
-            element={
-              <GuestRoute>
-                <Login />
-              </GuestRoute>
-            }
-          />
-          <Route path="/403" element={<Forbidden />} />
-          <Route
-            path="/"
-            element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </BrowserRouter>
+      <InnerApp />
     </QueryClientProvider>
   );
 }
