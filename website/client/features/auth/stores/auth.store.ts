@@ -6,9 +6,11 @@ type AuthState = {
   user: UserInfo | null;
   accessToken: string | null;
   isAuthenticated: boolean;
+  hasHydrated: boolean;
   setAuth: (user: UserInfo, accessToken: string) => void;
   clearAuth: () => void;
   setAccessToken: (accessToken: string) => void;
+  setHasHydrated: (value: boolean) => void;
 };
 
 export const useAuthStore = create<AuthState>()(
@@ -18,6 +20,8 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       accessToken: null,
       isAuthenticated: false,
+      // false until persisted state is read from localStorage; guards wait on this
+      hasHydrated: false,
 
       // action
       setAuth: (user, accessToken) =>
@@ -36,6 +40,7 @@ export const useAuthStore = create<AuthState>()(
         set({
           accessToken: newToken,
         }),
+      setHasHydrated: (value) => set({ hasHydrated: value }),
     }),
     {
       name: "user-info",
@@ -44,6 +49,7 @@ export const useAuthStore = create<AuthState>()(
         user: state.user,
         isAuthenticated: state.isAuthenticated,
       }),
+      onRehydrateStorage: () => (state) => state?.setHasHydrated(true),
     },
   ),
 );
