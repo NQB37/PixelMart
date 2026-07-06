@@ -13,7 +13,9 @@ type RoleGuardProps = {
 
 const RoleGuard = ({ allowedRoles, children }: RoleGuardProps) => {
   const router = useRouter();
-  const { user, isAuthenticated, hasHydrated } = useAuthStore();
+  const user = useAuthStore((s) => s.user);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const hasHydrated = useAuthStore((s) => s.hasHydrated);
   const hasRole =
     !allowedRoles || !!user?.roles.some((role) => allowedRoles.includes(role));
 

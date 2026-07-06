@@ -7,10 +7,10 @@ export default function ClientLayout({
   children: React.ReactNode;
 }) {
   return (
-    <main>
+    <>
       <Header />
-      {children}
+      <main>{children}</main>
       <Footer />
-    </main>
+    </>
   );
 }

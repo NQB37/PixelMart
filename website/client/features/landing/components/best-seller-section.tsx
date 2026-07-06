@@ -1,6 +1,5 @@
-import { ProductCard } from "@/components/shared/ProductCard";
+import { Product, ProductCard } from "@/components/shared/ProductCard";
 import SectionHeader from "@/components/ui/sectionHeader";
-import { Product } from "../libs/share";
 
 const BestSellerSection = () => {
   const BEST: Product[] = [
