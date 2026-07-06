@@ -180,10 +180,35 @@ model Shop {
   updatedAt      DateTime       @updatedAt
   deletedAt      DateTime?
 
-  user User @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  user         User              @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  verification ShopVerification?
 
   @@index([ownerId])
   @@map("shops")
+}
+
+// Pickup address + identity/bank KYC info collected at shop registration,
+// reviewed by admins before a shop's approvalStatus moves out of PENDING.
+model ShopVerification {
+  id                String   @id @default(uuid())
+  shopId            String   @unique
+  recipientName     String
+  phone             String
+  street            String
+  ward              String
+  province          String
+  nationalId        String
+  idFrontUrl        String
+  idBackUrl         String
+  bankAccountNumber String
+  cardHolderName    String
+  cardExpiry        String
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@map("shop_verifications")
 }
 
 enum ApprovalStatus {

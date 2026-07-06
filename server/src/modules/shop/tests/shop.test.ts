@@ -15,6 +15,21 @@ describe("Shop Registration Integration Tests", () => {
 
   const testPassword = "Password123!";
 
+  const validShopPayload = {
+    shopName: "Pixel Store",
+    recipientName: "Nguyen Van A",
+    phone: "0912345678",
+    street: "123 Le Loi Street",
+    ward: "Ward 1",
+    province: "Ho Chi Minh City",
+    nationalId: "123456789012",
+    idFrontUrl: "https://example.com/id-front.jpg",
+    idBackUrl: "https://example.com/id-back.jpg",
+    bankAccountNumber: "1234567890",
+    cardHolderName: "NGUYEN VAN A",
+    cardExpiry: "12/28",
+  };
+
   const registerUser = async (email: string) => {
     const res = await request(app)
       .post("/api/v1/auth/register")
@@ -32,7 +47,7 @@ describe("Shop Registration Integration Tests", () => {
       const res = await request(app)
         .post("/api/v1/shops")
         .set("Authorization", `Bearer ${accessToken}`)
-        .send({ shopName: "Pixel Store" });
+        .send(validShopPayload);
 
       expect(res.status).toBe(201);
       expect(res.body.data.shopName).toBe("Pixel Store");
@@ -60,12 +75,12 @@ describe("Shop Registration Integration Tests", () => {
       await request(app)
         .post("/api/v1/shops")
         .set("Authorization", `Bearer ${accessToken}`)
-        .send({ shopName: "Pixel Store" });
+        .send(validShopPayload);
 
       const res = await request(app)
         .post("/api/v1/shops")
         .set("Authorization", `Bearer ${accessToken}`)
-        .send({ shopName: "Another Store" });
+        .send({ ...validShopPayload, shopName: "Another Store" });
 
       expect(res.status).toBe(409);
     } finally {

@@ -1,5 +1,5 @@
 import { api } from "@/lib/api";
-import type { CreateShopInput } from "../schemas/shop.schema";
+import type { RegisterShopInput } from "../schemas/shop.schema";
 
 export interface Shop {
   id: string;
@@ -8,13 +8,22 @@ export interface Shop {
   approvalStatus: "PENDING" | "APPROVED" | "REJECTED";
 }
 
+export type RegisterShopPayload = RegisterShopInput & {
+  logoUrl?: string;
+  idFrontUrl: string;
+  idBackUrl: string;
+};
+
 export const shopApi = {
-  register: async (data: CreateShopInput): Promise<Shop> => {
-    const payload = {
-      shopName: data.shopName,
-      ...(data.logoUrl ? { logoUrl: data.logoUrl } : {}),
-    };
-    const response = await api.post<Shop>("shops", payload);
+  register: async (data: RegisterShopPayload): Promise<Shop> => {
+    const response = await api.post<Shop>("shops", data);
     return response.data;
+  },
+  uploadImage: async (file: File, folder: string): Promise<string> => {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("folder", folder);
+    const response = await api.post<{ url: string }>("uploads", formData);
+    return response.data.url;
   },
 };

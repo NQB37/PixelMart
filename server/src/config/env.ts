@@ -19,4 +19,8 @@ export const env = {
   accessTokenExpiresIn: process.env.ACCESS_TOKEN_EXPIRES_IN || "30m",
   refreshTokenExpiresIn: process.env.REFRESH_TOKEN_EXPIRES_IN || "14d",
   refreshTokenExpiresInDays: Number(process.env.REFRESH_TOKEN_EXPIRES_IN) || 14,
+  // cloudinary
+  cloudinaryCloudName: process.env.CLOUDINARY_CLOUD_NAME,
+  cloudinaryApiKey: process.env.CLOUDINARY_API_KEY,
+  cloudinaryApiSecret: process.env.CLOUDINARY_API_SECRET,
 };
