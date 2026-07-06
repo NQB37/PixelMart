@@ -1,8 +1,7 @@
-import { ProductCard } from "@/components/shared/ProductCard";
+import { Product, ProductCard } from "@/components/shared/ProductCard";
 import SectionHeader from "@/components/ui/sectionHeader";
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
-import { Product } from "../libs/share";
 
 const DealSection = () => {
   const DEALS: Product[] = [

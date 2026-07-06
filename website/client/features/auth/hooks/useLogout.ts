@@ -10,7 +10,7 @@ export const useLogout = () => {
 
   return useMutation({
     mutationFn: authApi.logout,
-    onSuccess: () => {
+    onSettled: () => {
       clearAuth();
       router.push("/");
     },

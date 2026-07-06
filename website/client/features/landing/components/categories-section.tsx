@@ -22,7 +22,7 @@ const CategoriesSection = () => {
           <Link
             key={category.name}
             href='/products'
-            className={`flex flex-col items-center gap-3 border-[3px] p-6 pixel-shadow transition-transform hover:-translate-y-1 ${accentBg[category.accent]}`}
+            className={`flex flex-col items-center gap-3 border-[3px] p-6 pixel-shadow transition-transform hover:-translate-y-1 ${accentBg[category.accent as keyof typeof accentBg]}`}
           >
             <span className='text-4xl float-pixel'>{category.icon}</span>
             <span className='text-center font-pixel text-[10px] uppercase'>
