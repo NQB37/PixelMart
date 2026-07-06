@@ -24,6 +24,12 @@ const login = asyncHandler(async (req, res) => {
   ApiResponse.success(res, response, "User logged in successfully");
 });
 
+const getMe = asyncHandler(async (req, res) => {
+  const user = await authService.getMe(req.user!.userId);
+
+  ApiResponse.success(res, user, "Current user fetched successfully");
+});
+
 const logout = asyncHandler(async (req, res) => {
   const refreshToken = req.cookies.refreshToken;
   if (refreshToken) {
@@ -52,4 +58,4 @@ const refreshToken = asyncHandler(async (req, res) => {
   );
 });
 
-export { register, login, logout, refreshToken };
+export { register, login, logout, refreshToken, getMe };

@@ -102,6 +102,22 @@ class AuthService {
     return { user: userResponse, accessToken, refreshToken };
   }
 
+  public async getMe(userId: string) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: { roles: { select: { role: { select: { name: true } } } } },
+    });
+    if (!user) {
+      throw ApiError.notFound('User not found');
+    }
+
+    return {
+      id: user.id,
+      email: user.email,
+      roles: user.roles.map((r) => r.role.name),
+    };
+  }
+
   public async logout(refreshToken: string) {
     await prisma.refreshToken.deleteMany({
       where: { token: refreshToken },

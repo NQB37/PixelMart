@@ -1,22 +1,21 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Link } from "@tanstack/react-router";
-import { Store, Lock, Mail, AlertCircle } from "lucide-react";
-import { useLogin } from "../hooks/useLogin";
-import { loginSchema, type LoginInput } from "../schemas/auth.schema";
+import { Store, Image as ImageIcon, AlertCircle } from "lucide-react";
+import { useRegisterShop } from "../hooks/useRegisterShop";
+import { createShopSchema, type CreateShopInput } from "../schemas/shop.schema";
 
-export default function LoginForm() {
-  const { mutate: login, isPending, error } = useLogin();
+export default function RegisterShopForm() {
+  const { mutate: registerShop, isPending, error } = useRegisterShop();
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<LoginInput>({
-    resolver: zodResolver(loginSchema),
+  } = useForm<CreateShopInput>({
+    resolver: zodResolver(createShopSchema),
   });
 
-  const onSubmit = (data: LoginInput) => {
-    login(data);
+  const onSubmit = (data: CreateShopInput) => {
+    registerShop(data);
   };
 
   return (
@@ -27,10 +26,10 @@ export default function LoginForm() {
             <Store className="h-6 w-6" />
           </div>
           <h1 className="text-xl font-semibold text-slate-900">
-            PixelMart Seller
+            Register your shop
           </h1>
-          <p className="mt-1 text-sm text-slate-500">
-            Sign in to manage your shop
+          <p className="mt-1 text-center text-sm text-slate-500">
+            Tell us about your shop to start selling on PixelMart
           </p>
         </div>
 
@@ -44,48 +43,47 @@ export default function LoginForm() {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
             <label
-              htmlFor="email"
+              htmlFor="shopName"
               className="mb-1 block text-sm font-medium text-slate-700"
             >
-              Email
+              Shop name
             </label>
             <div className="relative">
-              <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <Store className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
               <input
-                id="email"
-                type="email"
-                autoComplete="email"
-                {...register("email")}
+                id="shopName"
+                type="text"
+                {...register("shopName")}
                 className="w-full rounded-lg border border-slate-300 py-2 pl-9 pr-3 text-sm text-slate-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
               />
             </div>
-            {errors.email && (
+            {errors.shopName && (
               <p className="mt-1 text-xs text-red-500">
-                {errors.email.message}
+                {errors.shopName.message}
               </p>
             )}
           </div>
 
           <div>
             <label
-              htmlFor="password"
+              htmlFor="logoUrl"
               className="mb-1 block text-sm font-medium text-slate-700"
             >
-              Password
+              Logo URL (optional)
             </label>
             <div className="relative">
-              <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <ImageIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
               <input
-                id="password"
-                type="password"
-                autoComplete="current-password"
-                {...register("password")}
+                id="logoUrl"
+                type="text"
+                placeholder="https://..."
+                {...register("logoUrl")}
                 className="w-full rounded-lg border border-slate-300 py-2 pl-9 pr-3 text-sm text-slate-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
               />
             </div>
-            {errors.password && (
+            {errors.logoUrl && (
               <p className="mt-1 text-xs text-red-500">
-                {errors.password.message}
+                {errors.logoUrl.message}
               </p>
             )}
           </div>
@@ -95,16 +93,9 @@ export default function LoginForm() {
             disabled={isPending}
             className="w-full rounded-lg bg-indigo-600 py-2 text-sm font-semibold text-white transition-colors hover:bg-indigo-700 disabled:opacity-50"
           >
-            {isPending ? "Signing in..." : "Sign in"}
+            {isPending ? "Registering..." : "Register shop"}
           </button>
         </form>
-
-        <div className="mt-6 text-center text-sm text-slate-500">
-          Don&apos;t have an account?{" "}
-          <Link to="/register" className="font-medium text-indigo-600 hover:text-indigo-700">
-            Create one
-          </Link>
-        </div>
       </div>
     </div>
   );

@@ -10,3 +10,7 @@ export interface AuthResponse {
   user: UserInfo;
   accessToken: string;
 }
+
+export interface RefreshTokenResponse {
+  accessToken: string;
+}

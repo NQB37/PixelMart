@@ -2,21 +2,21 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Link } from "@tanstack/react-router";
 import { Store, Lock, Mail, AlertCircle } from "lucide-react";
-import { useLogin } from "../hooks/useLogin";
-import { loginSchema, type LoginInput } from "../schemas/auth.schema";
+import { useRegister } from "../hooks/useRegister";
+import { registerSchema, type RegisterInput } from "../schemas/auth.schema";
 
-export default function LoginForm() {
-  const { mutate: login, isPending, error } = useLogin();
+export default function RegisterForm() {
+  const { mutate: registerUser, isPending, error } = useRegister();
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<LoginInput>({
-    resolver: zodResolver(loginSchema),
+  } = useForm<RegisterInput>({
+    resolver: zodResolver(registerSchema),
   });
 
-  const onSubmit = (data: LoginInput) => {
-    login(data);
+  const onSubmit = (data: RegisterInput) => {
+    registerUser(data);
   };
 
   return (
@@ -30,7 +30,7 @@ export default function LoginForm() {
             PixelMart Seller
           </h1>
           <p className="mt-1 text-sm text-slate-500">
-            Sign in to manage your shop
+            Create an account to start selling
           </p>
         </div>
 
@@ -78,7 +78,7 @@ export default function LoginForm() {
               <input
                 id="password"
                 type="password"
-                autoComplete="current-password"
+                autoComplete="new-password"
                 {...register("password")}
                 className="w-full rounded-lg border border-slate-300 py-2 pl-9 pr-3 text-sm text-slate-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
               />
@@ -90,19 +90,43 @@ export default function LoginForm() {
             )}
           </div>
 
+          <div>
+            <label
+              htmlFor="confirmPassword"
+              className="mb-1 block text-sm font-medium text-slate-700"
+            >
+              Confirm password
+            </label>
+            <div className="relative">
+              <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <input
+                id="confirmPassword"
+                type="password"
+                autoComplete="new-password"
+                {...register("confirmPassword")}
+                className="w-full rounded-lg border border-slate-300 py-2 pl-9 pr-3 text-sm text-slate-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+              />
+            </div>
+            {errors.confirmPassword && (
+              <p className="mt-1 text-xs text-red-500">
+                {errors.confirmPassword.message}
+              </p>
+            )}
+          </div>
+
           <button
             type="submit"
             disabled={isPending}
             className="w-full rounded-lg bg-indigo-600 py-2 text-sm font-semibold text-white transition-colors hover:bg-indigo-700 disabled:opacity-50"
           >
-            {isPending ? "Signing in..." : "Sign in"}
+            {isPending ? "Creating account..." : "Create account"}
           </button>
         </form>
 
         <div className="mt-6 text-center text-sm text-slate-500">
-          Don&apos;t have an account?{" "}
-          <Link to="/register" className="font-medium text-indigo-600 hover:text-indigo-700">
-            Create one
+          Already have an account?{" "}
+          <Link to="/login" className="font-medium text-indigo-600 hover:text-indigo-700">
+            Sign in
           </Link>
         </div>
       </div>

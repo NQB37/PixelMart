@@ -1,5 +1,7 @@
 import { RouterProvider } from "@tanstack/react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import { router } from "@/router";
 import { useAuthStore } from "@/features/auth/stores/auth.store";
 
@@ -17,6 +19,7 @@ function InnerApp() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
+      <ToastContainer position="top-right" autoClose={3000} hideProgressBar />
       <InnerApp />
     </QueryClientProvider>
   );

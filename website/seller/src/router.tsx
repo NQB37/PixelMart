@@ -7,6 +7,8 @@ import {
   redirect,
 } from "@tanstack/react-router";
 import Login from "@/pages/Login";
+import Register from "@/pages/Register";
+import RegisterShop from "@/pages/RegisterShop";
 import Forbidden from "@/pages/Forbidden";
 import Dashboard from "@/pages/Dashboard";
 import type { UserInfo } from "@/features/auth/types/auth";
@@ -15,6 +17,9 @@ interface AuthContext {
   user: UserInfo | null;
   isAuthenticated: boolean;
 }
+
+const isSeller = (user: UserInfo) =>
+  user.roles.some((r) => r === "SELLER" || r === "ADMIN");
 
 const rootRoute = createRootRouteWithContext<{ auth: AuthContext }>()({
   component: () => <Outlet />,
@@ -32,6 +37,32 @@ const loginRoute = createRoute({
   component: Login,
 });
 
+const registerRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/register",
+  beforeLoad: ({ context }) => {
+    if (context.auth.isAuthenticated && context.auth.user) {
+      throw redirect({ to: "/" });
+    }
+  },
+  component: Register,
+});
+
+const registerShopRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/register-shop",
+  beforeLoad: ({ context }) => {
+    if (!context.auth.isAuthenticated || !context.auth.user) {
+      throw redirect({ to: "/login" });
+    }
+    // Already a seller — no need to register a shop again.
+    if (isSeller(context.auth.user)) {
+      throw redirect({ to: "/" });
+    }
+  },
+  component: RegisterShop,
+});
+
 const forbiddenRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/403",
@@ -45,10 +76,10 @@ const indexRoute = createRoute({
     if (!context.auth.isAuthenticated || !context.auth.user) {
       throw redirect({ to: "/login" });
     }
-    if (
-      !context.auth.user.roles.some((r) => r === "SELLER" || r === "ADMIN")
-    ) {
-      throw redirect({ to: "/403" });
+    // Any logged-in account (e.g. a CUSTOMER from the client website) can
+    // reach the seller portal, but must register their shop first.
+    if (!isSeller(context.auth.user)) {
+      throw redirect({ to: "/register-shop" });
     }
   },
   component: Dashboard,
@@ -57,6 +88,8 @@ const indexRoute = createRoute({
 const routeTree = rootRoute.addChildren([
   indexRoute,
   loginRoute,
+  registerRoute,
+  registerShopRoute,
   forbiddenRoute,
 ]);
 

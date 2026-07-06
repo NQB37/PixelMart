@@ -3,12 +3,12 @@ import { useNavigate } from "@tanstack/react-router";
 import { authApi } from "../services/auth.service";
 import { useAuthStore } from "../stores/auth.store";
 
-export function useLogin() {
+export function useRegister() {
   const setAuth = useAuthStore((state) => state.setAuth);
   const navigate = useNavigate();
 
   return useMutation({
-    mutationFn: authApi.login,
+    mutationFn: authApi.register,
     onSuccess: (res) => {
       setAuth(res.user, res.accessToken);
       navigate({ to: "/", replace: true });

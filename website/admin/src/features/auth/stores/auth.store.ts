@@ -8,6 +8,7 @@ type AuthState = {
   isAuthenticated: boolean;
   setAuth: (user: UserInfo, accessToken: string) => void;
   clearAuth: () => void;
+  setAccessToken: (accessToken: string) => void;
 };
 
 export const useAuthStore = create<AuthState>()(
@@ -21,6 +22,7 @@ export const useAuthStore = create<AuthState>()(
         set({ user, accessToken, isAuthenticated: true }),
       clearAuth: () =>
         set({ user: null, accessToken: null, isAuthenticated: false }),
+      setAccessToken: (accessToken) => set({ accessToken }),
     }),
     {
       name: "admin-user-info",
