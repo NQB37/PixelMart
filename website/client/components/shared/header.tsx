@@ -7,7 +7,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "../ui/dropdown-menu";
+} from "@pixelmart/shared/ui";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { useAuthStore } from "@/features/auth/stores/auth.store";

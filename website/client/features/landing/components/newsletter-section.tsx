@@ -1,4 +1,4 @@
-import { PixelButton } from "@/components/shared/PixelButton";
+import { PixelButton } from "@pixelmart/shared/ui";
 
 const NewsletterSection = () => {
   return (

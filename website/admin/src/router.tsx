@@ -9,7 +9,7 @@ import {
 import Login from "@/pages/Login";
 import Forbidden from "@/pages/Forbidden";
 import Dashboard from "@/pages/Dashboard";
-import type { UserInfo } from "@/features/auth/types/auth";
+import { hasRole, type UserInfo } from "@pixelmart/shared/auth";
 
 interface AuthContext {
   user: UserInfo | null;
@@ -45,7 +45,7 @@ const indexRoute = createRoute({
     if (!context.auth.isAuthenticated || !context.auth.user) {
       throw redirect({ to: "/login" });
     }
-    if (!context.auth.user.roles.includes("ADMIN")) {
+    if (!hasRole(context.auth.user, ["ADMIN"])) {
       throw redirect({ to: "/403" });
     }
   },
