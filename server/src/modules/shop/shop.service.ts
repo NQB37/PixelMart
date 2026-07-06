@@ -1,7 +1,7 @@
-import { prisma } from "@/libs/prisma";
-import { ApiError } from "@/utils/ApiError";
-import { ROLE } from "@/generated/prisma/client";
-import { CreateShopInput } from "./shop.validation";
+import { prisma } from '@/libs/prisma';
+import { ApiError } from '@/utils/ApiError';
+import { ROLE } from '@/generated/prisma/client';
+import { CreateShopInput } from './shop.validation';
 
 class ShopService {
   public async createShop(userId: string, data: CreateShopInput) {
@@ -9,12 +9,18 @@ class ShopService {
       where: { ownerId: userId },
     });
     if (existingShop) {
-      throw ApiError.conflict("You already have a shop");
+      throw ApiError.conflict('You already have a shop');
     }
+
+    const { shopName, logoUrl, ...verification } = data;
 
     return prisma.$transaction(async (tx) => {
       const shop = await tx.shop.create({
-        data: { ...data, ownerId: userId },
+        data: { shopName, logoUrl, ownerId: userId },
+      });
+
+      await tx.shopVerification.create({
+        data: { ...verification, shopId: shop.id },
       });
 
       const sellerRole = await tx.role.upsert({
