@@ -1,5 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
+import { hasRole } from "@pixelmart/shared/auth";
 import { authApi } from "../services/auth.service";
 import { useAuthStore } from "../stores/auth.store";
 
@@ -10,7 +11,7 @@ export function useLogin() {
   return useMutation({
     mutationFn: async (data: Parameters<typeof authApi.login>[0]) => {
       const res = await authApi.login(data);
-      if (!res.user.roles.includes("ADMIN")) {
+      if (!hasRole(res.user, ["ADMIN"])) {
         throw new Error("Access denied: this account is not an admin");
       }
       return res;

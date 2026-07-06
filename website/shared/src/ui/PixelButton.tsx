@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn } from "./cn";
 import { ButtonHTMLAttributes, forwardRef } from "react";
 
 type Variant = "cyan" | "pink" | "green" | "yellow" | "ghost";

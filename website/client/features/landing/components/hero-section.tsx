@@ -1,4 +1,4 @@
-import { PixelButton } from "@/components/shared/PixelButton";
+import { PixelButton } from "@pixelmart/shared/ui";
 import Image from "next/image";
 import Link from "next/link";
 import heroImg from "@/public/images/hero-pixel.png";

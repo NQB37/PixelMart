@@ -4,10 +4,8 @@ import { LoginInput, loginSchema } from "../schemas/auth.schema";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
-import { PixelButton } from "@/components/shared/PixelButton";
 import { Gamepad2 } from "lucide-react";
-import { Form, FormField } from "@/components/ui/form";
-import { Field } from "@/components/ui/field";
+import { PixelButton, Form, FormField, Field } from "@pixelmart/shared/ui";
 import { useLogin } from "../hooks/useLogin";
 
 const LoginForm = () => {

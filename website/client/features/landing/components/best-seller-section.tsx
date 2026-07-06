@@ -1,5 +1,5 @@
 import { Product, ProductCard } from "@/components/shared/ProductCard";
-import SectionHeader from "@/components/ui/sectionHeader";
+import { SectionHeader } from "@pixelmart/shared/ui";
 
 const BestSellerSection = () => {
   const BEST: Product[] = [

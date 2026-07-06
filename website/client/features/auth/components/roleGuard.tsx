@@ -2,8 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { hasRole as checkRole, UserRole } from "@pixelmart/shared/auth";
 import { useAuthStore } from "../stores/auth.store";
-import { UserRole } from "../types/auth";
 
 type RoleGuardProps = {
   // omit to require authentication only (any logged-in user)
@@ -16,8 +16,7 @@ const RoleGuard = ({ allowedRoles, children }: RoleGuardProps) => {
   const user = useAuthStore((s) => s.user);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const hasHydrated = useAuthStore((s) => s.hasHydrated);
-  const hasRole =
-    !allowedRoles || !!user?.roles.some((role) => allowedRoles.includes(role));
+  const hasRole = !allowedRoles || checkRole(user, allowedRoles);
 
   useEffect(() => {
     if (!hasHydrated) return;

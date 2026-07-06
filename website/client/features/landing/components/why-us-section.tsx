@@ -1,4 +1,4 @@
-import SectionHeader from "@/components/ui/sectionHeader";
+import { SectionHeader } from "@pixelmart/shared/ui";
 import { Award, RefreshCw, Shield, Truck, Zap } from "lucide-react";
 import { accentBg } from "../libs/share";
 

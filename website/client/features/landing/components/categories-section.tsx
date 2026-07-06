@@ -1,4 +1,4 @@
-import SectionHeader from "@/components/ui/sectionHeader";
+import { SectionHeader } from "@pixelmart/shared/ui";
 import Link from "next/link";
 import { accentBg } from "../libs/share";
 

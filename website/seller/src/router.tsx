@@ -11,15 +11,14 @@ import Register from "@/pages/Register";
 import RegisterShop from "@/pages/RegisterShop";
 import Forbidden from "@/pages/Forbidden";
 import Dashboard from "@/pages/Dashboard";
-import type { UserInfo } from "@/features/auth/types/auth";
+import { hasRole, type UserInfo } from "@pixelmart/shared/auth";
 
 interface AuthContext {
   user: UserInfo | null;
   isAuthenticated: boolean;
 }
 
-const isSeller = (user: UserInfo) =>
-  user.roles.some((r) => r === "SELLER" || r === "ADMIN");
+const isSeller = (user: UserInfo) => hasRole(user, ["SELLER", "ADMIN"]);
 
 const rootRoute = createRootRouteWithContext<{ auth: AuthContext }>()({
   component: () => <Outlet />,

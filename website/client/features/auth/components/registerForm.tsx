@@ -1,8 +1,6 @@
 "use client";
 
-import { PixelButton } from "@/components/shared/PixelButton";
-import { Field } from "@/components/ui/field";
-import { Form, FormField } from "@/components/ui/form";
+import { PixelButton, Field, Form, FormField } from "@pixelmart/shared/ui";
 import { Gamepad2 } from "lucide-react";
 import Link from "next/link";
 import { useForm } from "react-hook-form";

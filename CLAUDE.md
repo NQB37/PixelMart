@@ -6,9 +6,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 PixelMart is a **Retro Game / 8-bit / Arcade / Cyberpunk** themed e-commerce platform with:
 
-- `website/client` — Next.js 16 App Router (Frontend)
+- `website/client` — Next.js 16 App Router (Customer-facing frontend)
+- `website/admin` — Vite + React + TanStack Router (Admin portal)
+- `website/seller` — Vite + React + TanStack Router (Seller portal)
+- `website/shared` (`@pixelmart/shared`) — code shared across the three `website/*` apps (auth store/API client/schemas, generic UI components)
 - `server` — Express.js v5 + Prisma ORM (Backend)
 - `mobile` — TBD (empty)
+
+`website/*` is a single pnpm workspace (see `website/pnpm-workspace.yaml`) — run `pnpm install` from `website/`, then `pnpm --filter <app>` or `cd website/<app>` for per-app commands.
 
 Package manager: **pnpm** (required, do not use npm or yarn).
 
@@ -56,12 +61,14 @@ pnpm prisma migrate dev --name <name>   # Create migration + regenerate client
 pnpm prisma generate  # Regenerate Prisma client only
 ```
 
-### Client (`website/client/`)
+### Client / Admin / Seller (`website/{client,admin,seller}/`)
+
+Run `pnpm install` once from `website/` (single workspace lockfile). Then, from each app's directory (or `pnpm --filter <client|admin|seller> <script>` from `website/`):
 
 ```bash
-pnpm dev              # Next.js dev server
+pnpm dev              # Dev server (Next.js for client, Vite for admin/seller)
 pnpm build            # Production build
-pnpm test             # Run vitest
+pnpm test             # Run vitest (client only)
 pnpm lint             # ESLint
 ```
 
@@ -108,11 +115,21 @@ pnpm lint             # ESLint
 - Global UI state → Zustand
 - Never store API response data in Zustand or component `useState`
 
-**Axios instance** (`lib/api.ts`): Pre-configured with `withCredentials: true`, auto-attaches `Authorization: Bearer <token>` from Zustand, implements a parallel request queue for token refresh on 401 (`isRefreshing` flag + `failedQueue` pattern). The response interceptor unwraps `response.data` automatically — callers receive the data directly, not the Axios response object.
+**Axios instance** (`lib/api.ts`): built via `createAuthApiClient()` from `@pixelmart/shared/auth` — `withCredentials: true`, auto-attaches `Authorization: Bearer <token>`, implements a parallel request queue for token refresh on 401 (`isRefreshing` flag + `failedQueue` pattern). The response interceptor unwraps `response.data` automatically — callers receive the data directly, not the Axios response object.
 
 **Routing:** Next.js App Router with route groups: `(auth)` for login/register pages, `(protected)` for authenticated routes, `(public)` for public routes.
 
-Shared components (used across features): `components/shared/`. Always use `PixelButton` from `@/components/shared/PixelButton` for action buttons.
+Shared components (used across features): `components/shared/`. Always use `PixelButton` from `@pixelmart/shared/ui` for action buttons.
+
+### `website/shared` (`@pixelmart/shared`)
+
+Code used by more than one of `client`/`admin`/`seller` lives here, not duplicated per app:
+
+- `@pixelmart/shared/auth` — `createAuthStore()` (Zustand factory, parameterized by localStorage key), `createAuthApiClient()` (axios instance + refresh-on-401 interceptor factory), `createAuthApi()` (login/register/logout/refreshToken/getMe), `loginSchema`/`registerSchema` (Zod), shared `UserRole`/`UserInfo` types, and `hasRole()` for role checks.
+- `@pixelmart/shared/ui` — generic pixel-theme UI (`PixelButton`, `SectionHeader`, `cn`, and the shadcn `Form`/`Field`/`Label`/`DropdownMenu` wrappers).
+- `@pixelmart/shared/styles/theme.css` — the pixel/retro Tailwind v4 theme tokens; `client/app/globals.css` imports it.
+
+Each app still owns anything framework-specific (Next.js route guards vs TanStack Router `beforeLoad`, per-app toast copy, per-app env var names) as a thin wrapper around the shared factories — only add to `website/shared` when a piece of logic is truly framework-agnostic and used by more than one app.
 
 ---
 
