@@ -1,26 +1,26 @@
-import { Router } from "express";
-import * as authController from "./auth.controller";
-import { validate } from "@/middlewares/validate.middleware";
-import { registerSchema, loginSchema } from "./auth.validation";
-import { loginRateLimiter } from "@/middlewares/rateLimiter.middleware";
-import { isAuth } from "@/middlewares/auth.middleware";
+import { Router } from 'express';
+import * as authController from './auth.controller';
+import { validate } from '@/middlewares/validate.middleware';
+import { registerSchema, loginSchema } from './auth.validation';
+import { loginRateLimiter } from '@/middlewares/rateLimiter.middleware';
+import { isAuth } from '@/middlewares/auth.middleware';
 
 const router = Router();
 
 router.post(
-  "/register",
+  '/register',
   loginRateLimiter,
   validate(registerSchema),
   authController.register,
 );
 router.post(
-  "/login",
+  '/login',
   loginRateLimiter,
   validate(loginSchema),
   authController.login,
 );
-router.post("/refresh", authController.refreshToken);
-router.post("/logout", authController.logout);
-router.get("/me", isAuth, authController.getMe);
+router.post('/refresh', authController.refreshToken);
+router.post('/logout', authController.logout);
+router.get('/me', isAuth, authController.getMe);
 
 export const authRoutes = router;

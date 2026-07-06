@@ -1,8 +1,8 @@
-import { asyncHandler } from "@/utils/asyncHandler";
-import { authService } from "./auth.service";
-import { clearTokenCookies, setRefreshTokenCookie } from "@/utils/cookies";
-import { ApiResponse } from "@/utils/ApiResponse";
-import { ApiError } from "@/utils/ApiError";
+import { asyncHandler } from '@/utils/asyncHandler';
+import { authService } from './auth.service';
+import { clearTokenCookies, setRefreshTokenCookie } from '@/utils/cookies';
+import { ApiResponse } from '@/utils/ApiResponse';
+import { ApiError } from '@/utils/ApiError';
 
 const register = asyncHandler(async (req, res) => {
   const result = await authService.register(req.body);
@@ -11,7 +11,7 @@ const register = asyncHandler(async (req, res) => {
 
   const response = { user: result.user, accessToken: result.accessToken };
 
-  ApiResponse.created(res, response, "User registered successfully");
+  ApiResponse.created(res, response, 'User registered successfully');
 });
 
 const login = asyncHandler(async (req, res) => {
@@ -21,13 +21,13 @@ const login = asyncHandler(async (req, res) => {
 
   const response = { user: result.user, accessToken: result.accessToken };
 
-  ApiResponse.success(res, response, "User logged in successfully");
+  ApiResponse.success(res, response, 'User logged in successfully');
 });
 
 const getMe = asyncHandler(async (req, res) => {
   const user = await authService.getMe(req.user!.userId);
 
-  ApiResponse.success(res, user, "Current user fetched successfully");
+  ApiResponse.success(res, user, 'Current user fetched successfully');
 });
 
 const logout = asyncHandler(async (req, res) => {
@@ -38,13 +38,13 @@ const logout = asyncHandler(async (req, res) => {
 
   clearTokenCookies(res);
 
-  ApiResponse.success(res, null, "User logged out successfully");
+  ApiResponse.success(res, null, 'User logged out successfully');
 });
 
 const refreshToken = asyncHandler(async (req, res) => {
   const oldRefreshToken = req.cookies.refreshToken;
   if (!oldRefreshToken) {
-    throw ApiError.unauthorized("No refresh token provided");
+    throw ApiError.unauthorized('No refresh token provided');
   }
 
   const tokens = await authService.refreshToken(oldRefreshToken);
@@ -54,7 +54,7 @@ const refreshToken = asyncHandler(async (req, res) => {
   ApiResponse.success(
     res,
     { accessToken: tokens.accessToken },
-    "Token refreshed successfully",
+    'Token refreshed successfully',
   );
 });
 
