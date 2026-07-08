@@ -1,4 +1,4 @@
-import { createAuthApi } from "@pixelmart/shared/auth";
+import { createAuthApi } from "@website/shared/auth";
 import { api } from "@/lib/api";
 import type { RegisterInput } from "../schemas/auth.schema";
 

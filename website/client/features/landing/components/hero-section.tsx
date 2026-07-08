@@ -1,4 +1,4 @@
-import { PixelButton } from "@pixelmart/shared/ui";
+import { PixelButton } from "@website/shared/ui";
 import Image from "next/image";
 import Link from "next/link";
 import heroImg from "@/public/images/hero-pixel.png";

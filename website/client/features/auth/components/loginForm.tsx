@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { Gamepad2 } from "lucide-react";
-import { PixelButton, Form, FormField, Field } from "@pixelmart/shared/ui";
+import { PixelButton, Form, FormField, Field } from "@website/shared/ui";
 import { useLogin } from "../hooks/useLogin";
 
 const LoginForm = () => {

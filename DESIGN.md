@@ -2,7 +2,11 @@
 
 > **Direction:** Trẻ trung · Tối giản · Hiện đại · Năng động.
 > **Màu chủ đạo:** Mint green (bạc hà). Toàn bộ palette xoay quanh mint, cân bằng bởi một sắc **coral** làm điểm nhấn khuyến mãi.
-> **Stack:** Tailwind CSS + shadcn/ui. Mọi token màu là **CSS variable ở dạng HSL nguyên bản** (`H S% L%`), đúng chuẩn shadcn để dùng qua `hsl(var(--token))`.
+> **Stack:** Tailwind CSS **v4** + shadcn/ui. Mọi token màu là CSS variable ở dạng **OKLCH** (một _màu hoàn chỉnh_ `oklch(L C H)`, không phải triplet kênh HSL) — dùng trực tiếp qua `var(--token)`, **không** bọc `hsl()`.
+>
+> **Nguồn chuẩn (source of truth):** [`website/shared/src/styles/theme.css`](website/shared/src/styles/theme.css). Tài liệu này phản chiếu đúng các giá trị trong file đó — sửa token thì sửa cả hai.
+
+**Vì sao OKLCH thay vì HSL?** Đồng đều về mặt thị giác (đổi `L` là đổi độ sáng cảm nhận thật, không lệch như HSL), gamut rộng hơn cho mint tươi, và ở Tailwind v4 modifier opacity (`bg-primary/90`) vẫn chạy qua `color-mix()` dù giá trị là `oklch()`.
 
 ---
 
@@ -11,109 +15,106 @@
 | Nguyên tắc | Áp dụng |
 |---|---|
 | **Mint làm neo thương hiệu, 2 vai trò** | `primary` = mint đậm (jade) đủ tương phản để chữ trắng đạt WCAG AA; nền/`secondary`/`accent` = mint pastel nhạt. Cảm giác tổng thể luôn "minty" nhưng nút bấm vẫn đọc được. |
-| **Một điểm nhấn duy nhất: Coral** | Mint (~160°) và coral (~11°) gần bù nhau trên vòng màu → tương phản tươi, trẻ. Chỉ dùng cho **Sale badge / Banner ưu đãi**, không lạm dụng. |
+| **Một điểm nhấn duy nhất: Coral** | Mint (H≈162) và coral (H≈35) gần bù nhau trên vòng màu → tương phản tươi, trẻ. Chỉ dùng cho **Sale badge / Banner ưu đãi**, không lạm dụng. |
 | **Tối giản = kỷ luật khoảng trắng** | Ưu tiên spacing & typography chuẩn xác hơn là hiệu ứng. Bo góc mềm (`--radius: 0.75rem`), viền mảnh, đổ bóng nhẹ. |
 
 ---
 
-## 1. Theme Tokens (chuẩn shadcn/ui)
+## 1. Theme Tokens (chuẩn shadcn/ui, OKLCH)
 
-Bảng so sánh trực tiếp **Light (`:root`)** ↔ **Dark (`.dark`)**. Giá trị ở dạng HSL nguyên bản.
+Bảng so sánh trực tiếp **Light (`:root`)** ↔ **Dark (`.dark`)**. Giá trị ở dạng `oklch(L C H)`.
 
 | Token | Light `:root` | Dark `.dark` | Vai trò |
 |---|---|---|---|
-| `--background` | `150 30% 99%` | `170 28% 8%` | Nền trang (ám mint rất nhẹ) |
-| `--foreground` | `165 28% 12%` | `150 24% 96%` | Chữ chính |
-| `--card` | `0 0% 100%` | `170 24% 11%` | Nền product card / panel |
-| `--card-foreground` | `165 28% 12%` | `150 24% 96%` | Chữ trên card |
-| `--popover` | `0 0% 100%` | `170 26% 10%` | Dropdown, tooltip, combobox |
-| `--popover-foreground` | `165 28% 12%` | `150 24% 96%` | Chữ trong popover |
-| `--primary` | `161 84% 28%` | `156 70% 52%` | **Mint thương hiệu** — nút chính, link, active |
-| `--primary-foreground` | `150 40% 98%` | `165 65% 8%` | Chữ/icon trên nền primary |
-| `--secondary` | `156 44% 94%` | `168 18% 18%` | Nút phụ, chip, nền mint nhạt |
-| `--secondary-foreground` | `163 40% 22%` | `150 20% 92%` | Chữ trên secondary |
-| `--muted` | `160 24% 96%` | `170 16% 16%` | Nền phụ, skeleton, hàng ngăn cách |
-| `--muted-foreground` | `165 12% 42%` | `158 14% 62%` | Chữ phụ, caption, placeholder |
-| `--accent` | `157 55% 90%` | `166 24% 20%` | Hover ghost/menu, nền nhấn nhẹ |
-| `--accent-foreground` | `163 45% 20%` | `150 24% 96%` | Chữ trên accent |
-| `--destructive` | `0 84% 60%` | `0 72% 57%` | Xóa, lỗi, cảnh báo |
-| `--destructive-foreground` | `0 0% 100%` | `0 0% 100%` | Chữ trên destructive |
-| `--border` | `156 22% 90%` | `168 16% 20%` | Viền card, divider |
-| `--input` | `156 22% 90%` | `168 16% 22%` | Viền field |
-| `--ring` | `160 84% 33%` | `156 70% 52%` | Focus ring (mint) |
+| `--background` | `oklch(0.99 0.006 165)` | `oklch(0.19 0.02 175)` | Nền trang (ám mint rất nhẹ) |
+| `--foreground` | `oklch(0.25 0.02 170)` | `oklch(0.96 0.01 165)` | Chữ chính |
+| `--card` | `oklch(1 0 0)` | `oklch(0.22 0.02 173)` | Nền product card / panel |
+| `--card-foreground` | `oklch(0.25 0.02 170)` | `oklch(0.96 0.01 165)` | Chữ trên card |
+| `--popover` | `oklch(1 0 0)` | `oklch(0.21 0.02 173)` | Dropdown, tooltip, combobox |
+| `--popover-foreground` | `oklch(0.25 0.02 170)` | `oklch(0.96 0.01 165)` | Chữ trong popover |
+| `--primary` | `oklch(0.54 0.12 162)` | `oklch(0.78 0.15 165)` | **Mint thương hiệu** — nút chính, link, active |
+| `--primary-foreground` | `oklch(0.99 0.01 160)` | `oklch(0.22 0.05 170)` | Chữ/icon trên nền primary |
+| `--secondary` | `oklch(0.95 0.035 165)` | `oklch(0.28 0.025 172)` | Nút phụ, chip, nền mint nhạt |
+| `--secondary-foreground` | `oklch(0.4 0.06 165)` | `oklch(0.93 0.015 165)` | Chữ trên secondary |
+| `--muted` | `oklch(0.97 0.012 165)` | `oklch(0.26 0.02 172)` | Nền phụ, skeleton, hàng ngăn cách |
+| `--muted-foreground` | `oklch(0.55 0.02 170)` | `oklch(0.7 0.025 168)` | Chữ phụ, caption, placeholder |
+| `--accent` | `oklch(0.93 0.05 160)` | `oklch(0.3 0.03 170)` | Hover ghost/menu, nền nhấn nhẹ |
+| `--accent-foreground` | `oklch(0.4 0.06 165)` | `oklch(0.96 0.01 165)` | Chữ trên accent |
+| `--destructive` | `oklch(0.6 0.22 25)` | `oklch(0.62 0.2 25)` | Xóa, lỗi, cảnh báo |
+| `--destructive-foreground` | `oklch(0.99 0 0)` | `oklch(0.99 0 0)` | Chữ trên destructive |
+| `--border` | `oklch(0.92 0.015 165)` | `oklch(0.3 0.02 172)` | Viền card, divider |
+| `--input` | `oklch(0.92 0.015 165)` | `oklch(0.32 0.02 172)` | Viền field |
+| `--ring` | `oklch(0.54 0.12 162)` | `oklch(0.78 0.15 165)` | Focus ring (mint) |
 | `--radius` | `0.75rem` | `0.75rem` | Bán kính bo góc gốc |
 
 ### Token mở rộng (ngoài shadcn) — điểm nhấn thương mại
 
 | Token | Light `:root` | Dark `.dark` | Vai trò |
 |---|---|---|---|
-| `--highlight` | `11 82% 54%` | `12 84% 63%` | **Coral** — Sale badge, giá giảm, nhãn "HOT" |
-| `--highlight-foreground` | `0 0% 100%` | `15 50% 12%` | Chữ trên coral (in đậm) |
-| `--success` | `142 71% 40%` | `142 65% 52%` | "Còn hàng", đặt hàng thành công |
-| `--warning` | `38 92% 50%` | `38 90% 58%` | "Sắp hết hàng", chờ xử lý |
+| `--highlight` | `oklch(0.66 0.18 35)` | `oklch(0.7 0.16 38)` | **Coral** — Sale badge, giá giảm, nhãn "HOT" |
+| `--highlight-foreground` | `oklch(0.99 0 0)` | `oklch(0.22 0.04 40)` | Chữ trên coral (in đậm) |
+| `--success` | `oklch(0.62 0.15 155)` | `oklch(0.72 0.15 155)` | "Còn hàng", đặt hàng thành công |
+| `--warning` | `oklch(0.78 0.15 80)` | `oklch(0.8 0.15 82)` | "Sắp hết hàng", chờ xử lý |
 
-> **Ghi chú tương phản:** `primary` sáng ~4.7:1 với chữ trắng (đạt AA cho text thường). `highlight` (coral) ~4:1 — **luôn dùng chữ trắng in đậm** cho badge. Đừng dùng mint pastel làm nền cho chữ trắng.
+> **Ghi chú tương phản:** `primary` light (L≈0.54) đạt ≈4.5:1 với chữ trắng (AA cho text thường). `highlight` (coral) ≈4:1 — **luôn dùng chữ trắng in đậm** cho badge. Đừng dùng mint pastel (`secondary`/`accent`) làm nền cho chữ trắng.
 
-### CSS đầy đủ (dán vào `app/globals.css`)
+### CSS token — trích từ `website/shared/src/styles/theme.css`
 
 ```css
-@layer base {
-  :root {
-    --background: 150 30% 99%;
-    --foreground: 165 28% 12%;
-    --card: 0 0% 100%;
-    --card-foreground: 165 28% 12%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 165 28% 12%;
-    --primary: 161 84% 28%;
-    --primary-foreground: 150 40% 98%;
-    --secondary: 156 44% 94%;
-    --secondary-foreground: 163 40% 22%;
-    --muted: 160 24% 96%;
-    --muted-foreground: 165 12% 42%;
-    --accent: 157 55% 90%;
-    --accent-foreground: 163 45% 20%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 156 22% 90%;
-    --input: 156 22% 90%;
-    --ring: 160 84% 33%;
-    --radius: 0.75rem;
+:root {
+  --radius: 0.75rem;
+  --background: oklch(0.99 0.006 165);
+  --foreground: oklch(0.25 0.02 170);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.25 0.02 170);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.25 0.02 170);
+  --primary: oklch(0.54 0.12 162); /* deep mint — AA on white */
+  --primary-foreground: oklch(0.99 0.01 160);
+  --secondary: oklch(0.95 0.035 165);
+  --secondary-foreground: oklch(0.4 0.06 165);
+  --muted: oklch(0.97 0.012 165);
+  --muted-foreground: oklch(0.55 0.02 170);
+  --accent: oklch(0.93 0.05 160);
+  --accent-foreground: oklch(0.4 0.06 165);
+  --destructive: oklch(0.6 0.22 25);
+  --destructive-foreground: oklch(0.99 0 0);
+  --border: oklch(0.92 0.015 165);
+  --input: oklch(0.92 0.015 165);
+  --ring: oklch(0.54 0.12 162);
 
-    /* extended */
-    --highlight: 11 82% 54%;
-    --highlight-foreground: 0 0% 100%;
-    --success: 142 71% 40%;
-    --warning: 38 92% 50%;
-  }
+  /* commerce accents */
+  --highlight: oklch(0.66 0.18 35); /* coral */
+  --highlight-foreground: oklch(0.99 0 0);
+  --success: oklch(0.62 0.15 155);
+  --warning: oklch(0.78 0.15 80);
+}
 
-  .dark {
-    --background: 170 28% 8%;
-    --foreground: 150 24% 96%;
-    --card: 170 24% 11%;
-    --card-foreground: 150 24% 96%;
-    --popover: 170 26% 10%;
-    --popover-foreground: 150 24% 96%;
-    --primary: 156 70% 52%;
-    --primary-foreground: 165 65% 8%;
-    --secondary: 168 18% 18%;
-    --secondary-foreground: 150 20% 92%;
-    --muted: 170 16% 16%;
-    --muted-foreground: 158 14% 62%;
-    --accent: 166 24% 20%;
-    --accent-foreground: 150 24% 96%;
-    --destructive: 0 72% 57%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 168 16% 20%;
-    --input: 168 16% 22%;
-    --ring: 156 70% 52%;
+.dark {
+  --background: oklch(0.19 0.02 175);
+  --foreground: oklch(0.96 0.01 165);
+  --card: oklch(0.22 0.02 173);
+  --card-foreground: oklch(0.96 0.01 165);
+  --popover: oklch(0.21 0.02 173);
+  --popover-foreground: oklch(0.96 0.01 165);
+  --primary: oklch(0.78 0.15 165); /* bright mint on dark */
+  --primary-foreground: oklch(0.22 0.05 170);
+  --secondary: oklch(0.28 0.025 172);
+  --secondary-foreground: oklch(0.93 0.015 165);
+  --muted: oklch(0.26 0.02 172);
+  --muted-foreground: oklch(0.7 0.025 168);
+  --accent: oklch(0.3 0.03 170);
+  --accent-foreground: oklch(0.96 0.01 165);
+  --destructive: oklch(0.62 0.2 25);
+  --destructive-foreground: oklch(0.99 0 0);
+  --border: oklch(0.3 0.02 172);
+  --input: oklch(0.32 0.02 172);
+  --ring: oklch(0.78 0.15 165);
 
-    /* extended */
-    --highlight: 12 84% 63%;
-    --highlight-foreground: 15 50% 12%;
-    --success: 142 65% 52%;
-    --warning: 38 90% 58%;
-  }
+  --highlight: oklch(0.7 0.16 38);
+  --highlight-foreground: oklch(0.22 0.04 40);
+  --success: oklch(0.72 0.15 155);
+  --warning: oklch(0.8 0.15 82);
 }
 ```
 
@@ -121,7 +122,7 @@ Bảng so sánh trực tiếp **Light (`:root`)** ↔ **Dark (`.dark`)**. Giá t
 
 ## 2. Gradients (dải màu trẻ trung)
 
-Dùng hoàn toàn class Tailwind. `from-primary` / `to-highlight`… hoạt động được vì các token đã map thành màu trong config (mục 7). `via-*` / `to-*` dùng thang màu Tailwind gần với mint (emerald / teal) để chuyển mượt.
+Dùng hoàn toàn class Tailwind. `from-primary` / `to-highlight`… hoạt động được vì các token đã map thành màu trong `@theme inline` (mục 6). `via-*` / `to-*` dùng thang màu Tailwind gần với mint (emerald / teal) để chuyển mượt.
 
 | # | Tên | Class Tailwind | Dùng cho |
 |---|---|---|---|
@@ -161,17 +162,17 @@ Dùng hoàn toàn class Tailwind. `from-primary` / `to-highlight`… hoạt đ�
 |---|---|---|
 | Display (heading, giá, nút) | **Plus Jakarta Sans** | Geometric bo tròn → trẻ trung, thân thiện; hợp tông mint. Dùng weight 600–800, tiết chế. |
 | Body (mô tả, form, meta) | **Inter** | Trung tính, dễ đọc ở size nhỏ, hỗ trợ số tốt. |
-| Numeric/Mono *(tùy chọn)* | **Geist Mono** | Cho giá tiền / SKU / mã đơn — bật `tabular-nums` để số thẳng cột. |
+| Numeric *(tùy chọn)* | **Geist Mono** | Cho giá tiền / SKU / mã đơn — hoặc dùng Inter + `tabular-nums` để số thẳng cột. |
+
+Font được nạp qua Google Fonts `@import` ở đầu mỗi entry CSS (`client/app/globals.css`, `admin|seller/src/index.css`); token font khai báo trong `@theme inline` của `theme.css`:
 
 ```css
-/* globals.css — sau khi import font (next/font hoặc @fontsource) */
-:root {
-  --font-display: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
-  --font-body: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "Geist Mono", ui-monospace, monospace;
-}
-body { font-family: var(--font-body); }
+/* trong @theme inline (theme.css) */
+--font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+--font-display: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
 ```
+
+`h1–h6` mặc định dùng `font-display`; body dùng `font-sans`.
 
 **Bảng font scale → thành phần e-commerce:**
 
@@ -208,16 +209,6 @@ Biến gốc `--radius: 0.75rem` (12px) → mềm mại, trẻ trung. Các cấp
 | `rounded-lg` | `var(--radius)` = 12px | **Product card**, panel, dialog |
 | `rounded-xl` | `calc(var(--radius) + 4px)` = 16px | Banner, hero, modal lớn |
 | `rounded-full` | `9999px` | Avatar, icon button, pill filter |
-
-```js
-// tailwind.config.js → theme.extend.borderRadius
-borderRadius: {
-  xl: "calc(var(--radius) + 4px)",
-  lg: "var(--radius)",
-  md: "calc(var(--radius) - 2px)",
-  sm: "calc(var(--radius) - 4px)",
-}
-```
 
 ---
 
@@ -262,7 +253,50 @@ import { ShoppingCart } from "lucide-react";
 
 ## 6. Cấu hình Tailwind + shadcn/ui
 
-### 6a. Tailwind v3 — `tailwind.config.js` (như yêu cầu)
+### 6a. Tailwind v4 (dự án dùng cái này) — `@theme inline` trong `theme.css`
+
+Vì token là `oklch()` hoàn chỉnh, map **thẳng** `var(--x)` — **không** bọc `hsl()`. Trích từ `website/shared/src/styles/theme.css`:
+
+```css
+@import "tailwindcss";
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-highlight: var(--highlight);
+  --color-highlight-foreground: var(--highlight-foreground);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+}
+```
+
+Opacity modifier (`bg-primary/90`, `text-highlight/70`) chạy được vì Tailwind v4 dùng `color-mix()` — không cần tách kênh như HSL.
+
+### 6b. Nếu dùng Tailwind v3 — `tailwind.config.js`
+
+Với OKLCH hoàn chỉnh, map `var(--x)` trực tiếp:
 
 ```js
 /** @type {import('tailwindcss').Config} */
@@ -272,21 +306,20 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        background: "hsl(var(--background))",
-        foreground: "hsl(var(--foreground))",
-        card: { DEFAULT: "hsl(var(--card))", foreground: "hsl(var(--card-foreground))" },
-        popover: { DEFAULT: "hsl(var(--popover))", foreground: "hsl(var(--popover-foreground))" },
-        primary: { DEFAULT: "hsl(var(--primary))", foreground: "hsl(var(--primary-foreground))" },
-        secondary: { DEFAULT: "hsl(var(--secondary))", foreground: "hsl(var(--secondary-foreground))" },
-        muted: { DEFAULT: "hsl(var(--muted))", foreground: "hsl(var(--muted-foreground))" },
-        accent: { DEFAULT: "hsl(var(--accent))", foreground: "hsl(var(--accent-foreground))" },
-        destructive: { DEFAULT: "hsl(var(--destructive))", foreground: "hsl(var(--destructive-foreground))" },
-        highlight: { DEFAULT: "hsl(var(--highlight))", foreground: "hsl(var(--highlight-foreground))" },
-        success: "hsl(var(--success))",
-        warning: "hsl(var(--warning))",
-        border: "hsl(var(--border))",
-        input: "hsl(var(--input))",
-        ring: "hsl(var(--ring))",
+        background: "var(--background)",
+        foreground: "var(--foreground)",
+        card: { DEFAULT: "var(--card)", foreground: "var(--card-foreground)" },
+        primary: { DEFAULT: "var(--primary)", foreground: "var(--primary-foreground)" },
+        secondary: { DEFAULT: "var(--secondary)", foreground: "var(--secondary-foreground)" },
+        muted: { DEFAULT: "var(--muted)", foreground: "var(--muted-foreground)" },
+        accent: { DEFAULT: "var(--accent)", foreground: "var(--accent-foreground)" },
+        destructive: { DEFAULT: "var(--destructive)", foreground: "var(--destructive-foreground)" },
+        highlight: { DEFAULT: "var(--highlight)", foreground: "var(--highlight-foreground)" },
+        success: "var(--success)",
+        warning: "var(--warning)",
+        border: "var(--border)",
+        input: "var(--input)",
+        ring: "var(--ring)",
       },
       borderRadius: {
         xl: "calc(var(--radius) + 4px)",
@@ -294,50 +327,12 @@ module.exports = {
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
-      fontFamily: {
-        display: ["var(--font-display)"],
-        sans: ["var(--font-body)"],
-        mono: ["var(--font-mono)"],
-      },
     },
   },
-  plugins: [require("tailwindcss-animate")],
 };
 ```
 
-### 6b. Tailwind v4 (project này dùng v4) — `@theme inline` trong `globals.css`
-
-> PixelMart dùng Tailwind v4, không có `tailwind.config.js`. Giữ nguyên block `:root`/`.dark` ở mục 1, và khai báo mapping bằng `@theme inline`:
-
-```css
-@import "tailwindcss";
-@custom-variant dark (&:is(.dark *));
-
-@theme inline {
-  --color-background: hsl(var(--background));
-  --color-foreground: hsl(var(--foreground));
-  --color-primary: hsl(var(--primary));
-  --color-primary-foreground: hsl(var(--primary-foreground));
-  --color-secondary: hsl(var(--secondary));
-  --color-secondary-foreground: hsl(var(--secondary-foreground));
-  --color-muted: hsl(var(--muted));
-  --color-muted-foreground: hsl(var(--muted-foreground));
-  --color-accent: hsl(var(--accent));
-  --color-accent-foreground: hsl(var(--accent-foreground));
-  --color-destructive: hsl(var(--destructive));
-  --color-highlight: hsl(var(--highlight));
-  --color-highlight-foreground: hsl(var(--highlight-foreground));
-  --color-border: hsl(var(--border));
-  --color-input: hsl(var(--input));
-  --color-ring: hsl(var(--ring));
-  --radius-xl: calc(var(--radius) + 4px);
-  --radius-lg: var(--radius);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-sm: calc(var(--radius) - 4px);
-  --font-display: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-}
-```
+> **Lưu ý v3:** khi color là `oklch()` hoàn chỉnh (không phải channel triplet), modifier opacity `bg-primary/90` **không** tự chạy trên Tailwind v3 — cần `color-mix()` thủ công hoặc tách kênh. Dự án đang ở v4 nên không vướng.
 
 ---
 

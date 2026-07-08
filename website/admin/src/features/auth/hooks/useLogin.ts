@@ -1,6 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { hasRole } from "@pixelmart/shared/auth";
+import { hasRole } from "@website/shared/auth";
 import { authApi } from "../services/auth.service";
 import { useAuthStore } from "../stores/auth.store";
 

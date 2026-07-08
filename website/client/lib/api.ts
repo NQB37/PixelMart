@@ -1,4 +1,4 @@
-import { createAuthApiClient } from "@pixelmart/shared/auth";
+import { createAuthApiClient } from "@website/shared/auth";
 import { useAuthStore } from "@/features/auth/stores/auth.store";
 import { toast } from "react-toastify";
 import { authApi } from "@/features/auth/services/auth.service";

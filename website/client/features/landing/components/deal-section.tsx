@@ -1,5 +1,5 @@
 import { Product, ProductCard } from "@/components/shared/ProductCard";
-import { SectionHeader } from "@pixelmart/shared/ui";
+import { SectionHeader } from "@website/shared/ui";
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 

@@ -11,15 +11,15 @@ importers:
       '@hookform/resolvers':
         specifier: ^5.4.0
         version: 5.4.0(react-hook-form@7.81.0(react@19.2.7))
-      '@pixelmart/shared':
-        specifier: workspace:*
-        version: link:../shared
       '@tanstack/react-query':
         specifier: ^5.101.2
         version: 5.101.2(react@19.2.7)
       '@tanstack/react-router':
         specifier: ^1.170.17
         version: 1.170.17(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      '@website/shared':
+        specifier: workspace:*
+        version: link:../shared
       axios:
         specifier: ^1.18.1
         version: 1.18.1
@@ -93,9 +93,6 @@ importers:
       '@hookform/resolvers':
         specifier: ^5.4.0
         version: 5.4.0(react-hook-form@7.81.0(react@19.2.7))
-      '@pixelmart/shared':
-        specifier: workspace:*
-        version: link:../shared
       '@radix-ui/react-dropdown-menu':
         specifier: ^2.1.18
         version: 2.1.19(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
@@ -111,6 +108,9 @@ importers:
       '@tanstack/react-query-devtools':
         specifier: ^5.101.1
         version: 5.101.2(@tanstack/react-query@5.101.2(react@19.2.7))(react@19.2.7)
+      '@website/shared':
+        specifier: workspace:*
+        version: link:../shared
       axios:
         specifier: ^1.17.0
         version: 1.18.1
@@ -223,15 +223,15 @@ importers:
       '@hookform/resolvers':
         specifier: ^5.4.0
         version: 5.4.0(react-hook-form@7.81.0(react@19.2.7))
-      '@pixelmart/shared':
-        specifier: workspace:*
-        version: link:../shared
       '@tanstack/react-query':
         specifier: ^5.101.2
         version: 5.101.2(react@19.2.7)
       '@tanstack/react-router':
         specifier: ^1.170.17
         version: 1.170.17(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      '@website/shared':
+        specifier: workspace:*
+        version: link:../shared
       axios:
         specifier: ^1.18.1
         version: 1.18.1

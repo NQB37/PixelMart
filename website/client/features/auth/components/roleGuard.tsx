@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { hasRole as checkRole, UserRole } from "@pixelmart/shared/auth";
+import { hasRole as checkRole, UserRole } from "@website/shared/auth";
 import { useAuthStore } from "../stores/auth.store";
 
 type RoleGuardProps = {

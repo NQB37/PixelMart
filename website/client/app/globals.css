@@ -2,4 +2,4 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
-@import "@pixelmart/shared/styles/theme.css";
+@import "@website/shared/styles/theme.css";

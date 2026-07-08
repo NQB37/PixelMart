@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  transpilePackages: ["@pixelmart/shared"],
+  transpilePackages: ["@website/shared"],
 };
 
 export default nextConfig;

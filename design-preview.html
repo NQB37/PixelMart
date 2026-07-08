@@ -1,0 +1,621 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Mint Fresh — Token Preview</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap");
+
+      /* ── Tokens: mirrors website/shared/src/styles/theme.css ── */
+      :root {
+        --radius: 0.75rem;
+        --background: oklch(0.99 0.006 165);
+        --foreground: oklch(0.25 0.02 170);
+        --card: oklch(1 0 0);
+        --card-foreground: oklch(0.25 0.02 170);
+        --popover: oklch(1 0 0);
+        --popover-foreground: oklch(0.25 0.02 170);
+        --primary: oklch(0.54 0.12 162);
+        --primary-foreground: oklch(0.99 0.01 160);
+        --secondary: oklch(0.95 0.035 165);
+        --secondary-foreground: oklch(0.4 0.06 165);
+        --muted: oklch(0.97 0.012 165);
+        --muted-foreground: oklch(0.55 0.02 170);
+        --accent: oklch(0.93 0.05 160);
+        --accent-foreground: oklch(0.4 0.06 165);
+        --destructive: oklch(0.6 0.22 25);
+        --destructive-foreground: oklch(0.99 0 0);
+        --border: oklch(0.92 0.015 165);
+        --input: oklch(0.92 0.015 165);
+        --ring: oklch(0.54 0.12 162);
+        --highlight: oklch(0.66 0.18 35);
+        --highlight-foreground: oklch(0.99 0 0);
+        --success: oklch(0.62 0.15 155);
+        --warning: oklch(0.78 0.15 80);
+        --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+        --font-display: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+      }
+
+      .dark {
+        --background: oklch(0.19 0.02 175);
+        --foreground: oklch(0.96 0.01 165);
+        --card: oklch(0.22 0.02 173);
+        --card-foreground: oklch(0.96 0.01 165);
+        --popover: oklch(0.21 0.02 173);
+        --popover-foreground: oklch(0.96 0.01 165);
+        --primary: oklch(0.78 0.15 165);
+        --primary-foreground: oklch(0.22 0.05 170);
+        --secondary: oklch(0.28 0.025 172);
+        --secondary-foreground: oklch(0.93 0.015 165);
+        --muted: oklch(0.26 0.02 172);
+        --muted-foreground: oklch(0.7 0.025 168);
+        --accent: oklch(0.3 0.03 170);
+        --accent-foreground: oklch(0.96 0.01 165);
+        --destructive: oklch(0.62 0.2 25);
+        --destructive-foreground: oklch(0.99 0 0);
+        --border: oklch(0.3 0.02 172);
+        --input: oklch(0.32 0.02 172);
+        --ring: oklch(0.78 0.15 165);
+        --highlight: oklch(0.7 0.16 38);
+        --highlight-foreground: oklch(0.22 0.04 40);
+        --success: oklch(0.72 0.15 155);
+        --warning: oklch(0.8 0.15 82);
+      }
+
+      /* ── Page chrome (uses the tokens themselves) ── */
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--background);
+        color: var(--foreground);
+        font-family: var(--font-sans);
+        line-height: 1.5;
+        -webkit-font-smoothing: antialiased;
+      }
+      h1,
+      h2,
+      h3 {
+        font-family: var(--font-display);
+        letter-spacing: -0.01em;
+        line-height: 1.2;
+        margin: 0;
+      }
+      .wrap {
+        max-width: 1120px;
+        margin: 0 auto;
+        padding: 2rem 1.25rem 5rem;
+      }
+      header.top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-bottom: 0.5rem;
+      }
+      .sub {
+        color: var(--muted-foreground);
+        font-size: 0.9rem;
+        margin: 0.35rem 0 2.5rem;
+      }
+      .sub code {
+        font-family: ui-monospace, monospace;
+        background: var(--muted);
+        padding: 0.1em 0.4em;
+        border-radius: calc(var(--radius) - 4px);
+      }
+      section {
+        margin-top: 2.75rem;
+      }
+      .eyebrow {
+        font-family: var(--font-display);
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--primary);
+      }
+      section > h2 {
+        font-size: 1.4rem;
+        font-weight: 700;
+        margin: 0.25rem 0 1.1rem;
+      }
+
+      /* toggle */
+      .toggle {
+        font-family: var(--font-display);
+        font-weight: 600;
+        font-size: 0.85rem;
+        color: var(--primary-foreground);
+        background: var(--primary);
+        border: none;
+        border-radius: calc(var(--radius) - 2px);
+        padding: 0.6rem 1rem;
+        cursor: pointer;
+        transition: opacity 0.15s ease;
+      }
+      .toggle:hover {
+        opacity: 0.9;
+      }
+
+      /* swatches */
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(178px, 1fr));
+        gap: 0.85rem;
+      }
+      .swatch {
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        overflow: hidden;
+        background: var(--card);
+      }
+      .swatch .chip {
+        height: 66px;
+        border-bottom: 1px solid var(--border);
+      }
+      .swatch .meta {
+        padding: 0.55rem 0.7rem 0.7rem;
+      }
+      .swatch .name {
+        font-weight: 600;
+        font-size: 0.82rem;
+      }
+      .swatch .val {
+        font-family: ui-monospace, monospace;
+        font-size: 0.68rem;
+        color: var(--muted-foreground);
+        margin-top: 0.15rem;
+        word-break: break-all;
+      }
+
+      /* contrast pairs */
+      .pairs {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 0.85rem;
+      }
+      .pair {
+        border-radius: var(--radius);
+        padding: 1rem;
+        border: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+        min-height: 92px;
+        justify-content: center;
+      }
+      .pair .lg {
+        font-family: var(--font-display);
+        font-weight: 700;
+        font-size: 1.05rem;
+      }
+      .pair .sm {
+        font-size: 0.78rem;
+        opacity: 0.85;
+      }
+
+      /* gradients */
+      .gradients {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 0.85rem;
+      }
+      .grad {
+        border-radius: var(--radius);
+        padding: 1.4rem 1.25rem;
+        color: #fff;
+        min-height: 108px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        font-weight: 600;
+      }
+      .grad .tag {
+        font-family: ui-monospace, monospace;
+        font-size: 0.68rem;
+        font-weight: 500;
+        opacity: 0.92;
+      }
+      .g1 {
+        background: linear-gradient(
+          to bottom right,
+          var(--primary),
+          #34d399 55%,
+          #5eead4
+        );
+      }
+      .g2 {
+        background: linear-gradient(to right, var(--highlight), #fb7185);
+      }
+      .g3 {
+        background: linear-gradient(to right, var(--primary), #10b981);
+      }
+
+      /* typography scale */
+      .type-row {
+        display: flex;
+        align-items: baseline;
+        gap: 1rem;
+        padding: 0.5rem 0;
+        border-bottom: 1px dashed var(--border);
+      }
+      .type-row .lbl {
+        font-family: ui-monospace, monospace;
+        font-size: 0.72rem;
+        color: var(--muted-foreground);
+        width: 78px;
+        flex: none;
+      }
+      .type-row .txt {
+        font-family: var(--font-display);
+        font-weight: 700;
+        color: var(--foreground);
+      }
+
+      /* components */
+      .row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        align-items: center;
+      }
+      .btn {
+        font-family: var(--font-display);
+        font-weight: 600;
+        font-size: 0.875rem;
+        border: 1px solid transparent;
+        border-radius: calc(var(--radius) - 2px);
+        padding: 0.62rem 1.25rem;
+        cursor: pointer;
+        transition: opacity 0.15s ease;
+      }
+      .btn:hover {
+        opacity: 0.9;
+      }
+      .btn:focus-visible {
+        outline: none;
+        box-shadow:
+          0 0 0 2px var(--background),
+          0 0 0 4px var(--ring);
+      }
+      .btn.primary {
+        background: var(--primary);
+        color: var(--primary-foreground);
+      }
+      .btn.coral {
+        background: var(--highlight);
+        color: var(--highlight-foreground);
+      }
+      .btn.success {
+        background: var(--success);
+        color: #fff;
+      }
+      .btn.warning {
+        background: var(--warning);
+        color: var(--foreground);
+      }
+      .btn.ghost {
+        background: transparent;
+        color: var(--primary);
+        border-color: var(--border);
+      }
+      .btn.ghost:hover {
+        background: var(--accent);
+        opacity: 1;
+      }
+
+      .card {
+        width: 240px;
+        background: var(--card);
+        color: var(--card-foreground);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        overflow: hidden;
+      }
+      .card .img {
+        position: relative;
+        aspect-ratio: 1;
+        background: linear-gradient(135deg, var(--secondary), var(--accent));
+      }
+      .card .badge {
+        position: absolute;
+        top: 0.55rem;
+        left: 0.55rem;
+        background: var(--highlight);
+        color: var(--highlight-foreground);
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        border-radius: calc(var(--radius) - 4px);
+        padding: 0.15rem 0.45rem;
+      }
+      .card .body {
+        padding: 0.85rem;
+      }
+      .card .title {
+        font-family: var(--font-display);
+        font-weight: 600;
+        font-size: 1rem;
+      }
+      .card .cat {
+        color: var(--muted-foreground);
+        font-size: 0.8rem;
+        margin: 0.1rem 0 0.55rem;
+      }
+      .card .price {
+        font-family: var(--font-display);
+        font-weight: 800;
+        color: var(--primary);
+        font-variant-numeric: tabular-nums;
+        font-size: 1.2rem;
+      }
+      .card .old {
+        color: var(--muted-foreground);
+        text-decoration: line-through;
+        font-size: 0.82rem;
+        margin-left: 0.4rem;
+        font-variant-numeric: tabular-nums;
+      }
+      .card .add {
+        width: 100%;
+        margin-top: 0.7rem;
+      }
+
+      .radii {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+      }
+      .radii .box {
+        width: 84px;
+        height: 84px;
+        background: var(--secondary);
+        border: 1px solid var(--border);
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        padding-bottom: 0.35rem;
+        font-family: ui-monospace, monospace;
+        font-size: 0.68rem;
+        color: var(--secondary-foreground);
+      }
+      .r-sm {
+        border-radius: calc(var(--radius) - 4px);
+      }
+      .r-md {
+        border-radius: calc(var(--radius) - 2px);
+      }
+      .r-lg {
+        border-radius: var(--radius);
+      }
+      .r-xl {
+        border-radius: calc(var(--radius) + 4px);
+      }
+      .r-full {
+        border-radius: 9999px;
+      }
+
+      input.field {
+        font-family: var(--font-sans);
+        font-size: 0.9rem;
+        color: var(--foreground);
+        background: var(--card);
+        border: 1px solid var(--input);
+        border-radius: calc(var(--radius) - 2px);
+        padding: 0.6rem 0.8rem;
+        width: 260px;
+      }
+      input.field::placeholder {
+        color: var(--muted-foreground);
+      }
+      input.field:focus-visible {
+        outline: none;
+        border-color: var(--ring);
+        box-shadow: 0 0 0 3px color-mix(in oklch, var(--ring) 30%, transparent);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header class="top">
+        <div>
+          <h1>Mint Fresh — Token Preview</h1>
+        </div>
+        <button class="toggle" id="toggle">◑ Light / Dark</button>
+      </header>
+      <p class="sub">
+        Bản đồ token đã map, phản chiếu
+        <code>website/shared/src/styles/theme.css</code> (OKLCH). Giá trị bên
+        dưới đọc trực tiếp từ CSS variable đang áp dụng — bấm nút để đổi
+        light/dark.
+      </p>
+
+      <section>
+        <div class="eyebrow">01 — Core tokens</div>
+        <h2>shadcn semantic tokens</h2>
+        <div class="grid" id="core-grid"></div>
+      </section>
+
+      <section>
+        <div class="eyebrow">02 — Contrast</div>
+        <h2>Cặp nền / chữ (readability)</h2>
+        <div class="pairs" id="pairs"></div>
+      </section>
+
+      <section>
+        <div class="eyebrow">03 — Commerce accents</div>
+        <h2>Highlight · Success · Warning</h2>
+        <div class="grid" id="accent-grid"></div>
+      </section>
+
+      <section>
+        <div class="eyebrow">04 — Gradients</div>
+        <h2>Dải màu trẻ trung</h2>
+        <div class="gradients">
+          <div class="grad g1">
+            <span>Mint Flow · Banner ưu đãi</span>
+            <span class="tag">from-primary via-emerald-400 to-teal-300</span>
+          </div>
+          <div class="grad g2">
+            <span>Sunset Pop · Sale badge</span>
+            <span class="tag">from-highlight to-rose-400</span>
+          </div>
+          <div class="grad g3">
+            <span>Buy Now · CTA</span>
+            <span class="tag">from-primary to-emerald-500</span>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <div class="eyebrow">05 — Typography</div>
+        <h2>Font scale (Plus Jakarta Sans + Inter)</h2>
+        <div id="type-scale"></div>
+      </section>
+
+      <section>
+        <div class="eyebrow">06 — Components</div>
+        <h2>Buttons (PixelButton variants)</h2>
+        <div class="row">
+          <button class="btn primary">cyan → primary</button>
+          <button class="btn coral">pink → highlight</button>
+          <button class="btn success">green → success</button>
+          <button class="btn warning">yellow → warning</button>
+          <button class="btn ghost">ghost</button>
+        </div>
+
+        <h2 style="margin-top: 2rem">Product card · Radius · Input</h2>
+        <div class="row" style="align-items: flex-start; gap: 2rem">
+          <article class="card">
+            <div class="img"><span class="badge">-30%</span></div>
+            <div class="body">
+              <div class="title">Tai nghe Gaming Pro</div>
+              <div class="cat">Phụ kiện</div>
+              <div>
+                <span class="price">890.000₫</span
+                ><span class="old">1.290.000₫</span>
+              </div>
+              <button class="btn primary add">Thêm vào giỏ</button>
+            </div>
+          </article>
+
+          <div>
+            <div class="radii">
+              <div class="box r-sm">sm 8</div>
+              <div class="box r-md">md 10</div>
+              <div class="box r-lg">lg 12</div>
+              <div class="box r-xl">xl 16</div>
+              <div class="box r-full">full</div>
+            </div>
+            <div style="margin-top: 1.25rem">
+              <input class="field" placeholder="Tìm sản phẩm… (focus xem ring)" />
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      const CORE = [
+        "background",
+        "foreground",
+        "card",
+        "card-foreground",
+        "popover",
+        "popover-foreground",
+        "primary",
+        "primary-foreground",
+        "secondary",
+        "secondary-foreground",
+        "muted",
+        "muted-foreground",
+        "accent",
+        "accent-foreground",
+        "destructive",
+        "destructive-foreground",
+        "border",
+        "input",
+        "ring",
+      ];
+      const ACCENTS = [
+        "highlight",
+        "highlight-foreground",
+        "success",
+        "warning",
+      ];
+      const PAIRS = [
+        ["primary", "primary-foreground", "Primary"],
+        ["secondary", "secondary-foreground", "Secondary"],
+        ["accent", "accent-foreground", "Accent"],
+        ["muted", "muted-foreground", "Muted"],
+        ["destructive", "destructive-foreground", "Destructive"],
+        ["highlight", "highlight-foreground", "Highlight"],
+        ["success", "primary-foreground", "Success"],
+        ["card", "card-foreground", "Card"],
+      ];
+      const SCALE = [
+        ["text-xs", "0.75rem"],
+        ["text-sm", "0.875rem"],
+        ["text-base", "1rem"],
+        ["text-lg", "1.125rem"],
+        ["text-xl", "1.25rem"],
+        ["text-2xl", "1.5rem"],
+        ["text-3xl", "1.875rem"],
+        ["text-4xl", "2.25rem"],
+        ["text-5xl", "3rem"],
+      ];
+
+      function swatch(token) {
+        return `<div class="swatch">
+          <div class="chip" style="background: var(--${token})"></div>
+          <div class="meta">
+            <div class="name">--${token}</div>
+            <div class="val" data-token="${token}"></div>
+          </div>
+        </div>`;
+      }
+
+      document.getElementById("core-grid").innerHTML = CORE.map(swatch).join("");
+      document.getElementById("accent-grid").innerHTML =
+        ACCENTS.map(swatch).join("");
+
+      document.getElementById("pairs").innerHTML = PAIRS.map(
+        ([bg, fg, label]) =>
+          `<div class="pair" style="background: var(--${bg}); color: var(--${fg})">
+            <span class="lg">${label}</span>
+            <span class="sm">Aa · Giá 990.000₫</span>
+          </div>`,
+      ).join("");
+
+      document.getElementById("type-scale").innerHTML = SCALE.map(
+        ([cls, size]) =>
+          `<div class="type-row">
+            <span class="lbl">${cls}</span>
+            <span class="txt" style="font-size:${size}">Mua sắm cực đã</span>
+          </div>`,
+      ).join("");
+
+      // Read the live (as-authored) value of each custom property.
+      function refreshValues() {
+        const cs = getComputedStyle(document.documentElement);
+        document.querySelectorAll(".val[data-token]").forEach((el) => {
+          el.textContent = cs.getPropertyValue("--" + el.dataset.token).trim();
+        });
+      }
+
+      const root = document.documentElement;
+      document.getElementById("toggle").addEventListener("click", () => {
+        root.classList.toggle("dark");
+        refreshValues();
+      });
+      if (window.matchMedia?.("(prefers-color-scheme: dark)").matches) {
+        root.classList.add("dark");
+      }
+      refreshValues();
+    </script>
+  </body>
+</html>

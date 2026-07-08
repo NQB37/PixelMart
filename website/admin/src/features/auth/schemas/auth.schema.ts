@@ -1,2 +1,2 @@
-export { loginSchema } from "@pixelmart/shared/auth";
-export type { LoginInput } from "@pixelmart/shared/auth";
+export { loginSchema } from "@website/shared/auth";
+export type { LoginInput } from "@website/shared/auth";

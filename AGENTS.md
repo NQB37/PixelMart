@@ -30,11 +30,11 @@ Tài liệu này định nghĩa các nguyên tắc bắt buộc cho mọi AI Age
 
 ## 2. Kiến trúc & Quy chuẩn mã nguồn PixelMart (Technical Architecture)
 
-Dự án PixelMart là một hệ thống thương mại điện tử phong cách Retro Game, bao gồm các thành phần sau:
+Dự án PixelMart là một hệ thống thương mại điện tử phong cách **Mint Fresh** (trẻ trung, tối giản, hiện đại; màu mint chủ đạo), bao gồm các thành phần sau:
 * **website/client**: Next.js App Router — Frontend cho người mua (Buyer Storefront)
 * **website/admin**: Vite + React + TanStack Router — Cổng quản trị (Admin)
 * **website/seller**: Vite + React + TanStack Router — Cổng người bán (Seller)
-* **website/shared** (`@pixelmart/shared`): code dùng chung cho 3 app `website/*` (auth store / API client / schemas, UI component chung)
+* **website/shared** (`@website/shared`): code dùng chung cho 3 app `website/*` (auth store / API client / schemas, UI component chung)
 * **server**: Express.js v5 & Prisma ORM — Backend
 * **mobile**: Ứng dụng di động (TBD - hiện đang để trống)
 
@@ -68,22 +68,21 @@ Dự án PixelMart là một hệ thống thương mại điện tử phong các
 
 ---
 
-## 3. Quy chuẩn giao diện Retro/Pixel (Aesthetics & Design Guidelines)
+## 3. Quy chuẩn giao diện Mint Fresh (Aesthetics & Design Guidelines)
 
-PixelMart được thiết kế theo chủ đề **Retro Game (8-bit / Arcade / Cyberpunk)**. Mọi giao diện phát triển mới hoặc chỉnh sửa đều phải tuân thủ nghiêm ngặt tính thẩm mỹ này.
+PixelMart theo chủ đề **Mint Fresh** — trẻ trung, tối giản, hiện đại; mint là màu chủ đạo, coral làm điểm nhấn khuyến mãi. Tài liệu đầy đủ (bảng token, gradient, type scale): **`DESIGN.md`** ở gốc repo. Token nằm ở `@website/shared/styles/theme.css` (OKLCH). Trang xem trực quan: `design-preview.html`.
 
 * **Kiểu chữ (Typography)**:
-  * Luôn dùng font chữ retro phù hợp. Các class chính: `font-pixel` (cho tiêu đề, các nút hành động ngắn, điểm số) và `font-retro` (cho văn bản mô tả, form).
-* **Đường viền và Khung viền (Pixel Borders)**:
-  * Tránh các đường viền mượt dạng bo tròn tròn hiện đại (`rounded-lg`, `rounded-full`).
-  * Sử dụng các border vuông vức mang phong cách retro: `pixel-border`, `pixel-border-pink`, `pixel-border-yellow`, v.v.
-* **Bảng màu và Hiệu ứng Glow**:
-  * Dùng các gam màu neon tương phản cao: neon pink (`text-neon-pink`, `bg-neon-pink`), neon cyan (`text-neon-cyan`, `bg-neon-cyan`), neon green (`text-neon-green`), neon yellow.
-  * Sử dụng các hiệu ứng phát sáng (glow) đặc trưng: `glow-pink`, `glow-cyan`, `scanlines`, `retro-grid`.
+  * `font-display` (Plus Jakarta Sans) cho tiêu đề, giá tiền, nút. `font-sans` (Inter) cho body, form. Giá tiền dùng `tabular-nums`.
+* **Bảng màu (semantic tokens)**:
+  * Chỉ dùng token: `bg-primary`/`text-primary` (mint), `bg-secondary`/`bg-accent`/`bg-muted`, `bg-highlight` (coral — sale/promo), `bg-success`/`bg-warning`, `border-border`. **Không** hardcode `slate-*`/`indigo-*`/mã hex.
+* **Bo góc & viền**:
+  * Dùng bo góc mềm: `rounded-md`/`rounded-lg`/`rounded-xl` (dẫn xuất từ `--radius: 0.75rem`), viền mảnh `border border-border`, đổ bóng nhẹ.
 * **Các nút hành động (Buttons)**:
-  * Không dùng button phẳng thông thường. Luôn dùng component `PixelButton` từ `@pixelmart/shared/ui`.
+  * Dùng component `PixelButton` từ `@website/shared/ui` (đã đổi sang biến thể mint), hoặc `bg-primary`/`bg-highlight` + `rounded-md`.
+* **KHÔNG dùng trong UI mới**: các class retro cũ `font-pixel`/`font-retro`, `neon-*`, `glow-*`, `scanlines`, `retro-grid`, `pixel-border*` — đã deprecated, sẽ bị gỡ khi sweep xong `client`.
 * **Không dùng nội dung giả (No Placeholders)**:
-  * Nếu cần hiển thị ảnh sản phẩm hoặc avatar game, hãy yêu cầu hệ thống generate hoặc dùng asset thực tế, không dùng placeholder màu xám trơn.
+  * Nếu cần hiển thị ảnh sản phẩm hoặc avatar, hãy dùng asset thực tế, không dùng placeholder màu xám trơn.
 
 ---
 

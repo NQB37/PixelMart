@@ -4,12 +4,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-PixelMart is a **Retro Game / 8-bit / Arcade / Cyberpunk** themed e-commerce platform with:
+PixelMart is a modern, minimalist **Mint Fresh** themed e-commerce platform (young/dynamic, mint-green primary — migrated from the original retro/pixel theme; see `DESIGN.md`) with:
 
 - `website/client` — Next.js 16 App Router (Customer-facing frontend)
 - `website/admin` — Vite + React + TanStack Router (Admin portal)
 - `website/seller` — Vite + React + TanStack Router (Seller portal)
-- `website/shared` (`@pixelmart/shared`) — code shared across the three `website/*` apps (auth store/API client/schemas, generic UI components)
+- `website/shared` (`@website/shared`) — code shared across the three `website/*` apps (auth store/API client/schemas, generic UI components)
 - `server` — Express.js v5 + Prisma ORM (Backend)
 - `mobile` — TBD (empty)
 
@@ -115,33 +115,33 @@ pnpm lint             # ESLint
 - Global UI state → Zustand
 - Never store API response data in Zustand or component `useState`
 
-**Axios instance** (`lib/api.ts`): built via `createAuthApiClient()` from `@pixelmart/shared/auth` — `withCredentials: true`, auto-attaches `Authorization: Bearer <token>`, implements a parallel request queue for token refresh on 401 (`isRefreshing` flag + `failedQueue` pattern). The response interceptor unwraps `response.data` automatically — callers receive the data directly, not the Axios response object.
+**Axios instance** (`lib/api.ts`): built via `createAuthApiClient()` from `@website/shared/auth` — `withCredentials: true`, auto-attaches `Authorization: Bearer <token>`, implements a parallel request queue for token refresh on 401 (`isRefreshing` flag + `failedQueue` pattern). The response interceptor unwraps `response.data` automatically — callers receive the data directly, not the Axios response object.
 
 **Routing:** Next.js App Router with route groups: `(auth)` for login/register pages, `(protected)` for authenticated routes, `(public)` for public routes.
 
-Shared components (used across features): `components/shared/`. Always use `PixelButton` from `@pixelmart/shared/ui` for action buttons.
+Shared components (used across features): `components/shared/`. Always use `PixelButton` from `@website/shared/ui` for action buttons.
 
-### `website/shared` (`@pixelmart/shared`)
+### `website/shared` (`@website/shared`)
 
 Code used by more than one of `client`/`admin`/`seller` lives here, not duplicated per app:
 
-- `@pixelmart/shared/auth` — `createAuthStore()` (Zustand factory, parameterized by localStorage key), `createAuthApiClient()` (axios instance + refresh-on-401 interceptor factory), `createAuthApi()` (login/register/logout/refreshToken/getMe), `loginSchema`/`registerSchema` (Zod), shared `UserRole`/`UserInfo` types, and `hasRole()` for role checks.
-- `@pixelmart/shared/ui` — generic pixel-theme UI (`PixelButton`, `SectionHeader`, `cn`, and the shadcn `Form`/`Field`/`Label`/`DropdownMenu` wrappers).
-- `@pixelmart/shared/styles/theme.css` — the pixel/retro Tailwind v4 theme tokens; `client/app/globals.css` imports it.
+- `@website/shared/auth` — `createAuthStore()` (Zustand factory, parameterized by localStorage key), `createAuthApiClient()` (axios instance + refresh-on-401 interceptor factory), `createAuthApi()` (login/register/logout/refreshToken/getMe), `loginSchema`/`registerSchema` (Zod), shared `UserRole`/`UserInfo` types, and `hasRole()` for role checks.
+- `@website/shared/ui` — generic mint-theme UI (`PixelButton`, `SectionHeader`, `cn`, and the shadcn `Form`/`Field`/`Label`/`DropdownMenu` wrappers). Note: `PixelButton` keeps its name for API stability but now renders a mint-system button.
+- `@website/shared/styles/theme.css` — the **Mint Fresh** Tailwind v4 theme tokens (OKLCH); all three apps (`client`/`admin`/`seller`) import it. Legacy `neon-*`/`pixel-*` utilities remain temporarily during the client component sweep.
 
 Each app still owns anything framework-specific (Next.js route guards vs TanStack Router `beforeLoad`, per-app toast copy, per-app env var names) as a thin wrapper around the shared factories — only add to `website/shared` when a piece of logic is truly framework-agnostic and used by more than one app.
 
 ---
 
-## Design System (Retro/Pixel Theme)
+## Design System (Mint Fresh Theme)
 
-Every UI must follow the retro aesthetic:
+Full spec + token tables: **`DESIGN.md`** (repo root). Tokens live in `@website/shared/styles/theme.css` (OKLCH). Every UI must follow the mint aesthetic:
 
-- **Fonts:** `font-pixel` (headings, buttons, scores), `font-retro` (body text, forms)
-- **Borders:** Use `pixel-border`, `pixel-border-pink`, `pixel-border-yellow` — avoid `rounded-lg` / `rounded-full`
-- **Colors:** Neon palette — `text-neon-pink`, `text-neon-cyan`, `text-neon-green`, plus `bg-neon-*` variants
-- **Effects:** `glow-pink`, `glow-cyan`, `scanlines`, `retro-grid`
-- **Buttons:** Always use `<PixelButton>` component, never plain HTML buttons
+- **Fonts:** `font-display` (Plus Jakarta Sans — headings, prices, buttons), `font-sans` (Inter — body, forms). Prices use `tabular-nums`.
+- **Colors:** semantic tokens only — `bg-primary`/`text-primary` (mint), `bg-secondary`/`bg-accent`/`bg-muted`, `bg-highlight` (coral, sale/promo), `bg-success`/`bg-warning`. Never hardcode `slate-*`/`indigo-*`/hex.
+- **Borders/Radius:** soft — `rounded-md`/`rounded-lg`/`rounded-xl` (from `--radius: 0.75rem`), `border-border`. No `pixel-border`.
+- **Buttons:** use `<PixelButton>` from `@website/shared/ui` (mint variants), or `bg-primary`/`bg-highlight` with `rounded-md`.
+- **Do NOT use** legacy `neon-*`, `glow-*`, `scanlines`, `retro-grid`, `pixel-border`, `font-pixel`/`font-retro` in new UI — they're deprecated and being removed as the client is swept.
 
 ---
 

@@ -11,7 +11,7 @@ import Register from "@/pages/Register";
 import RegisterShop from "@/pages/RegisterShop";
 import Forbidden from "@/pages/Forbidden";
 import Dashboard from "@/pages/Dashboard";
-import { hasRole, type UserInfo } from "@pixelmart/shared/auth";
+import { hasRole, type UserInfo } from "@website/shared/auth";
 
 interface AuthContext {
   user: UserInfo | null;
