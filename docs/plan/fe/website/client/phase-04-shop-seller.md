@@ -8,6 +8,9 @@
 
 **Tech Stack:** React Hook Form, Zod, Tailwind CSS (v4), Vitest.
 
+> [!IMPORTANT]
+> 📌 **As-built (codebase là chân lý).** Wizard đăng ký shop **không** được build trong app `client` — nó được build trong app **`seller`** (xem `docs/plan/fe/website/seller/phase-04-shop-seller.md`). App `client` hiện **không có** feature `shop`. Endpoint thật là `POST /shops` (không phải `/shops/register`) và schema thật gồm cả **KYC (CCCD) + upload ảnh** (xem BE Phase 4). Toàn bộ plan dưới đây là thiết kế mục tiêu, phòng khi sau này muốn cho đăng ký shop ngay trong client.
+
 ## Global Constraints
 
 - Client web portal is located at `website/client/`
@@ -24,7 +27,7 @@
 - Create: `website/client/features/shop/schemas/shop.schema.ts`
 - Create: `website/client/features/shop/components/RegisterShopWizard.tsx`
 - Create: `website/client/app/(public)/shop/register/page.tsx`
-- Test: `website/client/features/shop/__tests__/RegisterShopWizard.test.tsx`
+- Test: `website/client/features/shop/tests/RegisterShopWizard.test.tsx`
 
 **Interfaces:**
 - Consumes: `@/lib/api` (api client for endpoints `/shops/register`)
@@ -32,7 +35,7 @@
 
 - [ ] **Step 1: Write the failing test**
 Tạo file test kiểm tra hoạt động của Wizard: chuyển bước, validate dữ liệu đầu vào.
-Create: `website/client/features/shop/__tests__/RegisterShopWizard.test.tsx`
+Create: `website/client/features/shop/tests/RegisterShopWizard.test.tsx`
 ```tsx
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
@@ -324,6 +327,6 @@ Expected: PASS.
 - [ ] **Step 5: Commit**
 Run:
 ```bash
-git add features/shop/schemas/shop.schema.ts features/shop/components/RegisterShopWizard.tsx app/\(public\)/shop/register/page.tsx features/shop/__tests__/RegisterShopWizard.test.tsx
+git add features/shop/schemas/shop.schema.ts features/shop/components/RegisterShopWizard.tsx app/\(public\)/shop/register/page.tsx features/shop/tests/RegisterShopWizard.test.tsx
 git commit -m "feat(client): refactor shop registration wizard to clean page and dedicated schema"
 ```

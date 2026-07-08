@@ -6,12 +6,14 @@
 
 **Architecture:** Nút Trái tim `WishlistToggle` gọi API `POST /wishlist/toggle` để thêm hoặc xóa sản phẩm khỏi danh sách yêu thích trên DB. Trang `/wishlist` hiển thị danh sách sản phẩm yêu thích được kết xuất động. Tại Checkout, thành phần `CouponInput` cho phép gửi mã giảm giá lên API `/coupons/validate` để kiểm tra tính hợp lệ và cập nhật lại tổng tiền giảm giá trên client.
 
-**Tech Stack:** React 19, Zustand, Axios API Client, Jest.
+**Tech Stack:** React 19, Zustand, Axios API Client, Vitest.
+
+> ⬜ **Chưa build** — plan mục tiêu; đã chỉnh cho khớp codebase. Backend wishlist/coupon API chưa tồn tại.
 
 ## Global Constraints
 
 - Client web portal is located at `website/client/`
-- Tech Stack: Next.js 15 (App Router), React 19, Tailwind CSS (v4), TypeScript, Zustand
+- Tech Stack: Next.js 16 (App Router), React 19, Tailwind CSS (v4), TypeScript, Zustand
 - No placeholder code in the plan: write actual implementations, imports, types, test cases, and commands.
 - Use Vietnamese for descriptions and explanations, and English for code and commands.
 - TDD workflow is mandatory for tasks: Step 1 write failing test, Step 2 run to fail, Step 3 minimal implementation, Step 4 run to pass, Step 5 git commit.
@@ -22,7 +24,7 @@
 
 **Files:**
 - Create: `website/client/features/wishlist/components/WishlistToggle.tsx`, `website/client/app/(public)/wishlist/page.tsx`
-- Test: `website/client/features/wishlist/__tests__/WishlistToggle.test.tsx`
+- Test: `website/client/features/wishlist/tests/WishlistToggle.test.tsx`
 
 **Interfaces:**
 - Consumes: Product ID
@@ -30,7 +32,7 @@
 
 - [ ] **Step 1: Write the failing test**
 Tạo file test kiểm tra thay đổi icon trái tim dựa trên status wishlist:
-Create: `website/client/features/wishlist/__tests__/WishlistToggle.test.tsx`
+Create: `website/client/features/wishlist/tests/WishlistToggle.test.tsx`
 ```tsx
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
@@ -173,7 +175,7 @@ Expected: PASS WishlistToggle.test.tsx
 - [ ] **Step 5: Commit**
 Run:
 ```bash
-git add features/wishlist/components/WishlistToggle.tsx app/\(storefront\)/wishlist/page.tsx features/wishlist/__tests__/WishlistToggle.test.tsx
+git add features/wishlist/components/WishlistToggle.tsx app/\(storefront\)/wishlist/page.tsx features/wishlist/tests/WishlistToggle.test.tsx
 git commit -m "feat(client): implement Wishlist heart toggle icon and list board page"
 ```
 
@@ -184,7 +186,7 @@ git commit -m "feat(client): implement Wishlist heart toggle icon and list board
 **Files:**
 - Create: `website/client/features/checkout/components/CouponInput.tsx`
 - Modify: `website/client/features/checkout/components/CheckoutForm.tsx:28-52`
-- Test: `website/client/features/checkout/__tests__/CouponInput.test.tsx`
+- Test: `website/client/features/checkout/tests/CouponInput.test.tsx`
 
 **Interfaces:**
 - Consumes: API endpoints `/coupons/validate`
@@ -192,7 +194,7 @@ git commit -m "feat(client): implement Wishlist heart toggle icon and list board
 
 - [ ] **Step 1: Write the failing test**
 Tạo file test kiểm tra nhập mã coupon và nhận phản hồi thành công/thất bại:
-Create: `website/client/features/checkout/__tests__/CouponInput.test.tsx`
+Create: `website/client/features/checkout/tests/CouponInput.test.tsx`
 ```tsx
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
@@ -347,7 +349,7 @@ Expected: PASS CouponInput.test.tsx
 - [ ] **Step 5: Commit**
 Run:
 ```bash
-git add features/checkout/components/CouponInput.tsx features/checkout/components/CheckoutForm.tsx features/checkout/__tests__/CouponInput.test.tsx
+git add features/checkout/components/CouponInput.tsx features/checkout/components/CheckoutForm.tsx features/checkout/tests/CouponInput.test.tsx
 git commit -m "feat(client): integrate CouponInput coupon codes validation inside checkout form flow"
 ```
 

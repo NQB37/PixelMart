@@ -8,10 +8,12 @@
 
 **Tech Stack:** Docker, GitHub Actions, Playwright.
 
+> ⬜ **Chưa build** — plan mục tiêu; đã chỉnh cho khớp codebase. App chưa có Dockerfile, workflow CI, hay Playwright.
+
 ## Global Constraints
 
 - Client web portal is located at `website/client/`
-- Tech Stack: Next.js 15 (App Router), React 19, Tailwind CSS (v4), TypeScript, Zustand
+- Tech Stack: Next.js 16 (App Router), React 19, Tailwind CSS (v4), TypeScript, Zustand
 - No placeholder code in the plan: write actual implementations, imports, types, test cases, and commands.
 - Use Vietnamese for descriptions and explanations, and English for code and commands.
 - TDD workflow is mandatory for tasks: Step 1 write failing test, Step 2 run to fail, Step 3 minimal implementation, Step 4 run to pass, Step 5 git commit.
@@ -23,7 +25,7 @@
 **Files:**
 - Create: `website/client/Dockerfile`, `website/client/.dockerignore`
 - Modify: `website/client/next.config.ts`
-- Test: `website/client/__tests__/docker-config.test.ts`
+- Test: `website/client/tests/docker-config.test.ts`
 
 **Interfaces:**
 - Consumes: Next.js build bundle
@@ -31,7 +33,7 @@
 
 - [ ] **Step 1: Write the failing test**
 Tạo file test xác nhận config output standalone đã được khai báo trong next.config.ts:
-Create: `website/client/__tests__/docker-config.test.ts`
+Create: `website/client/tests/docker-config.test.ts`
 ```typescript
 import nextConfig from '../next.config';
 
@@ -128,7 +130,7 @@ Expected: PASS docker-config.test.ts
 - [ ] **Step 5: Commit**
 Run:
 ```bash
-git add next.config.ts Dockerfile .dockerignore __tests__/docker-config.test.ts
+git add next.config.ts Dockerfile .dockerignore tests/docker-config.test.ts
 git commit -m "feat(client): add Dockerfile configurations and set standalone nextjs output mode"
 ```
 
@@ -138,7 +140,7 @@ git commit -m "feat(client): add Dockerfile configurations and set standalone ne
 
 **Files:**
 - Create: `.github/workflows/client-ci.yml`
-- Test: `.github/workflows/__tests__/ci-syntax.test.js`
+- Test: `.github/workflows/tests/ci-syntax.test.js`
 
 **Interfaces:**
 - Consumes: Push events on master branch
@@ -146,7 +148,7 @@ git commit -m "feat(client): add Dockerfile configurations and set standalone ne
 
 - [ ] **Step 1: Write the failing test**
 Tạo script test kiểm thử cú pháp YAML của file GitHub Action:
-Create: `.github/workflows/__tests__/ci-syntax.test.js`
+Create: `.github/workflows/tests/ci-syntax.test.js`
 ```javascript
 const fs = require('fs');
 const path = require('path');
@@ -169,7 +171,7 @@ try {
 - [ ] **Step 2: Run test to verify it fails**
 Run:
 ```bash
-node /home/nquocbao37/Code/PixelMart/.github/workflows/__tests__/ci-syntax.test.js
+node /home/nquocbao37/Code/PixelMart/.github/workflows/tests/ci-syntax.test.js
 ```
 Expected: FAIL do chưa tạo thư mục workflows và file `client-ci.yml`.
 
@@ -178,7 +180,7 @@ Cài đặt thư viện parse YAML phục vụ kiểm thử:
 Run:
 ```bash
 cd /home/nquocbao37/Code/PixelMart
-npm install -D js-yaml
+pnpm add -D js-yaml
 ```
 
 Tạo file workflow `.github/workflows/client-ci.yml`:
@@ -228,14 +230,14 @@ jobs:
 - [ ] **Step 4: Run test to verify it passes**
 Run:
 ```bash
-node /home/nquocbao37/Code/PixelMart/.github/workflows/__tests__/ci-syntax.test.js
+node /home/nquocbao37/Code/PixelMart/.github/workflows/tests/ci-syntax.test.js
 ```
 Expected: PASS ci-syntax.test.js
 
 - [ ] **Step 5: Commit**
 Run:
 ```bash
-git add .github/workflows/client-ci.yml .github/workflows/__tests__/ci-syntax.test.js
+git add .github/workflows/client-ci.yml .github/workflows/tests/ci-syntax.test.js
 git commit -m "ci(github): establish GitHub Actions workflow automation for client portal"
 ```
 
@@ -245,7 +247,7 @@ git commit -m "ci(github): establish GitHub Actions workflow automation for clie
 
 **Files:**
 - Create: `website/client/playwright.config.ts`, `website/client/e2e/auth-flow.spec.ts`
-- Test: `website/client/__tests__/playwright-config.test.ts`
+- Test: `website/client/tests/playwright-config.test.ts`
 
 **Interfaces:**
 - Consumes: Playwright testing API
@@ -253,7 +255,7 @@ git commit -m "ci(github): establish GitHub Actions workflow automation for clie
 
 - [ ] **Step 1: Write the failing test**
 Tạo file test kiểm định config của Playwright:
-Create: `website/client/__tests__/playwright-config.test.ts`
+Create: `website/client/tests/playwright-config.test.ts`
 ```typescript
 import playwrightConfig from '../playwright.config';
 
@@ -300,7 +302,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'npm run dev',
+    command: 'pnpm dev',
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
   },
@@ -336,7 +338,7 @@ Expected: PASS playwright-config.test.ts
 - [ ] **Step 5: Commit**
 Run:
 ```bash
-git add playwright.config.ts e2e/auth-flow.spec.ts __tests__/playwright-config.test.ts
+git add playwright.config.ts e2e/auth-flow.spec.ts tests/playwright-config.test.ts
 git commit -m "test(e2e): configure playwright and script dynamic auth flow validations"
 ```
 
@@ -352,5 +354,5 @@ git commit -m "test(e2e): configure playwright and script dynamic auth flow vali
 ### Checklist Cuối Phase
 - [ ] Build thành công Docker image `docker build -t client .` không lỗi compile.
 - [ ] File `.github/workflows/client-ci.yml` được parse cú pháp chính xác.
-- [ ] Chạy local playwright check `npx playwright test` vượt qua test case xác thực đăng nhập.
+- [ ] Chạy local playwright check `pnpm exec playwright test` vượt qua test case xác thực đăng nhập.
 - [ ] Bộ test suite hoàn tất.

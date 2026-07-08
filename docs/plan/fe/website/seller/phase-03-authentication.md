@@ -13,6 +13,9 @@
 
 **Tech Stack:** React 18, React Router v6, Zustand, TanStack Query, Axios, Vitest, React Testing Library.
 
+> [!NOTE]
+> 📌 **As-built (codebase là chân lý):** Auth đã build trên **`@pixelmart/shared/auth`**: store `createAuthStore("seller-user-info", { persistIsAuthenticated: true })`, axios `createAuthApiClient` (`lib/api.ts`) + `createAuthApi`, hook `useLogin` (TanStack Query), `loginSchema`/`registerSchema` **dùng lại từ shared** (mật khẩu **min 8**), form react-hook-form + zodResolver (`features/auth/components/LoginForm.tsx`), page sạch `pages/Login.tsx`. **Không có component `ProtectedRoute`** — phân quyền route bằng `beforeLoad` trong `src/router.tsx` với `hasRole(user, ["SELLER", "ADMIN"])`; trang `/403` = `pages/Forbidden.tsx`. Khác plan: tài khoản đã đăng nhập nhưng chưa là seller bị đẩy sang `/register-shop` (không phải `/403`).
+
 ## Global Constraints
 
 - Node.js version >= 18
@@ -346,14 +349,14 @@ git commit -m "feat(seller): refactor login to clean page and dedicated validati
 - Create: `website/seller/src/components/auth/ProtectedRoute.tsx`
 - Create: `website/seller/src/pages/Forbidden.tsx`
 - Modify: `website/seller/src/main.tsx`
-- Create: `website/seller/src/__tests__/guards.test.tsx`
+- Create: `website/seller/src/tests/guards.test.tsx`
 
 **Interfaces:**
 - Consumes: `useAuthStore` from Task 1.
 - Produces: `ProtectedRoute` bảo vệ các route nhạy cảm; chuyển hướng user không hợp lệ về `/login` hoặc hiển thị màn hình `/403` cấm truy cập.
 
 - [ ] **Step 1: Write the failing test**
-Create: `website/seller/src/__tests__/guards.test.tsx`
+Create: `website/seller/src/tests/guards.test.tsx`
 ```typescript
 import React from 'react';
 import { render, screen } from '@testing-library/react';
@@ -500,7 +503,7 @@ Expected: PASS tất cả các tests.
 
 - [ ] **Step 5: Commit**
 ```bash
-git add website/seller/src/components/auth/ProtectedRoute.tsx website/seller/src/pages/Forbidden.tsx website/seller/src/main.tsx website/seller/src/__tests__/guards.test.tsx
+git add website/seller/src/components/auth/ProtectedRoute.tsx website/seller/src/pages/Forbidden.tsx website/seller/src/main.tsx website/seller/src/tests/guards.test.tsx
 git commit -m "feat(seller): secure seller endpoints using ProtectedRoute and role matching check"
 ```
 

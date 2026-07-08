@@ -12,6 +12,13 @@
 - Middleware `isShopOwner` đảm bảo seller chỉ quản lý shop của mình
 - API CRUD Shop profile
 
+> [!IMPORTANT]
+> 📌 **As-built (codebase là chân lý).** Đã build **luồng đăng ký shop**: `POST /api/v1/shops` (`isAuth` + `validate(createShopSchema)`) nhận **đầy đủ hồ sơ KYC** (địa chỉ lấy hàng + CCCD + ngân hàng — xem schema thật bên dưới). Service dùng **một transaction** tạo `Shop` + nested-create `ShopVerification` + gán role `SELLER` (qua `UserRoles`). Ảnh (logo + 2 mặt CCCD) được upload trước qua `POST /api/v1/uploads` (Cloudinary — xem Phase 5) rồi truyền URL vào body.
+>
+> **Chưa build (vẫn là thiết kế mục tiêu):** API admin duyệt/khóa shop (`PATCH /:id/review`, `/:id/status`), `GET /me/dashboard`, `PUT /me`, `GET /:id` public, và middleware `isShopOwner`. Các snippet tương ứng bên dưới là mục tiêu.
+>
+> **Tên thật trong code:** middleware là `isAuth` (không phải `isAuth`) và `requireRole` (không phải `authorize`; hiện **chưa** gắn vào route nào); Prisma singleton ở `@/libs/prisma`.
+
 ---
 
 ## 🗄️ Database Changes (MVP)
@@ -67,7 +74,7 @@ model Shop {
 ### 2. Chạy Migration:
 
 ```bash
-npx prisma migrate dev --name add_shop
+pnpm prisma migrate dev --name add_shop
 ```
 
 ### 3. Viết Seed Data Cho `prisma/seed.ts`:
@@ -76,7 +83,7 @@ Cập nhật file `prisma/seed.ts` để seed thêm tài khoản Seller và Shop
 
 ```typescript
 import { PrismaClient, ROLE, ShopStatus, ApprovalStatus } from "@prisma/client";
-import bcrypt from "bcryptjs";
+import bcrypt from "bcrypt";
 
 const prisma = new PrismaClient();
 
@@ -133,7 +140,7 @@ main()
 Chạy lệnh seed:
 
 ```bash
-npx prisma db seed
+pnpm seed
 ```
 
 ---
@@ -147,10 +154,27 @@ npx prisma db seed
 ```typescript
 import { z } from "zod";
 
+// ✅ ĐÃ BUILD — nguồn: server/src/modules/shop/shop.validation.ts
+// Đăng ký shop nhận full hồ sơ KYC (không chỉ shopName).
 export const createShopSchema = z.object({
-  shopName: z.string().min(3, "Tên shop tối thiểu 3 ký tự").max(100).trim(),
+  shopName: z.string().trim().min(3, "Shop name must be at least 3 characters").max(100),
+  logoUrl: z.url("Invalid logo URL").optional(),
+  // pickup address
+  recipientName: z.string().trim().min(2, "Recipient name is required"),
+  phone: z.string().trim().regex(/^(0\d{9}|\+84\d{9})$/, "Enter a valid Vietnamese phone number"),
+  street: z.string().trim().min(5, "Enter a detailed street address"),
+  ward: z.string().trim().min(1, "Ward is required"),
+  province: z.string().trim().min(1, "Province/City is required"),
+  // identity + bank verification
+  nationalId: z.string().trim().regex(/^(\d{9}|\d{12})$/, "CCCD/CMND must be 9 or 12 digits"),
+  idFrontUrl: z.url("Invalid ID front photo URL"),
+  idBackUrl: z.url("Invalid ID back photo URL"),
+  bankAccountNumber: z.string().trim().regex(/^\d{6,20}$/, "Enter a valid bank account number"),
+  cardHolderName: z.string().trim().min(2, "Cardholder name is required"),
+  cardExpiry: z.string().trim().regex(/^(0[1-9]|1[0-2])\/\d{2}$/, "Format must be MM/YY"),
 });
 
+// ⬜ CHƯA BUILD (target — luồng admin duyệt & cập nhật shop):
 export const updateShopSchema = z.object({
   shopName: z.string().min(3).max(100).trim().optional(),
   logoUrl: z.string().url().optional(),
@@ -179,7 +203,7 @@ export type ReviewShopInput = z.infer<typeof reviewShopSchema>;
 #### `src/modules/shop/shop.service.ts`:
 
 ```typescript
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/libs/prisma";
 import { ApiError } from "@/utils/ApiError";
 import { CreateShopInput, UpdateShopInput, ReviewShopInput } from "./shop.validation";
 import { ROLE, ShopStatus, ApprovalStatus } from "@prisma/client";
@@ -475,8 +499,8 @@ export const updateShopStatus = asyncHandler(
 ```typescript
 import { Router } from "express";
 import * as shopController from "./shop.controller";
-import { isAuthenticated } from "@/middlewares/auth.middleware";
-import { authorize } from "@/middlewares/role.middleware";
+import { isAuth } from "@/middlewares/auth.middleware";
+import { requireRole } from "@/middlewares/role.middleware";
 import { validate } from "@/middlewares/validate.middleware";
 import {
   createShopSchema,
@@ -493,20 +517,20 @@ router.get("/:id", shopController.getShopById);
 // Seller (đã đăng nhập)
 router.post(
   "/",
-  isAuthenticated,
+  isAuth,
   validate(createShopSchema),
   shopController.createShop,
 );
 router.get(
   "/me/dashboard",
-  isAuthenticated,
-  authorize("SELLER", "ADMIN"),
+  isAuth,
+  requireRole("SELLER", "ADMIN"),
   shopController.getMyShop,
 );
 router.put(
   "/me",
-  isAuthenticated,
-  authorize("SELLER", "ADMIN"),
+  isAuth,
+  requireRole("SELLER", "ADMIN"),
   validate(updateShopSchema),
   shopController.updateMyShop,
 );
@@ -514,21 +538,21 @@ router.put(
 // Admin
 router.get(
   "/",
-  isAuthenticated,
-  authorize("ADMIN"),
+  isAuth,
+  requireRole("ADMIN"),
   shopController.getAllShops,
 );
 router.patch(
   "/:id/review",
-  isAuthenticated,
-  authorize("ADMIN"),
+  isAuth,
+  requireRole("ADMIN"),
   validate(reviewShopSchema),
   shopController.reviewShop,
 );
 router.patch(
   "/:id/status",
-  isAuthenticated,
-  authorize("ADMIN"),
+  isAuth,
+  requireRole("ADMIN"),
   validate(updateShopStatusSchema),
   shopController.updateShopStatus,
 );
@@ -544,7 +568,7 @@ export const shopRoutes = router;
 
 ```typescript
 import { Request, Response, NextFunction } from "express";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/libs/prisma";
 import { ApiError } from "@/utils/ApiError";
 
 /**
@@ -590,15 +614,15 @@ export const isShopOwner = async (
 
 ## 🏁 Checklist Cuối Phase 4
 
-- [ ] `POST /api/v1/shops` — User tạo shop, được gán thêm role SELLER
+- [x] `POST /api/v1/shops` — User đăng ký shop kèm hồ sơ KYC (→ Shop + ShopVerification), được gán thêm role SELLER
 - [ ] `GET /api/v1/shops/me/dashboard` — Seller xem dashboard shop mình
 - [ ] `PUT /api/v1/shops/me` — Seller cập nhật thông tin shop
 - [ ] `GET /api/v1/shops/:id` — Public xem trang shop
 - [ ] `GET /api/v1/shops` — Admin xem danh sách tất cả shops
 - [ ] `PATCH /api/v1/shops/:id/review` — Admin approve/reject shop (approvalStatus)
 - [ ] `PATCH /api/v1/shops/:id/status` — Admin suspend/mở lại shop (status)
-- [ ] Transaction đảm bảo tạo shop + gán role SELLER atomic
-- [ ] Shop mới có approvalStatus PENDING (chờ duyệt)
+- [x] Transaction đảm bảo tạo shop + ShopVerification + gán role SELLER atomic
+- [x] Shop mới có approvalStatus PENDING (chờ duyệt)
 - [ ] Commit: "feat: shop/seller module with admin approval flow"
 
 ---

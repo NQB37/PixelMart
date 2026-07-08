@@ -8,6 +8,8 @@
 
 **Tech Stack:** Docker, Nginx, Cypress, GitHub Actions, Node.js.
 
+> ⬜ **Chưa build** — plan mục tiêu; đã chỉnh cho khớp codebase. Chưa có Dockerfile/nginx/CI/Cypress. Lưu ý: repo là **pnpm workspace** (thư mục `website/`) nên Docker/CI thật phải dùng **pnpm** (xem mẫu ở seller phase-15), không phải `npm ci` / `cache: 'npm'` như snippet dưới.
+
 ## Global Constraints
 
 - Thư mục làm việc: `website/admin/`
@@ -125,7 +127,7 @@ git commit -m "feat(admin): dockerize admin portal using multi-stage build and n
 - [ ] **Step 1: Write the failing test**
 
 *(Tạo file CI nhưng cố tình làm sai syntax của GitHub Actions workflow để GitHub báo đỏ hoặc kiểm thử bằng công cụ linting local)*
-Run: `npx action-validator .github/workflows/admin-ci.yml`
+Run: `pnpm dlx action-validator .github/workflows/admin-ci.yml`
 Expected: FAIL hoặc thông báo file trống/không tồn tại.
 
 - [ ] **Step 2: Run test to verify it fails**
@@ -238,7 +240,7 @@ describe('Admin Portal E2E Flow', () => {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `cd website/admin && npx cypress run --spec cypress/e2e/admin_flow.cy.ts`
+Run: `cd website/admin && pnpm exec cypress run --spec cypress/e2e/admin_flow.cy.ts`
 Expected: FAIL do Cypress chưa được cài đặt hoặc dev server chưa khởi chạy.
 
 - [ ] **Step 3: Write minimal implementation**
@@ -249,7 +251,7 @@ Cập nhật package.json của `website/admin` để thêm script và devDepend
 "cypress:open": "cypress open",
 "cypress:run": "cypress run"
 ```
-Cài đặt cypress qua CLI: `npm install -D cypress`
+Cài đặt cypress qua CLI: `pnpm add -D cypress`
 
 ```typescript
 // website/admin/cypress.config.ts
@@ -283,8 +285,8 @@ Tạo file trống `website/admin/cypress/support/commands.ts` để tránh lỗ
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Khởi động ứng dụng React dev server: `npm run dev` ở terminal 1.
-Chạy test Cypress: `npm run cypress:run` ở terminal 2.
+Khởi động ứng dụng React dev server: `pnpm dev` ở terminal 1.
+Chạy test Cypress: `pnpm cypress:run` ở terminal 2.
 Expected: PASS, Cypress tự động hóa các hành động nhập form, chuyển hướng, click menu, click nút block người dùng và kết luận pass 100%.
 
 - [ ] **Step 5: Commit**
@@ -302,7 +304,7 @@ git commit -m "test(admin): install cypress and build core end-to-end admin user
 - [ ] Lệnh `docker build` thành công, image Nginx chạy nhẹ và tải trang cực nhanh.
 - [ ] F5 reload lại trang con trong môi trường Docker không bị lỗi 404 (chứng tỏ `try_files` ở nginx.conf chạy tốt).
 - [ ] File CI `.github/workflows/admin-ci.yml` kiểm tra định dạng và unit test tự động hoàn thành không có cảnh báo đỏ.
-- [ ] Chạy `npm run cypress:run` chạy mượt mà, ghi hình (video) các thao tác login/block người dùng không lỗi.
+- [ ] Chạy `pnpm cypress:run` chạy mượt mà, ghi hình (video) các thao tác login/block người dùng không lỗi.
 
 ### ⚠️ Lỗi Fresher hay mắc
 1. **Thiếu `try_files $uri $uri/ /index.html` trong Nginx:** Lỗi này làm cho SPA hoạt động bình thường khi đi từ trang chủ, nhưng khi người dùng reload trang (F5) ở route `/admin/shops`, Nginx sẽ tìm thư mục vật lý `/admin/shops` trên ổ đĩa và trả về lỗi 404.

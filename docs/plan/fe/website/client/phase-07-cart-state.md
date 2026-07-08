@@ -6,12 +6,14 @@
 
 **Architecture:** Sử dụng Zustand Persist Middleware tự động đồng bộ trạng thái giỏ hàng dưới Client xuống `localStorage`. Khi user đăng nhập thành công, một service `mergeCart` sẽ gửi toàn bộ sản phẩm từ local storage lên API `/cart/merge`, gộp chung với giỏ hàng hiện tại trên DB, sau đó cập nhật lại state client.
 
-**Tech Stack:** Zustand, Zustand Persist Middleware, Axios (API Client), Jest.
+**Tech Stack:** Zustand, Zustand Persist Middleware, Axios (API Client), Vitest.
+
+> 🟡 **Một phần** — mới có route rỗng `app/(public)/cart/` (chưa có `page.tsx`) và thư mục store rỗng `features/products/stores/`. Chưa có `cartStore`, service merge, và backend `/cart/*` chưa tồn tại — code Zustand persist + `/cart/merge` dưới là thiết kế mục tiêu.
 
 ## Global Constraints
 
 - Client web portal is located at `website/client/`
-- Tech Stack: Next.js 15 (App Router), React 19, Tailwind CSS (v4), TypeScript, Zustand
+- Tech Stack: Next.js 16 (App Router), React 19, Tailwind CSS (v4), TypeScript, Zustand
 - No placeholder code in the plan: write actual implementations, imports, types, test cases, and commands.
 - Use Vietnamese for descriptions and explanations, and English for code and commands.
 - TDD workflow is mandatory for tasks: Step 1 write failing test, Step 2 run to fail, Step 3 minimal implementation, Step 4 run to pass, Step 5 git commit.
@@ -22,7 +24,7 @@
 
 **Files:**
 - Create: `website/client/stores/cartStore.ts`
-- Test: `website/client/__tests__/cartStore.test.ts`
+- Test: `website/client/tests/cartStore.test.ts`
 
 **Interfaces:**
 - Consumes: Product model structure
@@ -30,7 +32,7 @@
 
 - [ ] **Step 1: Write the failing test**
 Tạo file test kiểm thử thêm, xóa, cập nhật số lượng giỏ hàng:
-Create: `website/client/__tests__/cartStore.test.ts`
+Create: `website/client/tests/cartStore.test.ts`
 ```typescript
 import { useCartStore } from '../stores/cartStore';
 
@@ -188,7 +190,7 @@ Expected: PASS cartStore.test.ts
 - [ ] **Step 5: Commit**
 Run:
 ```bash
-git add stores/cartStore.ts __tests__/cartStore.test.ts
+git add stores/cartStore.ts tests/cartStore.test.ts
 git commit -m "feat(client): develop Zustand cartStore with localStorage persistence support"
 ```
 
@@ -198,7 +200,7 @@ git commit -m "feat(client): develop Zustand cartStore with localStorage persist
 
 **Files:**
 - Create: `website/client/services/cart.service.ts`
-- Test: `website/client/__tests__/cart-sync.test.ts`
+- Test: `website/client/tests/cart-sync.test.ts`
 
 **Interfaces:**
 - Consumes: API endpoints `/cart/merge`, Zustand `cartStore` and `authStore`
@@ -206,7 +208,7 @@ git commit -m "feat(client): develop Zustand cartStore with localStorage persist
 
 - [ ] **Step 1: Write the failing test**
 Tạo file test kiểm tra xem service có gọi API gộp giỏ hàng và cập nhật lại state của store hay không:
-Create: `website/client/__tests__/cart-sync.test.ts`
+Create: `website/client/tests/cart-sync.test.ts`
 ```typescript
 import { mergeCartAfterLogin } from '../services/cart.service';
 import { useCartStore } from '../stores/cartStore';
@@ -291,7 +293,7 @@ Expected: PASS cart-sync.test.ts
 - [ ] **Step 5: Commit**
 Run:
 ```bash
-git add services/cart.service.ts __tests__/cart-sync.test.ts
+git add services/cart.service.ts tests/cart-sync.test.ts
 git commit -m "feat(client): implement backend merge cart logic upon user login"
 ```
 

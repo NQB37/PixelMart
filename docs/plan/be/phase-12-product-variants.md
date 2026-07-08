@@ -6,6 +6,8 @@
 
 ---
 
+> ⬜ **Chưa build** — plan mục tiêu; đã chỉnh path/lệnh cho khớp codebase hiện tại (server mới có `auth`/`shop`/`upload`).
+
 ## 🎯 MVP Của Phase Này
 
 - Sản phẩm có thể có multiple variants (Size: S/M/L, Color: Đỏ/Xanh, Storage: 128GB/256GB)
@@ -89,7 +91,7 @@ Cập nhật các liên kết trong các model cũ:
 ### 2. Chạy Migration:
 
 ```bash
-npx prisma migrate dev --name add_product_variants
+pnpm prisma migrate dev --name add_product_variants
 ```
 
 #### Ví dụ cấu trúc dữ liệu lưu trong DB:

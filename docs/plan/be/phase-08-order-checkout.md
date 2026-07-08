@@ -4,6 +4,8 @@
 
 ---
 
+> ⬜ **Chưa build** — plan mục tiêu; đã chỉnh path/lệnh cho khớp codebase hiện tại (server mới có `auth`/`shop`/`upload`).
+
 ## 🎯 MVP Của Phase Này
 
 - API Checkout: Nhận địa chỉ, phương thức thanh toán (COD/Bank Transfer) và tạo đơn hàng
@@ -124,7 +126,7 @@ Hãy nhớ cập nhật liên kết trong các model cũ:
 ### 2. Chạy Migration:
 
 ```bash
-npx prisma migrate dev --name add_orders
+pnpm prisma migrate dev --name add_orders
 ```
 
 ### 3. Viết Seed Data Cho `prisma/seed.ts`:
@@ -133,7 +135,7 @@ Cập nhật file `prisma/seed.ts` để tạo một địa chỉ mặc định 
 
 ```typescript
 import { PrismaClient, ROLE, ShopStatus } from "@prisma/client";
-import bcrypt from "bcryptjs";
+import bcrypt from "bcrypt";
 
 const prisma = new PrismaClient();
 
@@ -187,7 +189,7 @@ main()
 Chạy seed:
 
 ```bash
-npx prisma db seed
+pnpm seed
 ```
 
 ---
@@ -214,7 +216,7 @@ npx prisma db seed
 #### `src/modules/order/order.service.ts`:
 
 ```typescript
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/libs/prisma";
 import { ApiError } from "@/utils/ApiError";
 import { Prisma } from "@prisma/client";
 

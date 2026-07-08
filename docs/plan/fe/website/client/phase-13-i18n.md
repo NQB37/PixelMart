@@ -2,16 +2,18 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Tích hợp đa ngôn ngữ (i18n - Anh/Việt) cho Buyer Storefront sử dụng `next-intl` trong cấu trúc App Router của Next.js 15.
+**Goal:** Tích hợp đa ngôn ngữ (i18n - Anh/Việt) cho Buyer Storefront sử dụng `next-intl` trong cấu trúc App Router của Next.js 16.
 
 **Architecture:** Sử dụng thư viện `next-intl` với cấu trúc thư mục định tuyến dạng `[locale]`. Next.js Middleware sẽ xử lý việc tự động chuyển hướng ngôn ngữ dựa trên header của browser hoặc cookie đã lưu. Các bản dịch được tổ chức trong thư mục `messages/*.json`.
 
-**Tech Stack:** `next-intl`, Next.js Middleware, Jest.
+**Tech Stack:** `next-intl`, Next.js Middleware, Vitest.
+
+> ⬜ **Chưa build** — plan mục tiêu; đã chỉnh cho khớp codebase. App chưa có `next-intl`, `middleware.ts` hay cấu trúc route `[locale]`.
 
 ## Global Constraints
 
 - Client web portal is located at `website/client/`
-- Tech Stack: Next.js 15 (App Router), React 19, Tailwind CSS (v4), TypeScript, Zustand
+- Tech Stack: Next.js 16 (App Router), React 19, Tailwind CSS (v4), TypeScript, Zustand
 - No placeholder code in the plan: write actual implementations, imports, types, test cases, and commands.
 - Use Vietnamese for descriptions and explanations, and English for code and commands.
 - TDD workflow is mandatory for tasks: Step 1 write failing test, Step 2 run to fail, Step 3 minimal implementation, Step 4 run to pass, Step 5 git commit.
@@ -22,7 +24,7 @@
 
 **Files:**
 - Create: `website/client/messages/vi.json`, `website/client/messages/en.json`, `website/client/i18n/request.ts`
-- Test: `website/client/__tests__/i18n-dict.test.ts`
+- Test: `website/client/tests/i18n-dict.test.ts`
 
 **Interfaces:**
 - Consumes: JSON Translation files
@@ -30,7 +32,7 @@
 
 - [ ] **Step 1: Write the failing test**
 Tạo file test kiểm tra sự tồn tại và cấu trúc bản dịch của vi.json và en.json:
-Create: `website/client/__tests__/i18n-dict.test.ts`
+Create: `website/client/tests/i18n-dict.test.ts`
 ```typescript
 import viJson from '../messages/vi.json';
 import enJson from '../messages/en.json';
@@ -109,7 +111,7 @@ Expected: PASS i18n-dict.test.ts
 - [ ] **Step 5: Commit**
 Run:
 ```bash
-git add messages/vi.json messages/en.json i18n/request.ts __tests__/i18n-dict.test.ts
+git add messages/vi.json messages/en.json i18n/request.ts tests/i18n-dict.test.ts
 git commit -m "feat(client): integrate next-intl configuration and localization translations"
 ```
 
@@ -120,7 +122,7 @@ git commit -m "feat(client): integrate next-intl configuration and localization 
 **Files:**
 - Modify: `website/client/middleware.ts:1-24`
 - Create: `website/client/app/[locale]/layout.tsx`
-- Test: `website/client/__tests__/i18n-middleware.test.ts`
+- Test: `website/client/tests/i18n-middleware.test.ts`
 
 **Interfaces:**
 - Consumes: NextRequest middleware context
@@ -128,7 +130,7 @@ git commit -m "feat(client): integrate next-intl configuration and localization 
 
 - [ ] **Step 1: Write the failing test**
 Tạo file test kiểm tra khả năng redirect locale mặc định:
-Create: `website/client/__tests__/i18n-middleware.test.ts`
+Create: `website/client/tests/i18n-middleware.test.ts`
 ```typescript
 import { NextRequest } from 'next/server';
 import { middleware } from '../middleware';
@@ -239,7 +241,7 @@ Expected: PASS i18n-middleware.test.ts
 - [ ] **Step 5: Commit**
 Run:
 ```bash
-git add middleware.ts app/\[locale\]/layout.tsx __tests__/i18n-middleware.test.ts
+git add middleware.ts app/\[locale\]/layout.tsx tests/i18n-middleware.test.ts
 git commit -m "feat(client): integrate locale detection middleware and wrap app with next-intl provider"
 ```
 
@@ -249,7 +251,7 @@ git commit -m "feat(client): integrate locale detection middleware and wrap app 
 
 ### Lỗi Fresher Thường Gặp
 1. **Lệnh lặp lại router group app**: Khi di chuyển sang `[locale]` router, các trang tĩnh trước đó ở app root (không nằm dưới `[locale]`) phải được chuyển hẳn vào `[locale]/` để tránh lỗi 404 hoặc bị render chồng lấn.
-2. **Quên async/await params locale**: Next.js 15 xem locale params là một Promise. Không `await params` sẽ gây crash server.
+2. **Quên async/await params locale**: Next.js 16 xem locale params là một Promise. Không `await params` sẽ gây crash server.
 3. **Cài đặt sai matcher middleware**: Cấu hình regexp của middleware không khớp làm các file tĩnh (trong thư mục `public/`) cũng bị rewrite url chèn thêm locale (ví dụ `/images/logo.svg` biến thành `/vi/images/logo.svg`).
 
 ### Checklist Cuối Phase

@@ -11,6 +11,8 @@
 
 **Tech Stack:** React 18, React Router v6, Zod, Axios, Vitest, React Testing Library.
 
+> ⬜ **Chưa build** — plan mục tiêu; đã chỉnh cho khớp codebase. App `seller` chưa có `features/products` (mới có `features/auth` + `features/shop`), và backend cũng chưa có API sản phẩm.
+
 ---
 
 ## 📋 Task Breakdown

@@ -12,6 +12,11 @@
 - Seller chỉ quản lý sản phẩm của shop mình
 - Soft Delete: sản phẩm bị "xóa" vẫn còn trong DB, đơn hàng cũ không bị ảnh hưởng
 
+> [!IMPORTANT]
+> 📌 **As-built (codebase là chân lý).** Mới build **module `upload`** — nhưng khác thiết kế bên dưới: chỉ **một endpoint** `POST /api/v1/uploads` (`isAuth` + `uploadSingleImage` + `validate(uploadImageSchema)`), nhận **1 file** field `file` + body `folder` ∈ `['shops/logos','shops/identity','avatars','products']`, trả về Cloudinary `secure_url`. Multer cấu hình **inline trong `upload.middleware.ts`** (memoryStorage, 5MB, MIME `jpeg/png/webp`) — **không** có `config/multer.ts`, **không** có `/image`+`/images`, **không** gắn `requireRole`. Config Cloudinary ở `src/config/cloudinary.ts` (khớp snippet Task 5.3).
+>
+> **Chưa build:** module/model `Category`, `Product` (+ `ProductImage`), middleware `isShopOwner`, util `generateSlug`. Toàn bộ Task 5.1, 5.2, 5.4 bên dưới là thiết kế mục tiêu.
+
 ---
 
 ## 🗄️ Database Changes (MVP)
@@ -105,7 +110,7 @@ model Shop {
 ### 2. Chạy Migration:
 
 ```bash
-npx prisma migrate dev --name add_products
+pnpm prisma migrate dev --name add_products
 ```
 
 ### 3. Viết Seed Data Cho `prisma/seed.ts`:
@@ -114,7 +119,7 @@ Cập nhật file `prisma/seed.ts` để seed thêm categories và products:
 
 ```typescript
 import { PrismaClient, ROLE, ShopStatus } from "@prisma/client";
-import bcrypt from "bcryptjs";
+import bcrypt from "bcrypt";
 
 const prisma = new PrismaClient();
 
@@ -200,7 +205,7 @@ main()
 Chạy seed:
 
 ```bash
-npx prisma db seed
+pnpm seed
 ```
 
 ---
@@ -228,7 +233,7 @@ export const updateCategorySchema = createCategorySchema.partial();
 #### `src/modules/category/category.service.ts`:
 
 ```typescript
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/libs/prisma";
 import { ApiError } from "@/utils/ApiError";
 import { generateSlug } from "@/utils/generateSlug";
 
@@ -394,7 +399,7 @@ export type ProductQuery = z.infer<typeof productQuerySchema>;
 #### `src/modules/product/product.service.ts`:
 
 ```typescript
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/libs/prisma";
 import { ApiError } from "@/utils/ApiError";
 import { generateSlug } from "@/utils/generateSlug";
 import { CreateProductInput, ProductQuery } from "./product.validation";
@@ -626,8 +631,9 @@ export const productService = new ProductService();
 ### Task 5.3: Upload Ảnh — Cloudinary Integration (3-4h)
 
 ```bash
-npm install cloudinary multer
-npm install -D @types/multer
+# ✅ cloudinary + multer đã có sẵn trong dependencies (pnpm). Nếu làm lại từ đầu:
+pnpm add cloudinary multer
+pnpm add -D @types/multer
 ```
 
 #### `src/config/cloudinary.ts`:
@@ -699,7 +705,7 @@ class UploadService {
 export const uploadService = new UploadService();
 ```
 
-#### `src/config/multer.ts`:
+#### `src/config/multer.ts` (⚠️ thực tế: multer nằm inline trong `upload.middleware.ts`, không có file này):
 
 ```typescript
 import multer from "multer";
@@ -713,13 +719,13 @@ export const upload = multer({
 });
 ```
 
-#### `src/modules/upload/upload.routes.ts`:
+#### `src/modules/upload/upload.routes.ts` (⚠️ thực tế: chỉ 1 route `POST /`, field `file`, có `folder` allowlist, không có `/image`+`/images`):
 
 ```typescript
 import { Router } from "express";
 import { upload } from "@/config/multer";
-import { isAuthenticated } from "@/middlewares/auth.middleware";
-import { authorize } from "@/middlewares/role.middleware";
+import { isAuth } from "@/middlewares/auth.middleware";
+import { requireRole } from "@/middlewares/role.middleware";
 import { uploadService } from "./upload.service";
 import { asyncHandler } from "@/utils/asyncHandler";
 import { ApiResponse } from "@/utils/ApiResponse";
@@ -729,8 +735,8 @@ const router = Router();
 // Upload single image
 router.post(
   "/image",
-  isAuthenticated,
-  authorize("SELLER", "ADMIN"),
+  isAuth,
+  requireRole("SELLER", "ADMIN"),
   upload.single("image"),
   asyncHandler(async (req, res) => {
     if (!req.file) {
@@ -746,8 +752,8 @@ router.post(
 // Upload multiple images
 router.post(
   "/images",
-  isAuthenticated,
-  authorize("SELLER", "ADMIN"),
+  isAuth,
+  requireRole("SELLER", "ADMIN"),
   upload.array("images", 10),
   asyncHandler(async (req, res) => {
     const files = req.files as Express.Multer.File[];
@@ -785,8 +791,8 @@ export const uploadRoutes = router;
 ```typescript
 import { Router } from "express";
 import * as productController from "./product.controller";
-import { isAuthenticated } from "@/middlewares/auth.middleware";
-import { authorize } from "@/middlewares/role.middleware";
+import { isAuth } from "@/middlewares/auth.middleware";
+import { requireRole } from "@/middlewares/role.middleware";
 import { isShopOwner } from "@/middlewares/shopOwner.middleware";
 import { validate } from "@/middlewares/validate.middleware";
 import { createProductSchema, updateProductSchema } from "./product.validation";
@@ -801,8 +807,8 @@ router.get("/:slug", productController.getProductBySlug);
 // === SELLER (cần shop active) ===
 router.post(
   "/",
-  isAuthenticated,
-  authorize("SELLER"),
+  isAuth,
+  requireRole("SELLER"),
   isShopOwner,
   validate(createProductSchema),
   productController.createProduct,
@@ -810,16 +816,16 @@ router.post(
 
 router.get(
   "/seller/my-products",
-  isAuthenticated,
-  authorize("SELLER"),
+  isAuth,
+  requireRole("SELLER"),
   isShopOwner,
   productController.getMyProducts,
 );
 
 router.put(
   "/:id",
-  isAuthenticated,
-  authorize("SELLER"),
+  isAuth,
+  requireRole("SELLER"),
   isShopOwner,
   validate(updateProductSchema),
   productController.updateProduct,
@@ -827,8 +833,8 @@ router.put(
 
 router.delete(
   "/:id",
-  isAuthenticated,
-  authorize("SELLER"),
+  isAuth,
+  requireRole("SELLER"),
   isShopOwner,
   productController.deleteProduct,
 );
@@ -845,7 +851,7 @@ export const productRoutes = router;
 - [ ] Seller: Xem danh sách sản phẩm (chỉ của shop mình)
 - [ ] Seller: Cập nhật sản phẩm (verify ownership)
 - [ ] Seller: Xóa sản phẩm (soft delete)
-- [ ] Upload: File validation (type + size)
+- [x] Upload: File validation (type + size) — MIME `jpeg/png/webp` + 5MB trong `upload.middleware.ts`
 - [ ] Upload: Auto resize + WebP conversion
 - [ ] Slug tiếng Việt hoạt động cho cả product và category
 - [ ] Sản phẩm bị soft delete không hiện trong public queries

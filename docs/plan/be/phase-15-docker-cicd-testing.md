@@ -4,6 +4,8 @@
 
 ---
 
+> 🟡 **Một phần** — mới có test vitest (auth/shop/upload/role.middleware); Docker/compose/CI **chưa dựng**. Server dùng pnpm + tsx + vitest; workspace web ở `website/`. (Snippet Dockerfile/CI mẫu dưới còn dùng `npm ci`/`npm run` — thực tế phải chuyển sang `pnpm`.)
+
 ## 🎯 MVP Của Phase Này
 
 - `docker compose up` → toàn bộ hệ thống (client, server, postgres, redis) chạy
@@ -20,7 +22,7 @@
 Phase này **không có bảng mới** nào được tạo. Tuy nhiên, về mặt hạ tầng dữ liệu, chúng ta thực hiện các bước sau:
 
 1. **Docker hóa PostgreSQL:** Cấu hình container database PostgreSQL trong `docker-compose.yml` đi kèm với volume persist dữ liệu (`postgres_data`) để tránh mất mát dữ liệu khi container khởi động lại.
-2. **Database Test Độc Lập:** Thiết lập một cơ sở dữ liệu test riêng biệt mang tên `pixelmart_test` (cả local và trên môi trường CI GitHub Actions). Mỗi khi chạy test pipeline, Prisma sẽ tự động chạy lệnh `npx prisma migrate deploy` để đồng bộ cấu trúc bảng sang DB test nhằm đảm bảo các test cases không làm ảnh hưởng hay làm bẩn (dirty) dữ liệu đang phát triển ở DB dev.
+2. **Database Test Độc Lập:** Thiết lập một cơ sở dữ liệu test riêng biệt mang tên `pixelmart_test` (cả local và trên môi trường CI GitHub Actions). Mỗi khi chạy test pipeline, Prisma sẽ tự động chạy lệnh `pnpm prisma migrate deploy` để đồng bộ cấu trúc bảng sang DB test nhằm đảm bảo các test cases không làm ảnh hưởng hay làm bẩn (dirty) dữ liệu đang phát triển ở DB dev.
 
 ---
 
@@ -45,7 +47,7 @@ RUN npm ci
 COPY server/ .
 
 # Generate Prisma Client
-RUN npx prisma generate
+RUN pnpm prisma generate
 
 # Build TypeScript
 RUN npm run build
@@ -64,7 +66,7 @@ COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/package.json .
 
 # Generate Prisma Client in production
-RUN npx prisma generate
+RUN pnpm prisma generate
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
@@ -305,11 +307,11 @@ jobs:
 
       - name: Generate Prisma Client
         working-directory: server
-        run: npx prisma generate
+        run: pnpm prisma generate
 
       - name: Run migrations
         working-directory: server
-        run: npx prisma migrate deploy
+        run: pnpm prisma migrate deploy
         env:
           DATABASE_URL: postgresql://test:test@localhost:5432/pixelmart_test
 
@@ -331,7 +333,7 @@ jobs:
 
 ```bash
 cd server
-npm install -D jest ts-jest @types/jest supertest @types/supertest
+pnpm add -D vitest supertest @types/supertest  # dự án dùng vitest (đã cài sẵn), không phải jest
 ````
 
 #### `server/jest.config.ts`:
@@ -341,7 +343,7 @@ export default {
   preset: "ts-jest",
   testEnvironment: "node",
   roots: ["<rootDir>/src"],
-  testMatch: ["**/__tests__/**/*.test.ts", "**/*.test.ts"],
+  testMatch: ["**/tests/**/*.test.ts", "**/*.test.ts"],
   moduleNameMapper: { "^@/(.*)$": "<rootDir>/src/$1" },
   setupFilesAfterSetup: ["<rootDir>/tests/setup.ts"],
 };

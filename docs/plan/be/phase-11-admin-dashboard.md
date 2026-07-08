@@ -4,6 +4,8 @@
 
 ---
 
+> ⬜ **Chưa build** — plan mục tiêu; đã chỉnh path/lệnh cho khớp codebase hiện tại (server mới có `auth`/`shop`/`upload`).
+
 ## 🎯 MVP Của Phase Này
 
 - API Admin Stats: overview stats (tổng users, shops, orders, revenue)
@@ -26,7 +28,7 @@ Phase này **không có bảng mới** nào được tạo. Toàn bộ các ch�
 #### `src/modules/admin/admin.service.ts`:
 
 ```typescript
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/libs/prisma";
 
 class AdminService {
   async getDashboardStats() {

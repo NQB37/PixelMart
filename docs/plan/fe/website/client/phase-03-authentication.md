@@ -13,6 +13,9 @@
 
 **Tech Stack:** Zustand, TanStack Query, Next.js Middleware, Zod, Vitest, React Testing Library.
 
+> [!IMPORTANT]
+> 📌 **As-built (codebase là chân lý).** Auth client **đã build** nhưng dựa trên package dùng chung `@pixelmart/shared/auth` (không tự viết store/service/schema): `createAuthStore('user-info')`, `createAuthApiClient(...)` (interceptor refresh-on-401), `createAuthApi(...)`, và `loginSchema`/`registerSchema` dùng chung (mật khẩu **min 8**, không phải 6). Chặn route bằng **component guard** `features/auth/components/{roleGuard,guestGuard}.tsx` + cổng chờ hydrate — **không** dùng `middleware.ts` như Task 3.3 mô tả. Store thật ở `features/auth/stores/auth.store.ts` (wrapper mỏng bọc factory). Xem `@pixelmart/shared` trong CLAUDE.md.
+
 ## Global Constraints
 
 - Client web portal is located at `website/client/`
@@ -515,11 +518,11 @@ git commit -m "feat(client): refactor login/register to clean pages and dedicate
 
 ---
 
-### Task 3.3: Next.js Middleware Route Guards
+### Task 3.3: Next.js Middleware Route Guards (⚠️ thực tế: dùng component guard `roleGuard`/`guestGuard` + cổng hydrate, KHÔNG phải `middleware.ts`)
 
 **Files:**
 - Create: `website/client/middleware.ts`
-- Test: `website/client/__tests__/middleware.test.ts`
+- Test: `website/client/tests/middleware.test.ts`
 
 **Interfaces:**
 - Consumes: NextRequest, NextResponse
@@ -527,7 +530,7 @@ git commit -m "feat(client): refactor login/register to clean pages and dedicate
 
 - [ ] **Step 1: Write the failing test**
 Tạo file test mô phỏng request để verify middleware:
-Create: `website/client/__tests__/middleware.test.ts`
+Create: `website/client/tests/middleware.test.ts`
 ```typescript
 import { NextRequest, NextResponse } from 'next/server';
 import { middleware } from '../middleware';
@@ -601,7 +604,7 @@ Expected: PASS middleware.test.ts
 - [ ] **Step 5: Commit**
 Run:
 ```bash
-git add middleware.ts __tests__/middleware.test.ts
+git add middleware.ts tests/middleware.test.ts
 git commit -m "feat(client): implement middleware route guard protection for private routes"
 ```
 

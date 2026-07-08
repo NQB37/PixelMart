@@ -9,8 +9,15 @@
 - User đăng ký, đăng nhập, đăng xuất thành công
 - JWT Access Token + Refresh Token hoạt động (HttpOnly Cookie)
 - Refresh Token rotation (tự cấp token mới khi hết hạn)
-- Middleware phân quyền: `isAuthenticated`, `authorize('ADMIN', 'SELLER')`
+- Middleware phân quyền: `isAuth`, `requireRole('ADMIN', 'SELLER')`
 - Trang Admin chặn User thường (403), Frontend redirect đúng
+
+> [!NOTE]
+> 📌 **As-built (codebase là chân lý):** Auth **đã build** và khớp phần lớn thiết kế này, nhưng khác vài điểm quan trọng:
+> - **Access token ở Authorization header** (`Bearer`), **không** phải cookie; chỉ **refresh token** nằm trong httpOnly cookie (`sameSite=lax`, `path=/api/v1/auth`, 14 ngày) **và** lưu ở bảng `RefreshToken` (rotation theo `jti`). Middleware đọc token từ Bearer header.
+> - Tên thật: middleware `isAuth` + `requireRole` (`requireRole` đã có nhưng **chưa gắn** vào route nào); util `src/utils/{password,jwt,cookies}.ts` (không phải `hash/token/cookie`); Prisma singleton `@/libs/prisma`; hash dùng `bcrypt`.
+> - Env: `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`, `ACCESS_TOKEN_EXPIRES_IN` (mặc định 30m), `REFRESH_TOKEN_EXPIRES_IN`.
+> - RBAC bằng bảng nối `Role/UserRoles/Permission/RolePermissions`; `register` gán mặc định role `CUSTOMER`; rate limiter gắn ở `/login` + `/register`.
 
 ---
 
@@ -143,7 +150,7 @@ model RefreshToken {
 ### 2. Chạy Migration:
 
 ```bash
-npx prisma migrate dev --name init_auth
+pnpm prisma migrate dev --name init_auth
 ```
 
 ### 3. Viết Seed Data Cho `prisma/seed.ts`:
@@ -152,7 +159,7 @@ Hãy cập nhật hàm `main()` trong file `prisma/seed.ts` để tạo sẵn t�
 
 ```typescript
 import { PrismaClient, ROLE } from "@prisma/client";
-import bcrypt from "bcryptjs";
+import bcrypt from "bcrypt";
 
 const prisma = new PrismaClient();
 
@@ -219,7 +226,7 @@ main()
 Chạy lệnh seed để đổ dữ liệu vào DB:
 
 ```bash
-npx prisma db seed
+pnpm seed
 ```
 
 ---
@@ -231,7 +238,7 @@ npx prisma db seed
 #### `src/utils/hash.ts`:
 
 ```typescript
-import bcrypt from "bcryptjs";
+import bcrypt from "bcrypt";
 
 const SALT_ROUNDS = 12;
 
@@ -290,8 +297,8 @@ export const verifyRefreshToken = (token: string): TokenPayload => {
 **Cài đặt:**
 
 ```bash
-npm install jsonwebtoken
-npm install -D @types/jsonwebtoken
+pnpm add jsonwebtoken
+pnpm add -D @types/jsonwebtoken
 ```
 
 #### `src/utils/cookie.ts`:
@@ -422,7 +429,7 @@ export const validate = (schema: AnyZodObject) => {
 
 ```typescript
 import { randomUUID } from "crypto";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/libs/prisma";
 import { hashPassword, comparePassword } from "@/utils/hash";
 import {
   generateAccessToken,
@@ -685,7 +692,7 @@ import { Router } from "express";
 import * as authController from "./auth.controller";
 import { validate } from "@/middlewares/validate.middleware";
 import { registerSchema, loginSchema } from "./auth.validation";
-import { isAuthenticated } from "@/middlewares/auth.middleware";
+import { isAuth } from "@/middlewares/auth.middleware";
 
 const router = Router();
 
@@ -693,7 +700,7 @@ router.post("/register", validate(registerSchema), authController.register);
 router.post("/login", validate(loginSchema), authController.login);
 router.post("/refresh", authController.refreshToken);
 router.post("/logout", authController.logout);
-router.get("/me", isAuthenticated, authController.getMe);
+router.get("/me", isAuth, authController.getMe);
 
 export const authRoutes = router;
 ```
@@ -735,10 +742,10 @@ declare global {
 ```typescript
 import { Request, Response, NextFunction } from "express";
 import { verifyAccessToken } from "@/utils/token";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/libs/prisma";
 import { ApiError } from "@/utils/ApiError";
 
-export const isAuthenticated = async (
+export const isAuth = async (
   req: Request,
   _res: Response,
   next: NextFunction,
@@ -799,13 +806,13 @@ import { ApiError } from "@/utils/ApiError";
 
 /**
  * Middleware kiểm tra role.
- * Dùng SAU isAuthenticated.
+ * Dùng SAU isAuth.
  *
  * Ví dụ:
- *   router.get('/admin', isAuthenticated, authorize('ADMIN'), adminController.dashboard)
- *   router.get('/seller', isAuthenticated, authorize('SELLER', 'ADMIN'), sellerController.dashboard)
+ *   router.get('/admin', isAuth, requireRole('ADMIN'), adminController.dashboard)
+ *   router.get('/seller', isAuth, requireRole('SELLER', 'ADMIN'), sellerController.dashboard)
  */
-export const authorize = (...allowedRoles: ROLE[]) => {
+export const requireRole = (...allowedRoles: ROLE[]) => {
   return (req: Request, _res: Response, next: NextFunction) => {
     if (!req.user) {
       return next(ApiError.unauthorized("Vui lòng đăng nhập"));
@@ -826,7 +833,7 @@ export const authorize = (...allowedRoles: ROLE[]) => {
 };
 ```
 
-> **Pattern `authorize('SELLER', 'ADMIN')`:**
+> **Pattern `requireRole('SELLER', 'ADMIN')`:**
 > Admin có thể truy cập mọi thứ Seller thấy. Liệt kê explicit các role được phép → rõ ràng, dễ đọc, dễ debug.
 
 #### ⚠️ Lỗi fresher hay mắc:
@@ -840,7 +847,7 @@ export const authorize = (...allowedRoles: ROLE[]) => {
 ### Task 3.6: Viết Rate Limiting cho Auth APIs (1-2h)
 
 ```bash
-npm install express-rate-limit
+pnpm add express-rate-limit
 ```
 
 #### `src/middlewares/rateLimiter.middleware.ts`:

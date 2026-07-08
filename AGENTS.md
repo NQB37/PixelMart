@@ -31,8 +31,11 @@ Tài liệu này định nghĩa các nguyên tắc bắt buộc cho mọi AI Age
 ## 2. Kiến trúc & Quy chuẩn mã nguồn PixelMart (Technical Architecture)
 
 Dự án PixelMart là một hệ thống thương mại điện tử phong cách Retro Game, bao gồm các thành phần sau:
-* **website/client**: Dự án Next.js App Router (Frontend)
-* **server**: Dự án Express.js & Prisma ORM (Backend)
+* **website/client**: Next.js App Router — Frontend cho người mua (Buyer Storefront)
+* **website/admin**: Vite + React + TanStack Router — Cổng quản trị (Admin)
+* **website/seller**: Vite + React + TanStack Router — Cổng người bán (Seller)
+* **website/shared** (`@pixelmart/shared`): code dùng chung cho 3 app `website/*` (auth store / API client / schemas, UI component chung)
+* **server**: Express.js v5 & Prisma ORM — Backend
 * **mobile**: Ứng dụng di động (TBD - hiện đang để trống)
 
 ### 2.1. Quy chuẩn Frontend (`website/client`)
@@ -78,7 +81,7 @@ PixelMart được thiết kế theo chủ đề **Retro Game (8-bit / Arcade / 
   * Dùng các gam màu neon tương phản cao: neon pink (`text-neon-pink`, `bg-neon-pink`), neon cyan (`text-neon-cyan`, `bg-neon-cyan`), neon green (`text-neon-green`), neon yellow.
   * Sử dụng các hiệu ứng phát sáng (glow) đặc trưng: `glow-pink`, `glow-cyan`, `scanlines`, `retro-grid`.
 * **Các nút hành động (Buttons)**:
-  * Không dùng button phẳng thông thường. Luôn dùng component `PixelButton` từ `@/components/shared/PixelButton`.
+  * Không dùng button phẳng thông thường. Luôn dùng component `PixelButton` từ `@pixelmart/shared/ui`.
 * **Không dùng nội dung giả (No Placeholders)**:
   * Nếu cần hiển thị ảnh sản phẩm hoặc avatar game, hãy yêu cầu hệ thống generate hoặc dùng asset thực tế, không dùng placeholder màu xám trơn.
 

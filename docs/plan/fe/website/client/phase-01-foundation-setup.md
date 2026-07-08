@@ -2,16 +2,19 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Khởi tạo dự án Next.js 15 cho client, liên kết với workspace `@/lib/api` và dựng bố cục cơ bản (Header, Footer, Container) với cấu hình styling Tailwind CSS v4.
+**Goal:** Khởi tạo dự án Next.js 16 cho client, liên kết với workspace `@/lib/api` và dựng bố cục cơ bản (Header, Footer, Container) với cấu hình styling Tailwind CSS v4.
 
 **Architecture:** Sử dụng Next.js App Router làm khung chính. Tạo route group `(public)` để nhóm các trang của Buyer có chung Header và Footer. Sử dụng pnpm workspace để import trực tiếp các tiện ích từ `@/lib/api`.
 
-**Tech Stack:** Next.js 15 (App Router), React 19, Tailwind CSS (v4), TypeScript, Jest, React Testing Library.
+**Tech Stack:** Next.js 16 (App Router), React 19, Tailwind CSS (v4), TypeScript, Vitest, React Testing Library.
+
+> [!NOTE]
+> 📌 **As-built (codebase là chân lý):** Nền tảng client **đã build** nhưng khác plan: dùng **Next.js 16 + React 19 + Vitest** (không phải Next.js 15/Jest). `app/layout.tsx` là root layout (Geist font, `ToastContainer`, bọc provider `providers/tanstackQuery.tsx`); `app/globals.css` import theme pixel từ `@pixelmart/shared/styles/theme.css` (không tự khai báo `@theme`/`@source`). Header/Footer thật nằm ở `components/shared/{header,footer}.tsx` (không phải `components/layout/`); trang `(public)/page.tsx` render landing gồm 6 section trong `features/landing/`.
 
 ## Global Constraints
 
 - Client web portal is located at `website/client/`
-- Tech Stack: Next.js 15 (App Router), React 19, Tailwind CSS (v4), TypeScript, Zustand
+- Tech Stack: Next.js 16 (App Router), React 19, Tailwind CSS (v4), TypeScript, Zustand
 - No placeholder code in the plan: write actual implementations, imports, types, test cases, and commands.
 - Use Vietnamese for descriptions and explanations, and English for code and commands.
 - TDD workflow is mandatory for tasks: Step 1 write failing test, Step 2 run to fail, Step 3 minimal implementation, Step 4 run to pass, Step 5 git commit.
@@ -22,7 +25,7 @@
 
 **Files:**
 - Create: `website/client/package.json`, `website/client/tsconfig.json`, `website/client/next.config.ts`, `website/client/vitest.config.ts`, `website/client/vitest.config.ts`
-- Test: `website/client/__tests__/smoke.test.tsx`
+- Test: `website/client/tests/smoke.test.tsx`
 
 **Interfaces:**
 - Consumes: None
@@ -30,7 +33,7 @@
 
 - [ ] **Step 1: Write the failing test**
 Tạo file test cơ bản để xác nhận môi trường test chạy được:
-Create: `website/client/__tests__/smoke.test.tsx`
+Create: `website/client/tests/smoke.test.tsx`
 ```tsx
 import React from 'react';
 import { render, screen } from '@testing-library/react';
@@ -186,7 +189,7 @@ Expected: PASS smoke.test.tsx
 - [ ] **Step 5: Commit**
 Run:
 ```bash
-git add package.json tsconfig.json next.config.ts vitest.config.ts vitest.config.ts __tests__/smoke.test.tsx
+git add package.json tsconfig.json next.config.ts vitest.config.ts vitest.config.ts tests/smoke.test.tsx
 git commit -m "feat(client): setup Next.js 15 template and Jest testing environment"
 ```
 
@@ -196,7 +199,7 @@ git commit -m "feat(client): setup Next.js 15 template and Jest testing environm
 
 **Files:**
 - Create: `website/client/styles/globals.css`
-- Test: `website/client/__tests__/tailwind.test.tsx`
+- Test: `website/client/tests/tailwind.test.tsx`
 
 **Interfaces:**
 - Consumes: `@/lib/api`
@@ -204,7 +207,7 @@ git commit -m "feat(client): setup Next.js 15 template and Jest testing environm
 
 - [ ] **Step 1: Write the failing test**
 Tạo file test kiểm tra xem các class CSS của Tailwind hoặc `@/lib/api` có được compile và dùng đúng CSS class:
-Create: `website/client/__tests__/tailwind.test.tsx`
+Create: `website/client/tests/tailwind.test.tsx`
 ```tsx
 import React from 'react';
 import { render, screen } from '@testing-library/react';
@@ -261,7 +264,7 @@ Expected: PASS tailwind.test.tsx
 - [ ] **Step 5: Commit**
 Run:
 ```bash
-git add styles/globals.css __tests__/tailwind.test.tsx
+git add styles/globals.css tests/tailwind.test.tsx
 git commit -m "feat(client): setup globals.css with Tailwind v4 theme and shared components link"
 ```
 
@@ -271,7 +274,7 @@ git commit -m "feat(client): setup globals.css with Tailwind v4 theme and shared
 
 **Files:**
 - Create: `website/client/app/layout.tsx`, `website/client/app/(public)/layout.tsx`, `website/client/app/(public)/page.tsx`, `website/client/components/layout/Header.tsx`, `website/client/components/layout/Footer.tsx`
-- Test: `website/client/__tests__/layout.test.tsx`
+- Test: `website/client/tests/layout.test.tsx`
 
 **Interfaces:**
 - Consumes: Styles từ globals.css
@@ -279,7 +282,7 @@ git commit -m "feat(client): setup globals.css with Tailwind v4 theme and shared
 
 - [ ] **Step 1: Write the failing test**
 Tạo file test kiểm tra sự xuất hiện của Header, Footer và nội dung chính trên trang chủ storefront:
-Create: `website/client/__tests__/layout.test.tsx`
+Create: `website/client/tests/layout.test.tsx`
 ```tsx
 import React from 'react';
 import { render, screen } from '@testing-library/react';
@@ -458,7 +461,7 @@ Expected: PASS layout.test.tsx
 - [ ] **Step 5: Commit**
 Run:
 ```bash
-git add app/layout.tsx app/\(storefront\)/layout.tsx app/\(storefront\)/page.tsx components/layout/Header.tsx components/layout/Footer.tsx __tests__/layout.test.tsx
+git add app/layout.tsx app/\(storefront\)/layout.tsx app/\(storefront\)/page.tsx components/layout/Header.tsx components/layout/Footer.tsx tests/layout.test.tsx
 git commit -m "feat(client): implement core storefront header, footer, and page layout shell"
 ```
 
@@ -473,7 +476,7 @@ git commit -m "feat(client): implement core storefront header, footer, and page 
 4. **Không cấu hình `withCredentials: true`** trong API client dẫn đến việc cookie JWT (HttpOnly) không được gửi tự động kèm request lên API Gateway.
 
 ### Checklist Cuối Phase
-- [ ] Ổn định monorepo web workspace: `pnpm install` chạy mượt mà tại thư mục `web/`.
-- [ ] Next.js app chạy tốt trên cổng mặc định: `pnpm --filter client dev` tại cổng `http://localhost:3000`.
-- [ ] Header và Footer xuất hiện chuẩn xác và responsive trên Desktop / Mobile.
+- [x] Ổn định monorepo web workspace: `pnpm install` chạy mượt mà tại thư mục `website/`.
+- [x] Next.js app chạy tốt trên cổng mặc định: `pnpm --filter client dev` tại cổng `http://localhost:3000`.
+- [x] Header và Footer xuất hiện chuẩn xác và responsive trên Desktop / Mobile.
 - [ ] Toàn bộ bộ test suite: `smoke.test.tsx`, `tailwind.test.tsx`, `layout.test.tsx` đều PASS 100%.

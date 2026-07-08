@@ -4,6 +4,8 @@
 
 ---
 
+> ⬜ **Chưa build** — plan mục tiêu; đã chỉnh path/lệnh cho khớp codebase hiện tại (server mới có `auth`/`shop`/`upload`; chưa có Redis).
+
 ## 🎯 MVP Của Phase Này
 
 - Redis cache cho: categories, featured products, product detail, shop info
@@ -36,7 +38,7 @@ model Product {
 ### 2. Chạy Migration:
 
 ```bash
-npx prisma migrate dev --name add_performance_indexes
+pnpm prisma migrate dev --name add_performance_indexes
 ```
 
 ---
@@ -51,8 +53,8 @@ docker run -d --name redis -p 6379:6379 redis:alpine
 
 # Backend
 cd server
-npm install ioredis
-npm install -D @types/ioredis
+pnpm add ioredis
+pnpm add -D @types/ioredis
 ```
 
 #### `src/lib/redis.ts`:
@@ -245,7 +247,7 @@ LIMIT 20 OFFSET 0;
 Thay `express-rate-limit` (in-memory) bằng Redis store:
 
 ```bash
-npm install rate-limit-redis
+pnpm add rate-limit-redis
 ```
 
 ```typescript

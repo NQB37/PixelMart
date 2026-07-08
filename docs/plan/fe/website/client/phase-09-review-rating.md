@@ -11,6 +11,8 @@
 
 **Tech Stack:** React 19, Zod, Axios client, Vitest.
 
+> ⬜ **Chưa build** — plan mục tiêu; đã chỉnh cho khớp codebase. Backend review/rating API và feature `products` phía client đều chưa tồn tại.
+
 ## Global Constraints
 - Client web portal is located at `website/client/`
 - Tech Stack: Next.js 16 (App Router), React 19, Tailwind CSS (v4), TypeScript, Zustand
@@ -22,10 +24,10 @@
 **Files:**
 - Create: `website/client/features/product/schemas/review.schema.ts`
 - Create: `website/client/features/product/components/WriteReviewForm.tsx`
-- Test: `website/client/features/product/__tests__/WriteReviewForm.test.tsx`
+- Test: `website/client/features/product/tests/WriteReviewForm.test.tsx`
 
 - [ ] **Step 1: Write the failing test**
-Create: `website/client/features/product/__tests__/WriteReviewForm.test.tsx`
+Create: `website/client/features/product/tests/WriteReviewForm.test.tsx`
 ```tsx
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
@@ -111,6 +113,6 @@ Expected: PASS.
 - [ ] **Step 5: Commit**
 Run:
 ```bash
-git add features/product/schemas/review.schema.ts features/product/components/WriteReviewForm.tsx features/product/__tests__/WriteReviewForm.test.tsx
+git add features/product/schemas/review.schema.ts features/product/components/WriteReviewForm.tsx features/product/tests/WriteReviewForm.test.tsx
 git commit -m "feat(client): refactor write review form to use separated schema file"
 ```
