@@ -10,6 +10,8 @@
 
 **Tech Stack:** React 18, React Router v6, Axios, Vitest, React Testing Library.
 
+> ⬜ **Chưa build** — plan mục tiêu; đã chỉnh cho khớp codebase. Chưa có `features/products` nên chưa có `ProductForm` / `AttributeSelector` / `VariantsTable`; backend cũng chưa có API sản phẩm/biến thể.
+
 ---
 
 ## 📋 Task Breakdown
@@ -18,7 +20,7 @@
 
 **Files:**
 - Create: `website/seller/src/components/products/AttributeSelector.tsx`
-- Test: `website/seller/src/__tests__/attributeSelector.test.tsx`
+- Test: `website/seller/src/tests/attributeSelector.test.tsx`
 
 - [ ] **Step 3: Implementation**
 ...
@@ -31,13 +33,13 @@
 **Files:**
 - Create: `website/seller/src/components/products/VariantsTable.tsx`
 - Modify: `website/seller/src/features/products/components/ProductForm.tsx`
-- Test: `website/seller/src/__tests__/variantsTable.test.tsx`
+- Test: `website/seller/src/tests/variantsTable.test.tsx`
 
 - [ ] **Step 3: Integrate with ProductForm component**
 Cập nhật `website/seller/src/features/products/components/ProductForm.tsx` tích hợp cả `AttributeSelector` lẫn `VariantsTable` bên dưới thông số chính.
 
 - [ ] **Step 5: Commit**
 ```bash
-git add website/seller/src/components/products/VariantsTable.tsx website/seller/src/features/products/components/ProductForm.tsx website/seller/src/__tests__/variantsTable.test.tsx
+git add website/seller/src/components/products/VariantsTable.tsx website/seller/src/features/products/components/ProductForm.tsx website/seller/src/tests/variantsTable.test.tsx
 git commit -m "feat(seller): integrate variants and attributes manager UI into feature ProductForm"
 ```

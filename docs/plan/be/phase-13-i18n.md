@@ -4,6 +4,8 @@
 
 ---
 
+> ⬜ **Chưa build** — plan mục tiêu; đã chỉnh path/lệnh cho khớp codebase hiện tại (server mới có `auth`/`shop`/`upload`).
+
 ## 🎯 MVP Của Phase Này
 
 - Backend error messages trả về đúng ngôn ngữ theo header `Accept-Language` hoặc query parameter `?lang=`
@@ -21,7 +23,7 @@ Phase này **không có bảng mới** nào được tạo. Trong phiên bản M
 
 ```bash
 cd server
-npm install i18next
+pnpm add i18next
 ```
 
 Backend nhận locale từ:

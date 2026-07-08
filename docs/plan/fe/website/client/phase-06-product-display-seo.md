@@ -6,12 +6,14 @@
 
 **Architecture:** Sử dụng React hook `useDebounce` để tối ưu số lần gọi API khi người dùng gõ từ khóa tìm kiếm. Trang Chi tiết sản phẩm sử dụng mô hình Server Component trong Next.js App Router để fetch data trực tiếp từ API Gateway và cung cấp SEO metadata thông qua hàm `generateMetadata` cho crawler của Google/Facebook.
 
-**Tech Stack:** Next.js Server Components, custom React Hooks, SEO `generateMetadata` API, Jest.
+**Tech Stack:** Next.js Server Components, custom React Hooks, SEO `generateMetadata` API, Vitest.
+
+> 🟡 **Một phần** — mới có thư mục scaffold rỗng `features/products/{components,hooks,services,stores,types}` và route rỗng `app/(public)/products/` (chưa có `page.tsx`). `ProductCard` thật nằm ở `components/shared/ProductCard.tsx`, hiện chỉ dùng cho landing (`features/landing`) với type `Product` mock cục bộ. Backend product API chưa tồn tại nên chưa có fetch/SSR/SEO thật — code dưới là thiết kế mục tiêu.
 
 ## Global Constraints
 
 - Client web portal is located at `website/client/`
-- Tech Stack: Next.js 15 (App Router), React 19, Tailwind CSS (v4), TypeScript, Zustand
+- Tech Stack: Next.js 16 (App Router), React 19, Tailwind CSS (v4), TypeScript, Zustand
 - No placeholder code in the plan: write actual implementations, imports, types, test cases, and commands.
 - Use Vietnamese for descriptions and explanations, and English for code and commands.
 - TDD workflow is mandatory for tasks: Step 1 write failing test, Step 2 run to fail, Step 3 minimal implementation, Step 4 run to pass, Step 5 git commit.
@@ -22,7 +24,7 @@
 
 **Files:**
 - Create: `website/client/hooks/useDebounce.ts`, `website/client/features/product/components/ProductFilters.tsx`
-- Test: `website/client/hooks/__tests__/useDebounce.test.ts`
+- Test: `website/client/hooks/tests/useDebounce.test.ts`
 
 **Interfaces:**
 - Consumes: None
@@ -30,7 +32,7 @@
 
 - [ ] **Step 1: Write the failing test**
 Tạo file test kiểm tra xem hook `useDebounce` có cập nhật giá trị đúng thời gian trễ hay không:
-Create: `website/client/hooks/__tests__/useDebounce.test.ts`
+Create: `website/client/hooks/tests/useDebounce.test.ts`
 ```typescript
 import { renderHook, act } from '@testing-library/react';
 import { useDebounce } from '../useDebounce';
@@ -177,7 +179,7 @@ Expected: PASS useDebounce.test.ts
 - [ ] **Step 5: Commit**
 Run:
 ```bash
-git add hooks/useDebounce.ts features/product/components/ProductFilters.tsx hooks/__tests__/useDebounce.test.ts
+git add hooks/useDebounce.ts features/product/components/ProductFilters.tsx hooks/tests/useDebounce.test.ts
 git commit -m "feat(client): implement useDebounce hook and UI sidebar ProductFilters component"
 ```
 
@@ -187,7 +189,7 @@ git commit -m "feat(client): implement useDebounce hook and UI sidebar ProductFi
 
 **Files:**
 - Create: `website/client/features/product/components/ProductCard.tsx`, `website/client/app/(public)/products/page.tsx`
-- Test: `website/client/features/product/__tests__/ProductCard.test.tsx`
+- Test: `website/client/features/product/tests/ProductCard.test.tsx`
 
 **Interfaces:**
 - Consumes: Tailwind v4 theme utility
@@ -195,7 +197,7 @@ git commit -m "feat(client): implement useDebounce hook and UI sidebar ProductFi
 
 - [ ] **Step 1: Write the failing test**
 Tạo file test kiểm tra khả năng render của ProductCard:
-Create: `website/client/features/product/__tests__/ProductCard.test.tsx`
+Create: `website/client/features/product/tests/ProductCard.test.tsx`
 ```tsx
 import React from 'react';
 import { render, screen } from '@testing-library/react';
@@ -365,7 +367,7 @@ Expected: PASS ProductCard.test.tsx
 - [ ] **Step 5: Commit**
 Run:
 ```bash
-git add features/product/components/ProductCard.tsx app/\(storefront\)/products/page.tsx features/product/__tests__/ProductCard.test.tsx
+git add features/product/components/ProductCard.tsx app/\(storefront\)/products/page.tsx features/product/tests/ProductCard.test.tsx
 git commit -m "feat(client): develop ProductCard component and render dynamic product list with filters"
 ```
 
@@ -375,7 +377,7 @@ git commit -m "feat(client): develop ProductCard component and render dynamic pr
 
 **Files:**
 - Create: `website/client/app/(public)/products/[slug]/page.tsx`, `website/client/features/product/components/ShareButton.tsx`
-- Test: `website/client/app/(public)/products/[slug]/__tests__/ProductDetailsPage.test.tsx`, `website/client/features/product/__tests__/ShareButton.test.tsx`
+- Test: `website/client/app/(public)/products/[slug]/tests/ProductDetailsPage.test.tsx`, `website/client/features/product/tests/ShareButton.test.tsx`
 
 **Interfaces:**
 - Consumes: Next.js 15 generateMetadata, Clipboard API
@@ -384,7 +386,7 @@ git commit -m "feat(client): develop ProductCard component and render dynamic pr
 - [ ] **Step 1: Write the failing tests**
 
 Tạo file test kiểm tra khả năng render SSR và cấu hình generateMetadata:
-Create: `website/client/app/(public)/products/[slug]/__tests__/ProductDetailsPage.test.tsx`
+Create: `website/client/app/(public)/products/[slug]/tests/ProductDetailsPage.test.tsx`
 ```tsx
 import { generateMetadata } from '../page';
 
@@ -417,7 +419,7 @@ describe('Product Details SSR SEO', () => {
 ```
 
 Tạo file test kiểm tra chức năng Share Button sao chép đường dẫn:
-Create: `website/client/features/product/__tests__/ShareButton.test.tsx`
+Create: `website/client/features/product/tests/ShareButton.test.tsx`
 ```tsx
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
@@ -625,7 +627,7 @@ Expected: PASS ProductDetailsPage.test.tsx & ShareButton.test.tsx
 
 Run:
 ```bash
-git add app/\(storefront\)/products/\[slug\]/page.tsx app/\(storefront\)/products/\[slug\]/__tests__/ProductDetailsPage.test.tsx features/product/components/ShareButton.tsx features/product/__tests__/ShareButton.test.tsx
+git add app/\(storefront\)/products/\[slug\]/page.tsx app/\(storefront\)/products/\[slug\]/tests/ProductDetailsPage.test.tsx features/product/components/ShareButton.tsx features/product/tests/ShareButton.test.tsx
 git commit -m "feat(client): build SSR Product Details page with dynamic OpenGraph SEO tags and clipboard link sharing"
 ```
 

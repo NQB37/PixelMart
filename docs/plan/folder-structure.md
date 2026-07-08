@@ -1,7 +1,16 @@
 # 📁 PIXELMART — FOLDER STRUCTURE PLAN
 
 > Tài liệu này mô tả chi tiết cấu trúc thư mục cho cả **Monolith** (Phase 1–14) và **Microservices** (Phase 15–16+).
-> Multi-vendor Marketplace — Express.js + Next.js + Prisma + PostgreSQL/MongoDB.
+> Multi-vendor Marketplace — Express.js + Next.js + Prisma + PostgreSQL.
+
+> [!IMPORTANT]
+> 📌 **Thực tế codebase hiện tại (nguồn chân lý).** Sơ đồ chi tiết bên dưới là cấu trúc **mục tiêu**. Phần đã build thật:
+> - **`website/`** (pnpm workspace) có thật: `shared` = `@pixelmart/shared` (exports `./auth`, `./ui`, `./styles/theme.css`), `client` (Next.js), `seller` + `admin` (Vite). **`server/`** có thật.
+> - **`mobile/`, `services/`, `infra/`, `.github/workflows/`, `.husky/`, `docker-compose*.yml`** là mục tiêu — **chưa tồn tại** (`mobile/` đang trống).
+> - Backend hiện có **3 module**: `auth`, `shop`, `upload` (các module khác trong sơ đồ là mục tiêu).
+> - Mỗi module = 4 file (`*.controller/routes/service/validation.ts`) + thư mục **`tests/`** — **không** dùng `__tests__/`, và **không** có file `*.types.ts` riêng (type suy ra từ Zod `z.infer` trong `*.validation.ts`).
+> - `src/config/` thực tế: `env.ts`, `cors.ts`, `cloudinary.ts` (multer cấu hình inline trong `upload.middleware.ts`; `redis.ts` là mục tiêu Phase 14).
+> - Prisma: một file `prisma/seed.ts` (không có thư mục `seeds/`); Prisma Client singleton ở **`src/libs/prisma.ts`**; alias `@/` → `src/`.
 
 ---
 
@@ -107,7 +116,7 @@ server/
 │   │   │   ├── auth.routes.ts          # Route definitions (POST /login, etc.)
 │   │   │   ├── auth.validation.ts      # Input validation schemas (zod)
 │   │   │   ├── auth.types.ts           # TypeScript interfaces/types
-│   │   │   └── __tests__/
+│   │   │   └── tests/
 │   │   │       ├── auth.service.test.ts
 │   │   │       └── auth.controller.test.ts
 │   │   │
@@ -117,7 +126,7 @@ server/
 │   │   │   ├── user.routes.ts
 │   │   │   ├── user.validation.ts
 │   │   │   ├── user.types.ts
-│   │   │   └── __tests__/
+│   │   │   └── tests/
 │   │   │       └── user.service.test.ts
 │   │   │
 │   │   ├── shop/               # 🏪 Shop/Seller management (Multi-vendor!)
@@ -126,7 +135,7 @@ server/
 │   │   │   ├── shop.routes.ts
 │   │   │   ├── shop.validation.ts
 │   │   │   ├── shop.types.ts
-│   │   │   └── __tests__/
+│   │   │   └── tests/
 │   │   │       └── shop.service.test.ts
 │   │   │
 │   │   ├── category/           # 📂 Product categories (hierarchical)
@@ -135,7 +144,7 @@ server/
 │   │   │   ├── category.routes.ts
 │   │   │   ├── category.validation.ts
 │   │   │   ├── category.types.ts
-│   │   │   └── __tests__/
+│   │   │   └── tests/
 │   │   │       └── category.service.test.ts
 │   │   │
 │   │   ├── product/            # 📦 Product CRUD + variants
@@ -145,7 +154,7 @@ server/
 │   │   │   ├── product.validation.ts
 │   │   │   ├── product.types.ts
 │   │   │   ├── variant.service.ts        # Product variant logic
-│   │   │   └── __tests__/
+│   │   │   └── tests/
 │   │   │       ├── product.service.test.ts
 │   │   │       └── variant.service.test.ts
 │   │   │
@@ -155,7 +164,7 @@ server/
 │   │   │   ├── cart.routes.ts
 │   │   │   ├── cart.validation.ts
 │   │   │   ├── cart.types.ts
-│   │   │   └── __tests__/
+│   │   │   └── tests/
 │   │   │       └── cart.service.test.ts
 │   │   │
 │   │   ├── order/              # 📋 Order processing & management
@@ -164,7 +173,7 @@ server/
 │   │   │   ├── order.routes.ts
 │   │   │   ├── order.validation.ts
 │   │   │   ├── order.types.ts
-│   │   │   └── __tests__/
+│   │   │   └── tests/
 │   │   │       └── order.service.test.ts
 │   │   │
 │   │   ├── payment/            # 💳 Payment integration (COD → VNPAY/Stripe)
@@ -178,7 +187,7 @@ server/
 │   │   │   │   ├── cod.strategy.ts         # COD implementation
 │   │   │   │   ├── vnpay.strategy.ts       # VNPAY implementation
 │   │   │   │   └── stripe.strategy.ts      # Stripe implementation
-│   │   │   └── __tests__/
+│   │   │   └── tests/
 │   │   │       └── payment.service.test.ts
 │   │   │
 │   │   ├── review/             # ⭐ Product reviews & ratings
@@ -187,14 +196,14 @@ server/
 │   │   │   ├── review.routes.ts
 │   │   │   ├── review.validation.ts
 │   │   │   ├── review.types.ts
-│   │   │   └── __tests__/
+│   │   │   └── tests/
 │   │   │       └── review.service.test.ts
 │   │   │
 │   │   ├── wishlist/           # ❤️ Wishlist / Favorites
 │   │   │   ├── wishlist.controller.ts
 │   │   │   ├── wishlist.service.ts
 │   │   │   ├── wishlist.routes.ts
-│   │   │   └── __tests__/
+│   │   │   └── tests/
 │   │   │       └── wishlist.service.test.ts
 │   │   │
 │   │   ├── coupon/             # 🎟️ Coupon / Discount codes
@@ -203,21 +212,21 @@ server/
 │   │   │   ├── coupon.routes.ts
 │   │   │   ├── coupon.validation.ts
 │   │   │   ├── coupon.types.ts
-│   │   │   └── __tests__/
+│   │   │   └── tests/
 │   │   │       └── coupon.service.test.ts
 │   │   │
 │   │   ├── upload/             # 📸 File upload (Cloudinary/S3)
 │   │   │   ├── upload.controller.ts
 │   │   │   ├── upload.service.ts
 │   │   │   ├── upload.routes.ts
-│   │   │   └── __tests__/
+│   │   │   └── tests/
 │   │   │       └── upload.service.test.ts
 │   │   │
 │   │   ├── admin/              # 👑 Admin-only operations
 │   │   │   ├── admin.controller.ts
 │   │   │   ├── admin.service.ts
 │   │   │   ├── admin.routes.ts
-│   │   │   └── __tests__/
+│   │   │   └── tests/
 │   │   │       └── admin.service.test.ts
 │   │   │
 │   │   └── notification/       # 🔔 Email & push notifications
@@ -228,7 +237,7 @@ server/
 │   │       │   ├── order-confirmation.hbs
 │   │       │   ├── welcome.hbs
 │   │       │   └── password-reset.hbs
-│   │       └── __tests__/
+│   │       └── tests/
 │   │           └── notification.service.test.ts
 │   │
 │   ├── middlewares/            # 🛡️ Express middlewares
@@ -912,7 +921,7 @@ import { z } from "zod";
 import { IUser } from "@pixelmart/shared-types";
 
 // 4. Internal modules (absolute imports)
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/libs/prisma";
 import { ApiError } from "@/utils/ApiError";
 
 // 5. Relative imports (same module)

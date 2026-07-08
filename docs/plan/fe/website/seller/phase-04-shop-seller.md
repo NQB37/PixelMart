@@ -9,7 +9,12 @@
 - Validation Schema được tách biệt hoàn toàn tại `features/shop/schemas/shop.schema.ts`.
 - Form Presentation & Logic nằm tại `features/shop/components/ShopSettingsForm.tsx`.
 
-**Tech Stack:** React 18, Zustand, TanStack Query, Zod, Axios, Vitest, React Testing Library.
+**Tech Stack:** React 19, Zustand, TanStack Query, Zod, Axios, Vitest, React Testing Library.
+
+> [!IMPORTANT]
+> 📌 **As-built (codebase là chân lý).** App `seller` **không** build "Shop Settings" như kế hoạch dưới đây — mà build **wizard đăng ký shop** (buyer → seller): `features/shop/components/RegisterShopForm.tsx` (+ `ShopInfoStep`, `IdentityBankStep`, `ImageUploadField`, `ProgressStepper`, `FormField`), schema `features/shop/schemas/shop.schema.ts` (`registerShopSchema` = thông tin shop + KYC CCCD/ngân hàng), service `shopApi.register` → `POST /shops` và `shopApi.uploadImage` → `POST /uploads`, hook `useRegisterShop` (sau khi đăng ký gọi `refreshToken` + `getMe` để nhận role SELLER mới). Ảnh upload 2 pha (Cloudinary) rồi submit URL. Page `pages/RegisterShop.tsx`, route `/register-shop`.
+>
+> Form **Shop Settings** (`PUT /shops/me`) dưới đây **chưa build** — backend cũng chưa có `PUT /shops/me` (xem BE Phase 4). Snippet dưới là thiết kế mục tiêu.
 
 ---
 

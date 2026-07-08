@@ -8,6 +8,8 @@
 - Trang `pages/Dashboard.tsx` đóng vai trò là entry point sạch, chỉ import và render `<DashboardOverview />`.
 - Component `DashboardOverview.tsx` chịu trách nhiệm gọi API, lưu trữ state thống kê, vẽ biểu đồ bằng Recharts.
 
+> ⬜ **Chưa build** — plan mục tiêu; đã chỉnh cho khớp codebase. Chưa có `features/dashboard` / Recharts / stat cards (route `/` hiện chỉ render `pages/Dashboard.tsx` tối giản), và backend chưa có API thống kê.
+
 ---
 
 ## 📋 Task Breakdown

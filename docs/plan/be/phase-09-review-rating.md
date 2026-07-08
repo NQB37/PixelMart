@@ -4,6 +4,8 @@
 
 ---
 
+> ⬜ **Chưa build** — plan mục tiêu; đã chỉnh path/lệnh cho khớp codebase hiện tại (server mới có `auth`/`shop`/`upload`).
+
 ## 🎯 MVP Của Phase Này
 
 - Buyer chỉ review được khi đã mua hàng (order DELIVERED)
@@ -49,7 +51,7 @@ Hãy nhớ cập nhật liên kết trong các model cũ:
 ### 2. Chạy Migration:
 
 ```bash
-npx prisma migrate dev --name add_reviews
+pnpm prisma migrate dev --name add_reviews
 ```
 
 > [!NOTE]
@@ -64,7 +66,7 @@ npx prisma migrate dev --name add_reviews
 #### `src/modules/review/review.service.ts`:
 
 ```typescript
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/libs/prisma";
 import { ApiError } from "@/utils/ApiError";
 import { Prisma } from "@prisma/client";
 

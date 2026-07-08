@@ -6,12 +6,14 @@
 
 **Architecture:** Sử dụng `next/font/google` để tải font trực tiếp tại máy chủ Next.js và nhúng CSS inline loại bỏ Cumulative Layout Shift. Áp dụng Dynamic Imports (`next/dynamic`) cho các thành phần nặng (như Form Review, Giỏ hàng bay) để giảm kích thước bundle ban đầu. Sử dụng cơ chế Fetch Cache với tùy chọn `revalidate` cho các dữ liệu ít thay đổi (ví dụ: Danh sách category).
 
-**Tech Stack:** Next.js Image Optimization, Next.js Font, next/dynamic, Jest.
+**Tech Stack:** Next.js Image Optimization, Next.js Font, next/dynamic, Vitest.
+
+> ⬜ **Chưa build** — plan mục tiêu; đã chỉnh cho khớp codebase.
 
 ## Global Constraints
 
 - Client web portal is located at `website/client/`
-- Tech Stack: Next.js 15 (App Router), React 19, Tailwind CSS (v4), TypeScript, Zustand
+- Tech Stack: Next.js 16 (App Router), React 19, Tailwind CSS (v4), TypeScript, Zustand
 - No placeholder code in the plan: write actual implementations, imports, types, test cases, and commands.
 - Use Vietnamese for descriptions and explanations, and English for code and commands.
 - TDD workflow is mandatory for tasks: Step 1 write failing test, Step 2 run to fail, Step 3 minimal implementation, Step 4 run to pass, Step 5 git commit.
@@ -22,7 +24,7 @@
 
 **Files:**
 - Modify: `website/client/app/\[locale\]/layout.tsx`, `website/client/next.config.ts`
-- Test: `website/client/__tests__/optimization-settings.test.tsx`
+- Test: `website/client/tests/optimization-settings.test.tsx`
 
 **Interfaces:**
 - Consumes: Google Fonts API
@@ -30,7 +32,7 @@
 
 - [ ] **Step 1: Write the failing test**
 Tạo file test kiểm tra cấu hình nạp font và cấu hình ảnh từ Cloudinary:
-Create: `website/client/__tests__/optimization-settings.test.tsx`
+Create: `website/client/tests/optimization-settings.test.tsx`
 ```tsx
 import nextConfig from '../next.config';
 
@@ -128,7 +130,7 @@ Expected: PASS optimization-settings.test.tsx
 - [ ] **Step 5: Commit**
 Run:
 ```bash
-git add app/\[locale\]/layout.tsx next.config.ts __tests__/optimization-settings.test.tsx
+git add app/\[locale\]/layout.tsx next.config.ts tests/optimization-settings.test.tsx
 git commit -m "perf(client): optimize Google fonts loading and limit remote images pattern check"
 ```
 
@@ -139,7 +141,7 @@ git commit -m "perf(client): optimize Google fonts loading and limit remote imag
 **Files:**
 - Create: `website/client/components/HeavyChart.tsx`
 - Modify: `website/client/app/(public)/products/\[slug\]/page.tsx:32-60`
-- Test: `website/client/__tests__/dynamic-imports.test.tsx`
+- Test: `website/client/tests/dynamic-imports.test.tsx`
 
 **Interfaces:**
 - Consumes: Custom components
@@ -147,7 +149,7 @@ git commit -m "perf(client): optimize Google fonts loading and limit remote imag
 
 - [ ] **Step 1: Write the failing test**
 Tạo file test kiểm thử render của component load động bằng lazy import:
-Create: `website/client/__tests__/dynamic-imports.test.tsx`
+Create: `website/client/tests/dynamic-imports.test.tsx`
 ```tsx
 import React from 'react';
 import { render, screen } from '@testing-library/react';
@@ -213,7 +215,7 @@ Expected: PASS dynamic-imports.test.tsx
 - [ ] **Step 5: Commit**
 Run:
 ```bash
-git add components/HeavyChart.tsx app/\(storefront\)/products/\[slug\]/page.tsx __tests__/dynamic-imports.test.tsx
+git add components/HeavyChart.tsx app/\(storefront\)/products/\[slug\]/page.tsx tests/dynamic-imports.test.tsx
 git commit -m "perf(client): setup dynamic lazy load code splitting for heavy components"
 ```
 

@@ -4,6 +4,8 @@
 
 ---
 
+> ⬜ **Chưa build** — plan mục tiêu; hạ tầng microservices/queue/monitoring chưa dựng. Server hiện là monolith với `auth`/`shop`/`upload`, dùng pnpm + tsx.
+
 ## Tổng Quan
 
 Phase này là **graduation project** — tổng hợp tất cả kiến thức đã học. Chia thành 3 sub-phases:
@@ -57,8 +59,8 @@ Trong phase này, thay vì thêm bảng mới, chúng ta thực hiện kiến tr
 ```bash
 mkdir services/api-gateway
 cd services/api-gateway
-npm init -y
-npm install express http-proxy-middleware cors helmet jsonwebtoken
+pnpm init
+pnpm add express http-proxy-middleware cors helmet jsonwebtoken
 ```
 
 #### `services/api-gateway/src/routes.config.ts`:
@@ -275,7 +277,7 @@ export async function startOrderConsumer() {
 ### Task 16C.1: Structured Logging — Winston (2-3h)
 
 ```bash
-npm install winston
+pnpm add winston
 ```
 
 ```typescript
@@ -325,7 +327,7 @@ logger.info("User login", { email, password: "***" });
 ### Task 16C.2: Prometheus Metrics (2-3h)
 
 ```bash
-npm install prom-client
+pnpm add prom-client
 ```
 
 ```typescript

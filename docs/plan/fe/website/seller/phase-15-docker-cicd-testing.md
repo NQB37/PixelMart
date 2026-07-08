@@ -8,6 +8,8 @@
 
 **Tech Stack:** Docker, Nginx, Cypress 15, GitHub Actions CI.
 
+> ⬜ **Chưa build** — plan mục tiêu; đã chỉnh cho khớp codebase. Chưa có Docker/nginx/Cypress/CI. Lưu ý path thật: workspace là **`website/`** (không phải `web/`), shared package ở `website/shared`.
+
 ## Global Constraints
 
 - Node.js version >= 18
@@ -24,7 +26,7 @@
 **Files:**
 - Create: `infra/docker/Dockerfile.seller`
 - Create: `infra/nginx/seller.conf`
-- Create: `website/seller/src/__tests__/docker.test.ts`
+- Create: `website/seller/src/tests/docker.test.ts`
 
 **Interfaces:**
 - Consumes: Bản build build-output (dist) từ Phase 1.
@@ -32,7 +34,7 @@
 
 - [ ] **Step 1: Write the failing test**
 Để kiểm tra cấu hình Dockerfile có hợp lệ và sẵn sàng build, ta viết unit test kiểm tra sự tồn tại của file cấu hình.
-Create: `website/seller/src/__tests__/docker.test.ts`
+Create: `website/seller/src/tests/docker.test.ts`
 ```typescript
 import { describe, it, expect } from 'vitest';
 import * as fs from 'fs';
@@ -122,7 +124,7 @@ Expected: PASS 1/1 (docker.test.ts)
 
 - [ ] **Step 5: Commit**
 ```bash
-git add infra/docker/Dockerfile.seller infra/nginx/seller.conf website/seller/src/__tests__/docker.test.ts
+git add infra/docker/Dockerfile.seller infra/nginx/seller.conf website/seller/src/tests/docker.test.ts
 git commit -m "feat(seller): add Multi-stage Dockerfile and Nginx SPA fallback configurations"
 ```
 
@@ -223,7 +225,7 @@ git commit -m "feat(seller): install Cypress and write initial E2E login flow te
 
 - [ ] **Step 1: Write the failing test**
 Để kiểm tra workflow có cấu trúc hợp lệ, ta viết test case kiểm tra cú pháp YAML của file.
-Modify: `website/seller/src/__tests__/docker.test.ts:1-35`
+Modify: `website/seller/src/tests/docker.test.ts:1-35`
 ```typescript
 import { describe, it, expect } from 'vitest';
 import * as fs from 'fs';
@@ -295,7 +297,7 @@ jobs:
           start: pnpm dev
           wait-on: 'http://localhost:5173'
 ```
-*(Lưu ý: Để tránh lỗi lint trong dự án khi chạy GitHub Actions, hãy chắc chắn lệnh `npm run lint` hoặc `pnpm lint` đã được cấu hình trỏ vào eslint. Do ta chưa thiết lập ESLint quá nghiêm ngặt, ta cấu hình script `lint` tạm thời trả ra exit 0 hoặc trỏ đến eslint có sẵn)*
+*(Lưu ý: Để tránh lỗi lint trong dự án khi chạy GitHub Actions, hãy chắc chắn lệnh `pnpm --filter seller lint` đã được cấu hình trỏ vào eslint. Do ta chưa thiết lập ESLint quá nghiêm ngặt, ta cấu hình script `lint` tạm thời trả ra exit 0 hoặc trỏ đến eslint có sẵn)*
 
 - [ ] **Step 4: Run test to verify it passes**
 Run: `pnpm --filter seller test run`
@@ -303,7 +305,7 @@ Expected: PASS toàn bộ các test cases.
 
 - [ ] **Step 5: Commit**
 ```bash
-git add .github/workflows/seller-ci.yml website/seller/src/__tests__/docker.test.ts
+git add .github/workflows/seller-ci.yml website/seller/src/tests/docker.test.ts
 git commit -m "feat(seller): add GitHub Actions workflow config for integration test pipeline"
 ```
 

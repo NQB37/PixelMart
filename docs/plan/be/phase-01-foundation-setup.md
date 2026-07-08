@@ -16,6 +16,9 @@ Sau phase này, em phải có:
 - ESLint + Prettier chạy OK, code format đồng nhất
 - Git repository với `.gitignore` chuẩn
 
+> [!NOTE]
+> 📌 **As-built (codebase là chân lý):** Phase này **hoàn thành**. Toolchain thật: **pnpm** + **`tsx`** (dev `tsx --watch src/server.ts`, seed `pnpm seed`), **không** dùng `tsx`/`tsconfig-paths`. Alias `@/` → `src` khai báo trong `tsconfig.json`. Server chạy port 8000, có `GET /api/v1/health`; `src/config/env.ts` validate biến môi trường bằng Zod; ESLint + Prettier. (Prisma v7 thêm ở Phase 2.)
+
 ---
 
 ## 📋 Task Breakdown
@@ -70,7 +73,7 @@ coverage/
 
 #### ✅ Definition of Done:
 
-- [ ] `git status` hoạt động, `.gitignore` đã commit
+- [x] `git status` hoạt động, `.gitignore` đã commit
 
 ---
 
@@ -78,23 +81,23 @@ coverage/
 
 ```bash
 cd server
-npm init -y
+pnpm init
 ```
 
 #### Cài đặt dependencies:
 
 ```bash
 # === Runtime dependencies ===
-npm install express cors dotenv helmet morgan cookie-parser
+pnpm add express cors dotenv helmet morgan cookie-parser
 
 # === TypeScript & types ===
-npm install -D typescript ts-node-dev @types/node @types/express @types/cors @types/morgan @types/cookie-parser
+pnpm add -D typescript tsx @types/node @types/express @types/cors @types/morgan @types/cookie-parser
 
 # === Code quality ===
-npm install -D eslint prettier eslint-config-prettier @typescript-eslint/parser @typescript-eslint/eslint-plugin
+pnpm add -D eslint prettier eslint-config-prettier @typescript-eslint/parser @typescript-eslint/eslint-plugin
 
 # === Validation ===
-npm install zod
+pnpm add zod
 ```
 
 #### Giải thích từng package:
@@ -108,7 +111,7 @@ npm install zod
 | `morgan`        | HTTP logger                   | Log mỗi request: `GET /api/v1/health 200 3ms`               |
 | `cookie-parser` | Parse cookies                 | Đọc JWT từ HttpOnly Cookie                                  |
 | `zod`           | Schema validation             | Validate input data type-safe                               |
-| `ts-node-dev`   | Dev server                    | Auto-restart khi code thay đổi (giống nodemon nhưng cho TS) |
+| `tsx`   | Dev server                    | Auto-restart khi code thay đổi (giống nodemon nhưng cho TS) |
 
 #### Cấu hình `tsconfig.json`:
 
@@ -142,7 +145,7 @@ npm install zod
 ```json
 {
   "scripts": {
-    "dev": "ts-node-dev --respawn --transpile-only -r tsconfig-paths/register src/server.ts",
+    "dev": "tsx --watch src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
     "lint": "eslint src --ext .ts",
@@ -152,18 +155,17 @@ npm install zod
 }
 ```
 
-> **Cài thêm** `npm install -D tsconfig-paths` để `@/` alias hoạt động trong dev mode.
+> Dev runner là `tsx` (`tsx --watch`), tự resolve alias `@/` theo `tsconfig.json` — không cần cấu hình thêm.
 
 #### ⚠️ Lỗi fresher hay mắc:
 
-- **Quên `--transpile-only`:** Không có flag này, `ts-node-dev` sẽ check types mỗi lần restart → chậm x3-5 lần.
-- **Dùng `nodemon` cho TypeScript:** `nodemon` không hiểu TypeScript, phải cấu hình phức tạp. `ts-node-dev` sinh ra cho việc này.
+- **Chạy TypeScript trực tiếp:** dự án dùng `tsx --watch` — nhanh, hiểu TS + ESM sẵn, không cần build bước riêng hay `nodemon`.
 
 #### ✅ Definition of Done:
 
-- [ ] `npm run dev` → server khởi động không lỗi
-- [ ] `npm run lint` → pass, không warning
-- [ ] Import bằng `@/` alias hoạt động (`import { x } from '@/utils/x'`)
+- [x] `pnpm dev` → server khởi động không lỗi
+- [x] `pnpm lint` → pass, không warning
+- [x] Import bằng `@/` alias hoạt động (`import { x } from '@/utils/x'`)
 
 ---
 
@@ -508,22 +510,22 @@ startServer();
 
 #### ✅ Definition of Done:
 
-- [ ] `npm run dev` → server khởi động, log ra banner đẹp
-- [ ] `GET /api/v1/health` → `{ success: true, data: { status: "ok", ... } }`
-- [ ] `GET /api/v1/not-exist` → `{ success: false, message: "Cannot GET /api/v1/not-exist" }` (404)
-- [ ] `Ctrl+C` → log "Shutting down gracefully..."
+- [x] `pnpm dev` → server khởi động, log ra banner đẹp
+- [x] `GET /api/v1/health` → `{ success: true, data: { status: "ok", ... } }`
+- [x] `GET /api/v1/not-exist` → `{ success: false, message: "Cannot GET /api/v1/not-exist" }` (404)
+- [x] `Ctrl+C` → log "Shutting down gracefully..."
 
 ## 🏁 Checklist Cuối Phase 1
 
-- [ ] Git repository khởi tạo, `.gitignore` chuẩn
-- [ ] Backend: `npm run dev` → server chạy OK ở port 8000
-- [ ] Backend: `/api/v1/health` trả JSON đúng format
-- [ ] Backend: 404 handler trả JSON (không HTML)
-- [ ] Backend: Error handler trả JSON chuẩn format
-- [ ] Backend: ESLint + Prettier pass
-- [ ] Backend: `.env` + `.env.example` setup đúng
-- [ ] Backend: Env validation crash ngay khi thiếu biến
-- [ ] **First commit** pushed lên GitHub
+- [x] Git repository khởi tạo, `.gitignore` chuẩn
+- [x] Backend: `pnpm dev` → server chạy OK ở port 8000
+- [x] Backend: `/api/v1/health` trả JSON đúng format
+- [x] Backend: 404 handler trả JSON (không HTML)
+- [x] Backend: Error handler trả JSON chuẩn format
+- [x] Backend: ESLint + Prettier pass
+- [x] Backend: `.env` + `.env.example` setup đúng
+- [x] Backend: Env validation crash ngay khi thiếu biến
+- [x] **First commit** pushed lên GitHub
 
 ---
 

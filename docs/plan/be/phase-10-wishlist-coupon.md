@@ -4,6 +4,8 @@
 
 ---
 
+> ⬜ **Chưa build** — plan mục tiêu; đã chỉnh path/lệnh cho khớp codebase hiện tại (server mới có `auth`/`shop`/`upload`).
+
 ## 🎯 MVP Của Phase Này
 
 **Wishlist:**
@@ -90,7 +92,7 @@ Và các liên kết trong các model cũ khác:
 ### 2. Chạy Migration:
 
 ```bash
-npx prisma migrate dev --name add_wishlist_coupon
+pnpm prisma migrate dev --name add_wishlist_coupon
 ```
 
 ### 3. Viết Seed Data Cho `prisma/seed.ts`:
@@ -164,7 +166,7 @@ main()
 Chạy seed:
 
 ```bash
-npx prisma db seed
+pnpm seed
 ```
 
 ---
@@ -176,7 +178,7 @@ npx prisma db seed
 #### `src/modules/wishlist/wishlist.service.ts`:
 
 ```typescript
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/libs/prisma";
 import { ApiError } from "@/utils/ApiError";
 
 class WishlistService {
@@ -293,7 +295,7 @@ export const createCouponSchema = z
 #### `src/modules/coupon/coupon.service.ts`:
 
 ```typescript
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/libs/prisma";
 import { ApiError } from "@/utils/ApiError";
 import { Prisma } from "@prisma/client";
 

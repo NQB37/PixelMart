@@ -12,6 +12,8 @@
 
 **Tech Stack:** React Hook Form, Zod, Axios API Client, Next.js dynamic routing, Vitest.
 
+> ⬜ **Chưa build** — plan mục tiêu; đã chỉnh cho khớp codebase. Checkout/payment hiện chỉ là stub 5 dòng trong `app/(protected)/`, và backend `/orders` chưa tồn tại.
+
 ## Global Constraints
 
 - Client web portal is located at `website/client/`
@@ -26,14 +28,14 @@
 - Create: `website/client/features/checkout/schemas/checkout.schema.ts`
 - Create: `website/client/features/checkout/components/CheckoutForm.tsx`
 - Create: `website/client/app/(public)/checkout/page.tsx`
-- Test: `website/client/features/checkout/__tests__/CheckoutForm.test.tsx`
+- Test: `website/client/features/checkout/tests/CheckoutForm.test.tsx`
 
 **Interfaces:**
 - Consumes: Zustand `cartStore` items list
 - Produces: Form Checkout hoàn chỉnh thu thập thông tin người nhận và điều hướng thanh toán.
 
 - [ ] **Step 1: Write the failing test**
-Create: `website/client/features/checkout/__tests__/CheckoutForm.test.tsx`
+Create: `website/client/features/checkout/tests/CheckoutForm.test.tsx`
 ```tsx
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
@@ -194,6 +196,6 @@ Expected: PASS.
 - [ ] **Step 5: Commit**
 Run:
 ```bash
-git add features/checkout/schemas/checkout.schema.ts features/checkout/components/CheckoutForm.tsx app/\(public\)/checkout/page.tsx features/checkout/__tests__/CheckoutForm.test.tsx
+git add features/checkout/schemas/checkout.schema.ts features/checkout/components/CheckoutForm.tsx app/\(public\)/checkout/page.tsx features/checkout/tests/CheckoutForm.test.tsx
 git commit -m "feat(client): refactor checkout to clean page and dedicated validation schema"
 ```

@@ -8,6 +8,9 @@
 
 **Tech Stack:** React 18, Vite 5, TypeScript 5, React Router v6, Tailwind CSS v4, Lucide React, Vitest, React Testing Library.
 
+> [!NOTE]
+> 📌 **As-built (codebase là chân lý):** Nền tảng đã dựng nhưng khác plan — **React 19 + Vite 8 + TypeScript + Tailwind v4**, **định tuyến bằng `@tanstack/react-router`** (`src/router.tsx`), **chưa có Vitest**. Cấu trúc thật: `src/{main.tsx, App.tsx, router.tsx, index.css, lib/api.ts, pages/, features/}` — **chưa có Layout Shell** (Sidebar/Header/SellerLayout). Route thực tế: `/`, `/login`, `/register`, `/register-shop`, `/403` (chưa có `/orders`). Alias `@` → `src` khai báo trong `vite.config.ts`. Lệnh: `pnpm --filter seller <script>`.
+
 ## Global Constraints
 
 - Node.js version >= 18
@@ -36,7 +39,7 @@
 
 - [ ] **Step 1: Write the failing test**
 Vì đây là cấu hình hạ tầng, ta tạo file test đầu tiên kiểm tra xem môi trường test chạy được.
-Create: `website/seller/src/__tests__/smoke.test.ts`
+Create: `website/seller/src/tests/smoke.test.ts`
 ```typescript
 import { describe, it, expect } from 'vitest';
 
@@ -108,13 +111,13 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'jsdom',
-    setupFiles: './src/__tests__/setup.ts',
+    setupFiles: './src/tests/setup.ts',
   },
 });
 ```
 
 Tạo file setup cho test:
-Create: `website/seller/src/__tests__/setup.ts`
+Create: `website/seller/src/tests/setup.ts`
 ```typescript
 import '@testing-library/jest-dom';
 ```
@@ -213,7 +216,7 @@ Expected: PASS 1/1 test (smoke.test.ts)
 
 - [ ] **Step 5: Commit**
 ```bash
-git add website/seller/package.json website/seller/vite.config.ts website/seller/tsconfig.json website/seller/index.html website/seller/src/index.css website/seller/src/main.tsx website/seller/src/__tests__/smoke.test.ts website/seller/src/__tests__/setup.ts
+git add website/seller/package.json website/seller/vite.config.ts website/seller/tsconfig.json website/seller/index.html website/seller/src/index.css website/seller/src/main.tsx website/seller/src/tests/smoke.test.ts website/seller/src/tests/setup.ts
 git commit -m "feat(seller): initialize Vite project with TypeScript, Tailwind v4 and Vitest setup"
 ```
 
@@ -226,14 +229,14 @@ git commit -m "feat(seller): initialize Vite project with TypeScript, Tailwind v
 - Create: `website/seller/src/pages/Orders.tsx`
 - Create: `website/seller/src/pages/NotFound.tsx`
 - Modify: `website/seller/src/main.tsx`
-- Create: `website/seller/src/__tests__/router.test.tsx`
+- Create: `website/seller/src/tests/router.test.tsx`
 
 **Interfaces:**
 - Consumes: Cấu hình Vite & packages ở Task 1
 - Produces: Router điều hướng cho các trang Dashboard, Orders và trang 404.
 
 - [ ] **Step 1: Write the failing test**
-Create: `website/seller/src/__tests__/router.test.tsx`
+Create: `website/seller/src/tests/router.test.tsx`
 ```typescript
 import React from 'react';
 import { render, screen } from '@testing-library/react';
@@ -350,7 +353,7 @@ Expected: PASS 4/4 tests.
 
 - [ ] **Step 5: Commit**
 ```bash
-git add website/seller/src/pages/Dashboard.tsx website/seller/src/pages/Orders.tsx website/seller/src/pages/NotFound.tsx website/seller/src/main.tsx website/seller/src/__tests__/router.test.tsx
+git add website/seller/src/pages/Dashboard.tsx website/seller/src/pages/Orders.tsx website/seller/src/pages/NotFound.tsx website/seller/src/main.tsx website/seller/src/tests/router.test.tsx
 git commit -m "feat(seller): add basic routing and page shells for Dashboard, Orders, and 404"
 ```
 
@@ -363,14 +366,14 @@ git commit -m "feat(seller): add basic routing and page shells for Dashboard, Or
 - Create: `website/seller/src/components/layout/Header.tsx`
 - Create: `website/seller/src/components/layout/SellerLayout.tsx`
 - Modify: `website/seller/src/main.tsx`
-- Create: `website/seller/src/__tests__/layout.test.tsx`
+- Create: `website/seller/src/tests/layout.test.tsx`
 
 **Interfaces:**
 - Consumes: Cấu hình Router và pages từ Task 2.
 - Produces: Layout dùng chung `SellerLayout` bao quanh các trang nội bộ của Kênh người bán.
 
 - [ ] **Step 1: Write the failing test**
-Create: `website/seller/src/__tests__/layout.test.tsx`
+Create: `website/seller/src/tests/layout.test.tsx`
 ```typescript
 import React from 'react';
 import { render, screen } from '@testing-library/react';
@@ -546,7 +549,7 @@ Expected: PASS tất cả 5 tests bao gồm `layout.test.tsx`.
 
 - [ ] **Step 5: Commit**
 ```bash
-git add website/seller/src/components/layout/Sidebar.tsx website/seller/src/components/layout/Header.tsx website/seller/src/components/layout/SellerLayout.tsx website/seller/src/main.tsx website/seller/src/__tests__/layout.test.tsx
+git add website/seller/src/components/layout/Sidebar.tsx website/seller/src/components/layout/Header.tsx website/seller/src/components/layout/SellerLayout.tsx website/seller/src/main.tsx website/seller/src/tests/layout.test.tsx
 git commit -m "feat(seller): add SellerLayout with Sidebar, Header components and update routing structure"
 ```
 
@@ -563,7 +566,7 @@ git commit -m "feat(seller): add SellerLayout with Sidebar, Header components an
 
 ### ⚠️ Common Fresher Errors
 - **Error:** Quên import setup file hoặc cấu hình global environment jsdom trong vitest config dẫn đến lỗi `document is not defined` hoặc các matcher như `toBeInTheDocument` không khả dụng.
-  - *Fix:* Luôn khai báo `setupFiles: './src/__tests__/setup.ts'` và `environment: 'jsdom'` trong `vite.config.ts`.
+  - *Fix:* Luôn khai báo `setupFiles: './src/tests/setup.ts'` và `environment: 'jsdom'` trong `vite.config.ts`.
 - **Error:** Không import `@import "tailwindcss";` trong file css chính khiến giao diện bị vỡ và không ăn style.
   - *Fix:* Khai báo ở dòng đầu tiên của `src/index.css`.
 - **Error:** Không cấu hình alias `@/*` đồng bộ giữa `tsconfig.json` và `vite.config.ts` dẫn đến việc IDE gợi ý đường dẫn import đúng nhưng build compiler của Vite báo lỗi file not found.

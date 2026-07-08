@@ -153,7 +153,7 @@
   - _Tại sao?:_ Đóng gói mã nguồn cùng môi trường chạy thành một khối độc lập, giải quyết triệt để câu nói kinh điển: "Code chạy ngon trên máy em nhưng lên máy deploy lại lỗi".
 - **Task 2: Viết file docker-compose.yml để liên kết Frontend, Backend và Postgres Database chạy chung một mạng nội bộ.**
   - _Tại sao?:_ Quản lý đa container một cách dễ dàng, cấu hình các biến môi trường tập trung tại một chỗ.
-- **Task 3: Viết file script GitHub Actions để tự chạy npm run lint và npm run build mỗi khi tạo Pull Request.**
+- **Task 3: Viết file script GitHub Actions để tự chạy pnpm lint và pnpm build mỗi khi tạo Pull Request.**
   - _Tại sao?:_ Tự động hóa khâu kiểm tra chất lượng code, ngăn chặn việc đẩy code lỗi lên nhánh chính.
 
 #### **🧠 Kiến Thức Sẽ Học Được**

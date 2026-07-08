@@ -4,6 +4,8 @@
 
 ---
 
+> ⬜ **Chưa build** — plan mục tiêu; đã chỉnh path/lệnh cho khớp codebase hiện tại (server mới có `auth`/`shop`/`upload`).
+
 ## 🎯 MVP Của Phase Này
 
 - Lấy giỏ hàng của user hiện tại, nhóm theo shop
@@ -56,7 +58,7 @@ Hãy nhớ cập nhật liên kết trong các model cũ:
 ### 2. Chạy Migration:
 
 ```bash
-npx prisma migrate dev --name add_cart
+pnpm prisma migrate dev --name add_cart
 ```
 
 > [!NOTE]
@@ -71,7 +73,7 @@ npx prisma migrate dev --name add_cart
 #### `src/modules/cart/cart.service.ts`:
 
 ```typescript
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/libs/prisma";
 import { ApiError } from "@/utils/ApiError";
 
 class CartService {

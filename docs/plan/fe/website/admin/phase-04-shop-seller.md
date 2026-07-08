@@ -9,6 +9,8 @@
 - Component `ShopsManager.tsx` chứa logic fetch danh sách shop, bộ lọc trạng thái, và modal handling.
 - Reusable modal `ActionReasonModal.tsx` nằm tại `features/shops/components/ActionReasonModal.tsx`.
 
+> ⬜ **Chưa build** — plan mục tiêu; đã chỉnh cho khớp codebase. App `admin` hiện chỉ có `features/auth`; chưa có trang Shops / `ShopsManager` / `ActionReasonModal`, và backend cũng chưa có endpoint duyệt shop cho admin.
+
 ---
 
 ## 📋 Task Breakdown

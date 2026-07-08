@@ -13,6 +13,9 @@
 - Kết nối thành công tới database PostgreSQL qua CLI và test connection thành công bằng query đơn giản.
 - Thiết kế target Prisma schema hoàn chỉnh (nhưng chưa migrate hết) để làm tài liệu đối chiếu cho các phase sau.
 
+> [!NOTE]
+> 📌 **As-built (codebase là chân lý):** Phase này coi như **hoàn thành**. Đã chạy 5 migration (`init_user_model` → `add_shop_verification`) cho các model: `User, Profile, RefreshToken, Role, UserRoles, Permission, RolePermissions, Address, Shop, ShopVerification, DeliveryPerson`. Dùng Prisma **v7** (+ `@prisma/adapter-pg`), client sinh ra ở `src/generated/prisma`, singleton ở **`src/libs/prisma.ts`**. Seed chạy bằng `pnpm seed` (`tsx prisma/seed.ts`); hash mật khẩu dùng **`bcrypt`** (không phải `bcryptjs`). Các model thương mại (Category/Product/Cart/Order/…) vẫn là **target — chưa migrate**.
+
 ---
 
 ## 📋 Task Breakdown
@@ -46,18 +49,19 @@ CORE AUTH & RBAC (đã migrate):
 
 ACTORS & ADDRESS (đã migrate):
 8. Shop              — Cửa hàng (1 seller = 1 shop); approvalStatus + status tách riêng
-9. DeliveryPerson    — Người giao hàng (role DELIVERY_PERSON)
-10. Address          — Địa chỉ POLYMORPHIC (ownerType USER | SHOP), 1 chủ nhiều địa chỉ
+9. ShopVerification  — Hồ sơ KYC của Shop (1-1): địa chỉ lấy hàng, CCCD (nationalId + ảnh trước/sau), tài khoản ngân hàng
+10. DeliveryPerson   — Người giao hàng (role DELIVERY_PERSON)
+11. Address          — Địa chỉ POLYMORPHIC (ownerType USER | SHOP), 1 chủ nhiều địa chỉ
 
 COMMERCE & FEATURES (PLANNED — migrate dần ở phase 5–10):
-11. Category         — Danh mục sản phẩm (admin quản lý)
-12. Product          — Sản phẩm (thuộc về 1 shop)
-13. ProductImage     — Ảnh sản phẩm (tách bảng riêng)
-14. Cart / CartItem  — Giỏ hàng (thuộc về 1 user)
-15. Order / OrderItem — Đơn hàng (OrderItem snapshot giá)
-16. Review           — Đánh giá sản phẩm
-17. Wishlist         — Danh sách yêu thích
-18. Coupon           — Mã giảm giá (shop hoặc platform)
+12. Category         — Danh mục sản phẩm (admin quản lý)
+13. Product          — Sản phẩm (thuộc về 1 shop)
+14. ProductImage     — Ảnh sản phẩm (tách bảng riêng)
+15. Cart / CartItem  — Giỏ hàng (thuộc về 1 user)
+16. Order / OrderItem — Đơn hàng (OrderItem snapshot giá)
+17. Review           — Đánh giá sản phẩm
+18. Wishlist         — Danh sách yêu thích
+19. Coupon           — Mã giảm giá (shop hoặc platform)
 ```
 
 #### ERD Diagram (Text-based):
@@ -237,9 +241,9 @@ COMMERCE & FEATURES (PLANNED — migrate dần ở phase 5–10):
 
 ```bash
 cd server
-npm install prisma -D
-npm install @prisma/client
-npx prisma init
+pnpm add -D prisma
+pnpm add @prisma/client
+pnpm prisma init
 ```
 
 Lúc này file `prisma/schema.prisma` được tạo ra. Hãy tạm thời giữ nguyên hoặc chỉ cấu hình phần `datasource db` kết nối đến PostgreSQL.
@@ -491,13 +495,39 @@ model Shop {
   updatedAt      DateTime       @updatedAt
   deletedAt      DateTime?      // soft delete
 
-  user User @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  user         User              @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  verification ShopVerification? // hồ sơ KYC (1-1), tạo lúc đăng ký shop
 
   // Quan hệ tới các model thương mại (products/orders/coupons) sẽ được
   // bổ sung khi các model đó được migrate ở các phase sau.
 
   @@index([ownerId])
   @@map("shops")
+}
+
+// ---------- SHOP VERIFICATION — KYC lúc đăng ký shop (đã migrate) ----------
+// Địa chỉ lấy hàng + CCCD + tài khoản ngân hàng. Admin xét duyệt trước khi
+// shop.approvalStatus rời khỏi PENDING.
+model ShopVerification {
+  id                String   @id @default(uuid())
+  shopId            String   @unique // 1-1 với Shop
+  recipientName     String
+  phone             String
+  street            String
+  ward              String
+  province          String
+  nationalId        String   // CCCD/CMND (9 hoặc 12 số)
+  idFrontUrl        String   // ảnh mặt trước CCCD (Cloudinary)
+  idBackUrl         String   // ảnh mặt sau CCCD (Cloudinary)
+  bankAccountNumber String
+  cardHolderName    String
+  cardExpiry        String   // MM/YY
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@map("shop_verifications")
 }
 
 // ---------- DELIVERY (đã migrate) ----------
@@ -751,7 +781,7 @@ model Coupon {
 #### ✅ Definition of Done:
 
 - [ ] Schema viết xong, không có syntax error
-- [ ] `npx prisma validate` pass
+- [ ] `pnpm prisma validate` pass
 - [ ] Tất cả enum đã định nghĩa
 - [ ] Tất cả index đã đánh cho FK và cột hay query
 
@@ -760,10 +790,10 @@ model Coupon {
 ### Task 2.3: Tạo Prisma Client Singleton & Kiểm Tra Kết Nối (2h)
 
 > [!NOTE]
-> Vì file `schema.prisma` hiện tại chưa có model nào (rỗng), việc chạy `npx prisma migrate dev` lúc này chưa tạo ra bảng nào và đó là điều hoàn toàn bình thường.
-> Chúng ta sẽ viết file Prisma Client Singleton và kiểm tra xem ứng dụng có kết nối thành công đến PostgreSQL database (Docker hoặc Local) hay không.
+> Khi mới `pnpm prisma init`, schema còn rỗng nên `pnpm prisma migrate dev` chưa tạo bảng nào — điều đó bình thường. (Hiện schema đã có nhóm model nền tảng auth/RBAC/shop/delivery — xem callout đầu phase.)
+> Tiếp theo viết Prisma Client Singleton và kiểm tra kết nối tới PostgreSQL.
 
-#### Tạo `src/lib/prisma.ts`:
+#### Tạo `src/libs/prisma.ts`:
 
 ```typescript
 import { PrismaClient } from "@prisma/client";
@@ -790,7 +820,7 @@ if (env.NODE_ENV !== "production") {
 Vì chưa có các hàm ORM (như `prisma.user`), ta có thể gọi `prisma.$connect()` và thực hiện một câu query thô đơn giản để test kết nối:
 
 ```typescript
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/libs/prisma";
 
 const startServer = async () => {
   try {
@@ -853,8 +883,8 @@ main()
 
 ```json
 {
-  "prisma": {
-    "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"
+  "scripts": {
+    "seed": "tsx prisma/seed.ts"
   }
 }
 ```
@@ -862,27 +892,29 @@ main()
 **Cài đặt dependencies hỗ trợ (sẽ dùng khi bắt đầu seed User ở Phase 3):**
 
 ```bash
-npm install bcryptjs
-npm install -D @types/bcryptjs ts-node
+pnpm add bcrypt
+pnpm add -D @types/bcrypt
 ```
+
+> `tsx` đã có sẵn trong dependencies (dùng cho cả `pnpm dev` và `pnpm seed`), không cần `ts-node`.
 
 #### ✅ Definition of Done:
 
-- [ ] File `prisma/seed.ts` được tạo đúng cấu trúc rỗng.
-- [ ] `package.json` có cấu hình `"prisma": { "seed": ... }`.
+- [x] File `prisma/seed.ts` được tạo đúng cấu trúc.
+- [x] `package.json` có script `"seed": "tsx prisma/seed.ts"` (chạy bằng `pnpm seed`).
 
 ---
 
 ## 🏁 Checklist Cuối Phase 2
 
-- [ ] ERD vẽ xong toàn bộ hệ thống để lấy context, export vào `docs/erd/`
-- [ ] Thiết kế xong Target Prisma Schema làm tài liệu tham khảo cho dự án
-- [ ] Khởi tạo Prisma thành công trong thư mục `server/`
-- [ ] Prisma Client singleton tạo xong trong `src/lib/prisma.ts`
-- [ ] Server test connection thành công đến DB PostgreSQL khi startup qua `prisma.$connect()` và raw query
-- [ ] Cấu trúc file `prisma/seed.ts` được chuẩn bị sẵn sàng
-- [ ] Graceful shutdown đóng kết nối DB thành công
-- [ ] Commit: "chore: initialize database design and prisma connection setup"
+- [~] ERD: hiện mới có `docs/erd/AuthERD.png` (phần auth). ERD toàn hệ thống commerce vẫn là target.
+- [x] Thiết kế xong Target Prisma Schema làm tài liệu tham khảo cho dự án
+- [x] Khởi tạo Prisma thành công trong thư mục `server/`
+- [x] Prisma Client singleton tạo xong trong `src/libs/prisma.ts`
+- [x] Server test connection thành công đến DB PostgreSQL khi startup
+- [x] Cấu trúc file `prisma/seed.ts` được chuẩn bị sẵn sàng
+- [ ] Graceful shutdown đóng kết nối DB thành công (chưa xác nhận)
+- [x] Commit: nền tảng schema + prisma đã có trong lịch sử git
 
 ---
 

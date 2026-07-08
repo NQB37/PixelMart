@@ -8,6 +8,8 @@
 
 **Tech Stack:** React 18, i18next, react-i18next, Lucide React, Vitest, React Testing Library.
 
+> ⬜ **Chưa build** — plan mục tiêu; đã chỉnh cho khớp codebase. Chưa tích hợp i18n (không có `react-i18next` / thư mục `locales/`), và app hiện chưa có Header/Sidebar để gắn LanguageSwitcher.
+
 ## Global Constraints
 
 - Thư mục làm việc: `website/admin/`
@@ -26,7 +28,7 @@
 - Create: `website/admin/src/locales/vi/translation.json`
 - Create: `website/admin/src/locales/en/translation.json`
 - Create: `website/admin/src/lib/i18n.ts`
-- Create: `website/admin/src/__tests__/i18n.test.tsx`
+- Create: `website/admin/src/tests/i18n.test.tsx`
 - Modify: `website/admin/src/main.tsx` (import `./lib/i18n`)
 
 **Interfaces:**
@@ -36,7 +38,7 @@
 - [ ] **Step 1: Write the failing test**
 
 ```typescript
-// website/admin/src/__tests__/i18n.test.tsx
+// website/admin/src/tests/i18n.test.tsx
 import React from 'react';
 import { render, screen, act } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
@@ -166,7 +168,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 ```
 
 Modify `website/admin/package.json` to add i18n dependencies:
-Run: `npm install i18next react-i18next`
+Run: `pnpm add i18next react-i18next`
 (Add entries to dependencies in `package.json` file inside implementing phase).
 
 - [ ] **Step 4: Run test to verify it passes**
@@ -177,7 +179,7 @@ Expected: PASS.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add src/locales/ src/lib/i18n.ts src/main.tsx src/__tests__/i18n.test.tsx
+git add src/locales/ src/lib/i18n.ts src/main.tsx src/tests/i18n.test.tsx
 git commit -m "feat(admin): configure react-i18next and define dictionaries for vi and en"
 ```
 
@@ -187,7 +189,7 @@ git commit -m "feat(admin): configure react-i18next and define dictionaries for 
 
 **Files:**
 - Create: `website/admin/src/components/layout/LanguageSwitcher.tsx`
-- Create: `website/admin/src/__tests__/LanguageSwitcher.test.tsx`
+- Create: `website/admin/src/tests/LanguageSwitcher.test.tsx`
 - Modify: `website/admin/src/components/layout/Header.tsx` (chèn LanguageSwitcher vào header)
 - Modify: `website/admin/src/components/layout/Sidebar.tsx` (dùng useTranslation dịch menu navigation)
 
@@ -198,7 +200,7 @@ git commit -m "feat(admin): configure react-i18next and define dictionaries for 
 - [ ] **Step 1: Write the failing test**
 
 ```typescript
-// website/admin/src/__tests__/LanguageSwitcher.test.tsx
+// website/admin/src/tests/LanguageSwitcher.test.tsx
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
@@ -369,7 +371,7 @@ Expected: PASS.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add src/components/layout/LanguageSwitcher.tsx src/__tests__/LanguageSwitcher.test.tsx src/components/layout/Header.tsx src/components/layout/Sidebar.tsx
+git add src/components/layout/LanguageSwitcher.tsx src/tests/LanguageSwitcher.test.tsx src/components/layout/Header.tsx src/components/layout/Sidebar.tsx
 git commit -m "feat(admin): integration of LanguageSwitcher widget and translate sidebar elements"
 ```
 

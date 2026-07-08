@@ -13,6 +13,9 @@
 
 **Tech Stack:** React 18, React Router DOM v6, Zustand, TanStack Query, Axios, Lucide React, Vitest, React Testing Library.
 
+> [!NOTE]
+> 📌 **As-built (codebase là chân lý):** Auth đã build trên **`@pixelmart/shared/auth`**: store `createAuthStore("admin-user-info", { persistIsAuthenticated: true })` (`features/auth/stores/auth.store.ts`), axios `createAuthApiClient` (`lib/api.ts`) + `createAuthApi` (`features/auth/services/auth.service.ts`), hook `useLogin` (TanStack Query) chặn role bằng `hasRole(user, ["ADMIN"])`, `loginSchema` **dùng lại từ shared** (mật khẩu **min 8**), form react-hook-form + zodResolver (`features/auth/components/LoginForm.tsx`), page sạch `pages/Login.tsx`. **Không có component `ProtectedRoute`** — phân quyền route bằng `beforeLoad` trong `src/router.tsx` (chưa đăng nhập → `/login`, không phải ADMIN → `/403`; `/login` là guest-only). Trang 403 = `pages/Forbidden.tsx`.
+
 ## Global Constraints
 
 - Thư mục làm việc: `website/admin/`
@@ -379,7 +382,7 @@ git commit -m "feat(admin): refactor login to clean page and dedicated validatio
 - Produces: `ProtectedRoute` component bảo vệ các routes con, chuyển hướng người dùng chưa đăng nhập về `/admin/login`, và từ chối các người dùng không có role `ADMIN`.
 
 - [ ] **Step 1: Write the failing test**
-Create: `website/admin/src/__tests__/ProtectedRoute.test.tsx`
+Create: `website/admin/src/tests/ProtectedRoute.test.tsx`
 ```typescript
 import React from 'react';
 import { render, screen } from '@testing-library/react';
@@ -513,6 +516,6 @@ git commit -m "feat(admin): secure admin routes via ProtectedRoute and role matc
 ## 🏁 Definition of Done & Checklists
 
 ### Checklist cuối phase
-- [ ] Các tệp trang `Login.tsx` hoàn toàn sạch sẽ, không chứa logic Form.
-- [ ] Validation Schema và Types của Form nằm độc lập trong tệp `schemas/auth.schema.ts`.
+- [x] Các tệp trang `Login.tsx` hoàn toàn sạch sẽ, không chứa logic Form.
+- [x] Validation Schema và Types của Form nằm độc lập trong tệp `schemas/auth.schema.ts`.
 - [ ] 100% các Vitest tests kiểm thử authentication chạy thành công.

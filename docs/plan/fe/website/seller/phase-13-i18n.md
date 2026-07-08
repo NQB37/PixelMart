@@ -8,6 +8,8 @@
 
 **Tech Stack:** React 18, `i18next`, `react-i18next`, Vitest, React Testing Library.
 
+> ⬜ **Chưa build** — plan mục tiêu; đã chỉnh cho khớp codebase. Chưa tích hợp i18n (không có `react-i18next` / thư mục `locales/`), và app hiện chưa có Sidebar/Header để gắn LanguageSwitcher.
+
 ## Global Constraints
 
 - Node.js version >= 18
@@ -28,14 +30,14 @@
 - Create: `website/seller/src/locales/en/translation.json`
 - Create: `website/seller/src/i18n.ts`
 - Modify: `website/seller/src/main.tsx`
-- Create: `website/seller/src/__tests__/i18n.test.ts`
+- Create: `website/seller/src/tests/i18n.test.ts`
 
 **Interfaces:**
 - Consumes: Cấu hình Vite & packages ở Phase 1.
 - Produces: Hệ thống dịch i18n sẵn sàng cung cấp dữ liệu qua `useTranslation`.
 
 - [ ] **Step 1: Write the failing test**
-Create: `website/seller/src/__tests__/i18n.test.ts`
+Create: `website/seller/src/tests/i18n.test.ts`
 ```typescript
 import { describe, it, expect } from 'vitest';
 import i18next from 'i18next';
@@ -139,7 +141,7 @@ Modify: `website/seller/src/main.tsx:1-20`
 (Nhập `import './i18n';` ở dòng đầu tiên của `website/seller/src/main.tsx`).
 
 Tạo file setup test cho i18n nhằm tránh lỗi thiếu provider khi test:
-Modify: `website/seller/src/__tests__/setup.ts:1-10`
+Modify: `website/seller/src/tests/setup.ts:1-10`
 ```typescript
 import '@testing-library/jest-dom';
 import '../i18n';
@@ -151,7 +153,7 @@ Expected: PASS 1/1 (i18n.test.ts)
 
 - [ ] **Step 5: Commit**
 ```bash
-git add website/seller/src/locales/vi/translation.json website/seller/src/locales/en/translation.json website/seller/src/i18n.ts website/seller/src/main.tsx website/seller/src/__tests__/i18n.test.ts website/seller/src/__tests__/setup.ts
+git add website/seller/src/locales/vi/translation.json website/seller/src/locales/en/translation.json website/seller/src/i18n.ts website/seller/src/main.tsx website/seller/src/tests/i18n.test.ts website/seller/src/tests/setup.ts
 git commit -m "feat(seller): configure i18next and translation files for Vietnamese and English"
 ```
 
@@ -161,14 +163,14 @@ git commit -m "feat(seller): configure i18next and translation files for Vietnam
 
 **Files:**
 - Create: `website/seller/src/components/layout/LanguageSwitcher.tsx`
-- Create: `website/seller/src/__tests__/languageSwitcher.test.tsx`
+- Create: `website/seller/src/tests/languageSwitcher.test.tsx`
 
 **Interfaces:**
 - Consumes: Cấu hình `i18n` từ Task 1.
 - Produces: Component `LanguageSwitcher` chứa giao diện nút bấm hoặc dropdown để thay đổi ngôn ngữ hiển thị.
 
 - [ ] **Step 1: Write the failing test**
-Create: `website/seller/src/__tests__/languageSwitcher.test.tsx`
+Create: `website/seller/src/tests/languageSwitcher.test.tsx`
 ```typescript
 import React from 'react';
 import { render, screen } from '@testing-library/react';
@@ -224,7 +226,7 @@ Expected: PASS 2/2 (languageSwitcher.test.tsx)
 
 - [ ] **Step 5: Commit**
 ```bash
-git add website/seller/src/components/layout/LanguageSwitcher.tsx website/seller/src/__tests__/languageSwitcher.test.tsx
+git add website/seller/src/components/layout/LanguageSwitcher.tsx website/seller/src/tests/languageSwitcher.test.tsx
 git commit -m "feat(seller): add LanguageSwitcher dropdown selection component"
 ```
 
@@ -235,14 +237,14 @@ git commit -m "feat(seller): add LanguageSwitcher dropdown selection component"
 **Files:**
 - Modify: `website/seller/src/components/layout/Sidebar.tsx`
 - Modify: `website/seller/src/components/layout/Header.tsx`
-- Create: `website/seller/src/__tests__/translationFlow.test.tsx`
+- Create: `website/seller/src/tests/translationFlow.test.tsx`
 
 **Interfaces:**
 - Consumes: `LanguageSwitcher` và hook `useTranslation` từ i18n.
 - Produces: Layout hiển thị chuẩn dịch tự động theo ngôn ngữ được chọn.
 
 - [ ] **Step 1: Write the failing test**
-Create: `website/seller/src/__tests__/translationFlow.test.tsx`
+Create: `website/seller/src/tests/translationFlow.test.tsx`
 ```typescript
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
@@ -361,7 +363,7 @@ Expected: PASS tất cả 16 tests bao gồm cả test đổi ngôn ngữ độn
 
 - [ ] **Step 5: Commit**
 ```bash
-git add website/seller/src/components/layout/Sidebar.tsx website/seller/src/components/layout/Header.tsx website/seller/src/__tests__/translationFlow.test.tsx
+git add website/seller/src/components/layout/Sidebar.tsx website/seller/src/components/layout/Header.tsx website/seller/src/tests/translationFlow.test.tsx
 git commit -m "feat(seller): internationalize Sidebar navigation links and add LanguageSwitcher into Header"
 ```
 
@@ -380,6 +382,6 @@ git commit -m "feat(seller): internationalize Sidebar navigation links and add L
 - **Error:** Quên khai báo các trường hoặc cụm dịch tương ứng giữa các file ngôn ngữ `vi/translation.json` và `en/translation.json` dẫn đến việc trang hiển thị mã key thô (ví dụ: `common.dashboard`) khi đổi ngôn ngữ.
   - *Fix:* Luôn kiểm tra song song và khai báo đầy đủ các key dịch giống hệt nhau ở cả 2 file.
 - **Error:** Bị crash lỗi render trong môi trường test do các component con dùng hook `useTranslation` nhưng test suite không mock hoặc không import tệp `i18n.ts` vào setup.
-  - *Fix:* Import file `i18n.ts` trực tiếp ở file cấu hình `website/seller/src/__tests__/setup.ts` để khởi tạo i18n một lần duy nhất cho toàn bộ môi trường test.
+  - *Fix:* Import file `i18n.ts` trực tiếp ở file cấu hình `website/seller/src/tests/setup.ts` để khởi tạo i18n một lần duy nhất cho toàn bộ môi trường test.
 - **Error:** Định nghĩa thừa hoặc thiếu thẻ đóng ngoặc JSON trong tệp locales dẫn đến compile webpack/vite báo lỗi cú pháp parse JSON.
   - *Fix:* Sử dụng IDE extension hoặc check định dạng JSON hợp lệ trước khi lưu.

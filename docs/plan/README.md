@@ -11,24 +11,27 @@
 
 | Phase | Tên | Độ khó | Thời lượng | Trạng thái |
 |---|---|---|---|---|
-| 01 | [Foundation & Setup](./phase-01-foundation-setup.md) | ⭐ | 10-15h | ⬜ |
-| 02 | [Database Design & ORM](./phase-02-database-design.md) | ⭐⭐ | 12-18h | ⬜ |
-| 03 | [Authentication & Authorization](./phase-03-authentication.md) | ⭐⭐⭐ | 15-20h | ⬜ |
-| 04 | [Shop & Seller Module](./phase-04-shop-seller.md) | ⭐⭐ | 10-15h | ⬜ |
-| 05 | [Product Management (Seller)](./phase-05-product-management.md) | ⭐⭐ | 12-18h | ⬜ |
-| 06 | [Product Display & SEO (Buyer)](./phase-06-product-display-seo.md) | ⭐⭐⭐ | 15-20h | ⬜ |
-| 07 | [Cart & State Management](./phase-07-cart-state.md) | ⭐⭐⭐ | 12-18h | ⬜ |
-| 08 | [Order & Checkout](./phase-08-order-checkout.md) | ⭐⭐⭐⭐ | 15-22h | ⬜ |
-| 09 | [Review & Rating](./phase-09-review-rating.md) | ⭐⭐ | 8-12h | ⬜ |
-| 10 | [Wishlist & Coupon](./phase-10-wishlist-coupon.md) | ⭐⭐ | 10-14h | ⬜ |
-| 11 | [Admin Dashboard & Reports](./phase-11-admin-dashboard.md) | ⭐⭐⭐ | 12-18h | ⬜ |
-| 12 | [Product Variants](./phase-12-product-variants.md) | ⭐⭐⭐⭐ | 15-20h | ⬜ |
-| 13 | [Internationalization (i18n)](./phase-13-i18n.md) | ⭐⭐ | 10-14h | ⬜ |
-| 14 | [Performance (Redis & Indexing)](./phase-14-performance-redis.md) | ⭐⭐⭐ | 12-16h | ⬜ |
-| 15 | [Docker, CI/CD & Testing](./phase-15-docker-cicd-testing.md) | ⭐⭐⭐ | 15-20h | ⬜ |
-| 16 | [Microservices & Monitoring](./phase-16-microservices-monitoring.md) | ⭐⭐⭐⭐⭐ | 25-35h | ⬜ |
+| 01 | [Foundation & Setup](./be/phase-01-foundation-setup.md) | ⭐ | 10-15h | ✅ |
+| 02 | [Database Design & ORM](./be/phase-02-database-design.md) | ⭐⭐ | 12-18h | ✅ |
+| 03 | [Authentication & Authorization](./be/phase-03-authentication.md) | ⭐⭐⭐ | 15-20h | ✅ |
+| 04 | [Shop & Seller Module](./be/phase-04-shop-seller.md) | ⭐⭐ | 10-15h | 🟡 |
+| 05 | [Product Management (Seller)](./be/phase-05-product-management.md) | ⭐⭐ | 12-18h | 🟡 |
+| 06 | [Product Display & SEO (Buyer)](./be/phase-06-product-display-seo.md) | ⭐⭐⭐ | 15-20h | ⬜ |
+| 07 | [Cart & State Management](./be/phase-07-cart-state.md) | ⭐⭐⭐ | 12-18h | ⬜ |
+| 08 | [Order & Checkout](./be/phase-08-order-checkout.md) | ⭐⭐⭐⭐ | 15-22h | ⬜ |
+| 09 | [Review & Rating](./be/phase-09-review-rating.md) | ⭐⭐ | 8-12h | ⬜ |
+| 10 | [Wishlist & Coupon](./be/phase-10-wishlist-coupon.md) | ⭐⭐ | 10-14h | ⬜ |
+| 11 | [Admin Dashboard & Reports](./be/phase-11-admin-dashboard.md) | ⭐⭐⭐ | 12-18h | ⬜ |
+| 12 | [Product Variants](./be/phase-12-product-variants.md) | ⭐⭐⭐⭐ | 15-20h | ⬜ |
+| 13 | [Internationalization (i18n)](./be/phase-13-i18n.md) | ⭐⭐ | 10-14h | ⬜ |
+| 14 | [Performance (Redis & Indexing)](./be/phase-14-performance-redis.md) | ⭐⭐⭐ | 12-16h | ⬜ |
+| 15 | [Docker, CI/CD & Testing](./be/phase-15-docker-cicd-testing.md) | ⭐⭐⭐ | 15-20h | 🟡 |
+| 16 | [Microservices & Monitoring](./be/phase-16-microservices-monitoring.md) | ⭐⭐⭐⭐⭐ | 25-35h | ⬜ |
 
 **Tổng ước tính:** ~200-290 giờ (~5-7 tháng với 15-20h/tuần)
+
+> **Chú thích trạng thái:** ✅ đã hoàn thành · 🟡 làm dở / một phần · ⬜ chưa bắt đầu.
+> Trạng thái phản ánh **codebase hiện tại** (nguồn chân lý). Phase 04 mới xong luồng đăng ký shop (chưa có admin duyệt); Phase 05 mới xong module upload ảnh (chưa có Product/Category); Phase 15 mới có test vitest (chưa có Docker/CI).
 
 ---
 
@@ -56,16 +59,16 @@ Docker/CI → Microservices → Message Queue → Monitoring
 | Tài liệu | Đường dẫn |
 |---|---|
 | **Folder Structure** | [folder-structure.md](./folder-structure.md) |
-| **Plan Outline gốc** | [PlanOutline.md](../../PlanOutline.md) |
+| **Plan Outline gốc** | [PlanOutline.md](./PlanOutline.md) |
 | **ERD Diagram** | `docs/erd/` (tạo ở Phase 2) |
 
 ### 🌐 Frontend Web (Từng Cổng & Thư Viện Shared)
 | Cổng | Thư mục Kế hoạch | Mô tả |
 |---|---|---|
-| **Shared Library** | [shared](./fe/web/shared/) | Cấu hình Axios interceptors, Refresh Token, Common components. |
-| **Client (Buyer)** | [client](./fe/web/client/) | Next.js Buyer Storefront (SEO, SSR, Zustand, Checkout, VNPAY). |
-| **Seller (Người bán)** | [seller](./fe/web/seller/) | Vite Seller Panel (CRUD sản phẩm, biến thể, hình ảnh). |
-| **Admin (Quản trị)** | [admin](./fe/web/admin/) | Vite Admin Dashboard (Phê duyệt shop, vẽ biểu đồ Recharts). |
+| **Shared Library** | [@pixelmart/shared](../../CLAUDE.md) | ✅ Đã triển khai — auth store / API client / schemas + UI dùng chung. Không có file plan riêng; xem mục `@pixelmart/shared` trong CLAUDE.md. |
+| **Client (Buyer)** | [client](./fe/website/client/) | Next.js Buyer Storefront (SEO, SSR, Zustand, Checkout, VNPAY). |
+| **Seller (Người bán)** | [seller](./fe/website/seller/) | Vite Seller Panel (CRUD sản phẩm, biến thể, hình ảnh). |
+| **Admin (Quản trị)** | [admin](./fe/website/admin/) | Vite Admin Dashboard (Phê duyệt shop, vẽ biểu đồ Recharts). |
 
 
 ---

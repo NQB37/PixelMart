@@ -8,6 +8,9 @@
 
 **Tech Stack:** React 18, Vite 5, TypeScript, TailwindCSS v4, React Router DOM v6, Lucide React (icons), Vitest, React Testing Library.
 
+> [!NOTE]
+> 📌 **As-built (codebase là chân lý):** Nền tảng đã dựng nhưng khác plan — **React 19 + Vite 8 + TypeScript + Tailwind v4**, **định tuyến bằng `@tanstack/react-router`** (`src/router.tsx`) chứ không phải React Router DOM, và **chưa có Vitest** (không có script `test` hay file test nào). Cấu trúc thật: `src/{main.tsx, App.tsx, router.tsx, index.css, lib/api.ts, pages/, features/}` — **chưa có Layout Shell** (Header/Sidebar/AdminLayout) lẫn route `/admin/shops`, `/admin/users`; route thực tế chỉ gồm `/`, `/login`, `/403`. Lệnh chạy qua workspace: `pnpm --filter admin <script>`.
+
 ## Global Constraints
 
 - Thư mục làm việc: `website/admin/`
@@ -30,7 +33,7 @@
 - Create: `website/admin/src/index.css`
 - Create: `website/admin/src/main.tsx`
 - Create: `website/admin/src/App.tsx`
-- Create: `website/admin/src/__tests__/App.test.tsx`
+- Create: `website/admin/src/tests/App.test.tsx`
 
 **Interfaces:**
 - Consumes: None (khởi tạo từ đầu)
@@ -39,7 +42,7 @@
 - [ ] **Step 1: Write the failing test**
 
 ```typescript
-// website/admin/src/__tests__/App.test.tsx
+// website/admin/src/tests/App.test.tsx
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
 import App from '../App';
@@ -212,7 +215,7 @@ git commit -m "feat(admin): initialize vite project with typescript and vitest"
 - Create: `website/admin/src/components/layout/AdminLayout.tsx`
 - Create: `website/admin/src/components/layout/Header.tsx`
 - Create: `website/admin/src/components/layout/Sidebar.tsx`
-- Create: `website/admin/src/__tests__/AdminLayout.test.tsx`
+- Create: `website/admin/src/tests/AdminLayout.test.tsx`
 - Modify: `website/admin/src/App.tsx`
 
 **Interfaces:**
@@ -222,7 +225,7 @@ git commit -m "feat(admin): initialize vite project with typescript and vitest"
 - [ ] **Step 1: Write the failing test**
 
 ```typescript
-// website/admin/src/__tests__/AdminLayout.test.tsx
+// website/admin/src/tests/AdminLayout.test.tsx
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
@@ -433,7 +436,7 @@ Expected: PASS all tests.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add src/components/layout/ src/__tests__/AdminLayout.test.tsx src/App.tsx
+git add src/components/layout/ src/tests/AdminLayout.test.tsx src/App.tsx
 git commit -m "feat(admin): build AdminLayout Shell with collapsible sidebar and router config"
 ```
 
@@ -442,7 +445,7 @@ git commit -m "feat(admin): build AdminLayout Shell with collapsible sidebar and
 ## 🏁 Definition of Done & Checklists
 
 ### Checklist cuối phase
-- [ ] Chạy lệnh `npm run build` hoàn thành không có lỗi biên dịch TypeScript.
+- [x] Chạy lệnh `pnpm build` hoàn thành không có lỗi biên dịch TypeScript.
 - [ ] Chạy lệnh `pnpm test` vượt qua tất cả các bài unit test.
 - [ ] Có thể thu nhỏ Sidebar khi click nút Menu ở Header, layout tự co giãn mượt mà.
 - [ ] Các route `/admin`, `/admin/shops`, `/admin/users` hoạt động và hiển thị nội dung mẫu đúng layout.
