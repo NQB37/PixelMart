@@ -1,7 +1,6 @@
-import { Store, MapPin, User, Phone } from "lucide-react";
-import type { UseFormRegister, FieldErrors } from "react-hook-form";
-import FormField from "./FormField";
-import ImageUploadField from "./ImageUploadField";
+import { MapPin, Phone, Store, User } from "lucide-react";
+import type { FieldErrors, UseFormRegister } from "react-hook-form";
+import { ImageDropzone, TextField } from "@website/shared/ui";
 import type { RegisterShopInput } from "../schemas/shop.schema";
 
 interface ShopInfoStepProps {
@@ -19,59 +18,49 @@ export default function ShopInfoStep({
 }: ShopInfoStepProps) {
   return (
     <div className="space-y-4">
-      <ImageUploadField
+      <ImageDropzone
         label="Shop logo (optional)"
         file={logoFile}
         onChange={onLogoChange}
         hint="PNG or JPG, square image works best"
       />
 
-      <FormField
-        id="shopName"
+      <TextField
         label="Shop name"
         icon={Store}
-        registration={register("shopName")}
         error={errors.shopName?.message}
+        {...register("shopName")}
       />
 
       <div className="pt-2">
-        <p className="mb-2 flex items-center gap-1 text-sm font-medium text-slate-700">
-          <MapPin className="h-4 w-4" /> Pickup address
+        <p className="mb-3 flex items-center gap-1.5 text-sm font-medium text-foreground">
+          <MapPin className="h-4 w-4" strokeWidth={1.5} /> Pickup address
         </p>
         <div className="space-y-4">
-          <FormField
-            id="recipientName"
+          <TextField
             label="Recipient name"
             icon={User}
-            registration={register("recipientName")}
             error={errors.recipientName?.message}
+            {...register("recipientName")}
           />
-          <FormField
-            id="phone"
+          <TextField
             label="Phone number"
             icon={Phone}
             placeholder="0xxxxxxxxx"
-            registration={register("phone")}
             error={errors.phone?.message}
+            {...register("phone")}
           />
-          <FormField
-            id="street"
+          <TextField
             label="Street address"
-            registration={register("street")}
             error={errors.street?.message}
+            {...register("street")}
           />
           <div className="grid grid-cols-2 gap-3">
-            <FormField
-              id="ward"
-              label="Ward"
-              registration={register("ward")}
-              error={errors.ward?.message}
-            />
-            <FormField
-              id="province"
+            <TextField label="Ward" error={errors.ward?.message} {...register("ward")} />
+            <TextField
               label="Province/City"
-              registration={register("province")}
               error={errors.province?.message}
+              {...register("province")}
             />
           </div>
         </div>

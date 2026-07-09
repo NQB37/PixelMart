@@ -1,7 +1,6 @@
-import { CreditCard, User, Landmark, CalendarClock } from "lucide-react";
-import type { UseFormRegister, FieldErrors } from "react-hook-form";
-import FormField from "./FormField";
-import ImageUploadField from "./ImageUploadField";
+import { CalendarClock, CreditCard, Landmark, User } from "lucide-react";
+import type { FieldErrors, UseFormRegister } from "react-hook-form";
+import { ImageDropzone, TextField } from "@website/shared/ui";
 import type { RegisterShopInput } from "../schemas/shop.schema";
 
 interface IdentityBankStepProps {
@@ -26,60 +25,46 @@ export default function IdentityBankStep({
   return (
     <div className="space-y-5">
       <div>
-        <p className="mb-2 text-sm font-medium text-slate-700">
+        <p className="mb-3 text-sm font-medium text-foreground">
           National ID (CCCD/CMND)
         </p>
-        <FormField
-          id="nationalId"
+        <TextField
           label="ID number"
           icon={CreditCard}
-          registration={register("nationalId")}
           error={errors.nationalId?.message}
+          {...register("nationalId")}
         />
         <div className="mt-3 grid grid-cols-2 gap-3">
-          <ImageUploadField
-            label="Front side"
-            file={idFrontFile}
-            onChange={onIdFrontChange}
-          />
-          <ImageUploadField
-            label="Back side"
-            file={idBackFile}
-            onChange={onIdBackChange}
-          />
+          <ImageDropzone label="Front side" file={idFrontFile} onChange={onIdFrontChange} />
+          <ImageDropzone label="Back side" file={idBackFile} onChange={onIdBackChange} />
         </div>
         {idPhotosError && (
-          <p className="mt-1 text-xs text-red-500">{idPhotosError}</p>
+          <p className="mt-1.5 text-sm font-medium text-destructive">{idPhotosError}</p>
         )}
       </div>
 
       <div>
-        <p className="mb-2 text-sm font-medium text-slate-700">
-          Bank account
-        </p>
+        <p className="mb-3 text-sm font-medium text-foreground">Bank account</p>
         <div className="space-y-4">
-          <FormField
-            id="bankAccountNumber"
+          <TextField
             label="Account number"
             icon={Landmark}
-            registration={register("bankAccountNumber")}
             error={errors.bankAccountNumber?.message}
+            {...register("bankAccountNumber")}
           />
-          <FormField
-            id="cardHolderName"
+          <TextField
             label="Cardholder name"
             icon={User}
             placeholder="AS PRINTED ON CARD"
-            registration={register("cardHolderName")}
             error={errors.cardHolderName?.message}
+            {...register("cardHolderName")}
           />
-          <FormField
-            id="cardExpiry"
+          <TextField
             label="Expiry date"
             icon={CalendarClock}
             placeholder="MM/YY"
-            registration={register("cardExpiry")}
             error={errors.cardExpiry?.message}
+            {...register("cardExpiry")}
           />
         </div>
       </div>
