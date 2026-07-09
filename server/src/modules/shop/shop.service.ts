@@ -4,6 +4,18 @@ import { ROLE } from '@/generated/prisma/client';
 import { CreateShopInput } from './shop.validation';
 
 class ShopService {
+  public async getMyShop(userId: string) {
+    const shop = await prisma.shop.findUnique({
+      where: { ownerId: userId },
+      include: { verification: true },
+    });
+    if (!shop) {
+      throw ApiError.notFound('Shop not found');
+    }
+
+    return shop;
+  }
+
   public async createShop(userId: string, data: CreateShopInput) {
     const existingShop = await prisma.shop.findUnique({
       where: { ownerId: userId },

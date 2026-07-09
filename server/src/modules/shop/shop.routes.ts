@@ -6,6 +6,7 @@ import { createShopSchema } from './shop.validation';
 
 const router = Router();
 
+router.get('/me', isAuth, shopController.getMyShop);
 router.post('/', isAuth, validate(createShopSchema), shopController.createShop);
 
 export const shopRoutes = router;
