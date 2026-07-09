@@ -5,7 +5,8 @@
 
 > [!IMPORTANT]
 > 📌 **Thực tế codebase hiện tại (nguồn chân lý).** Sơ đồ chi tiết bên dưới là cấu trúc **mục tiêu**. Phần đã build thật:
-> - **`website/`** (pnpm workspace) có thật: `shared` = `@pixelmart/shared` (exports `./auth`, `./ui`, `./styles/theme.css`), `client` (Next.js), `seller` + `admin` (Vite). **`server/`** có thật.
+>
+> - **`website/`** (pnpm workspace) có thật: `shared` = `@website/shared` (exports `./auth`, `./ui`, `./styles/theme.css`), `client` (Next.js), `seller` + `admin` (Vite). **`server/`** có thật.
 > - **`mobile/`, `services/`, `infra/`, `.github/workflows/`, `.husky/`, `docker-compose*.yml`** là mục tiêu — **chưa tồn tại** (`mobile/` đang trống).
 > - Backend hiện có **3 module**: `auth`, `shop`, `upload` (các module khác trong sơ đồ là mục tiêu).
 > - Mỗi module = 4 file (`*.controller/routes/service/validation.ts`) + thư mục **`tests/`** — **không** dùng `__tests__/`, và **không** có file `*.types.ts` riêng (type suy ra từ Zod `z.infer` trong `*.validation.ts`).
@@ -318,7 +319,7 @@ website/
 ├── pnpm-workspace.yaml # Định nghĩa workspace cục bộ cho web
 │
 ├── shared/ # 📦 Gói UI và logic dùng chung cho Web
-│ ├── package.json # Tên package: @pixelmart/website/client
+│ ├── package.json # Tên package: @website/shared
 │ ├── tsconfig.json # Cấu hình TypeScript cho shared module
 │ └── src/
 │ ├── index.ts # Entry point để export mọi components & utils
@@ -337,7 +338,7 @@ website/
 │ │ └── checkout/ # Thanh toán "/checkout"
 │ ├── public/ # Các file tĩnh (logo, banners...)
 │ ├── tailwind.config.ts
-│ └── package.json # Khai báo dependency: "@pixelmart/website/client": "workspace:_"
+│ └── package.json # Khai báo dependency: "@website/client": "workspace:_"
 │
 ├── seller/ # 🏪 Seller Dashboard (React + Vite + TS SPA)
 │ ├── src/
@@ -347,7 +348,7 @@ website/
 │ │ └── assets/ # Ảnh, icons dùng riêng cho Seller
 │ ├── index.html
 │ ├── vite.config.ts
-│ └── package.json # Khai báo dependency: "@pixelmart/website/client": "workspace:_"
+│ └── package.json # Khai báo dependency: "@website/seller": "workspace:_"
 │
 └── admin/ # 👑 Admin Panel (React + Vite + TS SPA)
 ├── src/
@@ -356,14 +357,14 @@ website/
 │ └── pages/ # Quản lý users, phê duyệt shop, báo cáo doanh thu
 ├── index.html
 ├── vite.config.ts
-└── package.json # Khai báo dependency: "@pixelmart/website/client": "workspace:\*"
+└── package.json # Khai báo dependency: "@website/admin": "workspace:\*"
 
 ```
 
 ### Kiến trúc Chia sẻ Code
 
 - **Cơ chế Import:** Các app con import UI/logic từ package shared bằng cú pháp clean:
-  `import { Button } from '@pixelmart/website/clientsite/components/ui/button'` hoặc `import { api } from '@pixelmart/website/clientsite/utils/api'`.
+  `import { Button } from '@website/shared/ui/button'` hoặc `import { api } from '@website/shared/utils/api'`.
 - **Đồng bộ CSS (Tailwind v4):** Trong các dự án con, cấu hình Tailwind CSS quét mã nguồn từ thư mục shared để biên dịch các class tiện ích:
   ```css
   @import "tailwindcss";
