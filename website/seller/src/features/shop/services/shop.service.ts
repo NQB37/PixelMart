@@ -15,6 +15,10 @@ export type RegisterShopPayload = RegisterShopInput & {
 };
 
 export const shopApi = {
+  getMyShop: async (): Promise<Shop> => {
+    const response = await api.get<Shop>("shops/me");
+    return response.data;
+  },
   register: async (data: RegisterShopPayload): Promise<Shop> => {
     const response = await api.post<Shop>("shops", data);
     return response.data;

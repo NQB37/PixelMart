@@ -11,6 +11,8 @@ import Register from "@/pages/Register";
 import RegisterShop from "@/pages/RegisterShop";
 import Forbidden from "@/pages/Forbidden";
 import Dashboard from "@/pages/Dashboard";
+import Placeholder from "@/pages/Placeholder";
+import SellerLayout from "@/components/layout/SellerLayout";
 import { hasRole, type UserInfo } from "@website/shared/auth";
 
 interface AuthContext {
@@ -68,9 +70,9 @@ const forbiddenRoute = createRoute({
   component: Forbidden,
 });
 
-const indexRoute = createRoute({
+const sellerLayoutRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: "/",
+  id: "seller-layout",
   beforeLoad: ({ context }) => {
     if (!context.auth.isAuthenticated || !context.auth.user) {
       throw redirect({ to: "/login" });
@@ -81,11 +83,37 @@ const indexRoute = createRoute({
       throw redirect({ to: "/register-shop" });
     }
   },
+  component: SellerLayout,
+});
+
+const indexRoute = createRoute({
+  getParentRoute: () => sellerLayoutRoute,
+  path: "/",
   component: Dashboard,
 });
 
+const placeholderRoute = (path: string, title: string) =>
+  createRoute({
+    getParentRoute: () => sellerLayoutRoute,
+    path,
+    component: () => <Placeholder title={title} />,
+  });
+
 const routeTree = rootRoute.addChildren([
-  indexRoute,
+  sellerLayoutRoute.addChildren([
+    indexRoute,
+    placeholderRoute("/analytics/business-insight", "Business Insight"),
+    placeholderRoute("/analytics/income", "Income"),
+    placeholderRoute("/analytics/bank-account", "Bank Account"),
+    placeholderRoute("/orders", "Orders"),
+    placeholderRoute("/orders/returns", "Return / Refund / Cancel"),
+    placeholderRoute("/products", "Products"),
+    placeholderRoute("/products/new", "Add New Product"),
+    placeholderRoute("/vouchers", "Vouchers"),
+    placeholderRoute("/chat", "Chat Management"),
+    placeholderRoute("/reviews", "Review Management"),
+    placeholderRoute("/profile", "Profile"),
+  ]),
   loginRoute,
   registerRoute,
   registerShopRoute,
