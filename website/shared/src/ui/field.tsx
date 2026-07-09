@@ -1,4 +1,5 @@
 import { FormControl, FormItem, FormLabel, FormMessage } from "./form";
+import { Input } from "./input";
 
 export function Field({
   label,
@@ -6,17 +7,11 @@ export function Field({
 }: { label: string } & React.InputHTMLAttributes<HTMLInputElement>) {
   return (
     <FormItem>
-      <FormLabel className='font-pixel text-[9px] text-neon-cyan'>
-        {label}
-      </FormLabel>
+      <FormLabel>{label}</FormLabel>
       <FormControl>
-        <input
-          {...rest}
-          value={rest.value ?? ""}
-          className='mt-2 h-11 w-full border-[3px] border-foreground bg-input px-3 font-retro text-lg outline-none focus:border-neon-cyan'
-        />
+        <Input {...rest} value={rest.value ?? ""} />
       </FormControl>
-      <FormMessage className='font-retro text-base' />
+      <FormMessage />
     </FormItem>
   );
 }

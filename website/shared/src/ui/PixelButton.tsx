@@ -1,5 +1,5 @@
 import { cn } from "./cn";
-import { ButtonHTMLAttributes, forwardRef } from "react";
+import { type ButtonHTMLAttributes, forwardRef } from "react";
 
 type Variant = "cyan" | "pink" | "green" | "yellow" | "ghost";
 
