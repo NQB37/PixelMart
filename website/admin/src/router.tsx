@@ -9,6 +9,9 @@ import {
 import Login from "@/pages/Login";
 import Forbidden from "@/pages/Forbidden";
 import Dashboard from "@/pages/Dashboard";
+import Users from "@/pages/Users";
+import Placeholder from "@/pages/Placeholder";
+import AdminLayout from "@/components/layout/AdminLayout";
 import { hasRole, type UserInfo } from "@website/shared/auth";
 
 interface AuthContext {
@@ -38,9 +41,9 @@ const forbiddenRoute = createRoute({
   component: Forbidden,
 });
 
-const indexRoute = createRoute({
+const adminLayoutRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: "/",
+  id: "admin-layout",
   beforeLoad: ({ context }) => {
     if (!context.auth.isAuthenticated || !context.auth.user) {
       throw redirect({ to: "/login" });
@@ -49,11 +52,44 @@ const indexRoute = createRoute({
       throw redirect({ to: "/403" });
     }
   },
+  component: AdminLayout,
+});
+
+const indexRoute = createRoute({
+  getParentRoute: () => adminLayoutRoute,
+  path: "/",
   component: Dashboard,
 });
 
+const usersRoute = createRoute({
+  getParentRoute: () => adminLayoutRoute,
+  path: "/users",
+  component: Users,
+});
+
+const placeholderRoute = (path: string, title: string) =>
+  createRoute({
+    getParentRoute: () => adminLayoutRoute,
+    path,
+    component: () => <Placeholder title={title} />,
+  });
+
 const routeTree = rootRoute.addChildren([
-  indexRoute,
+  adminLayoutRoute.addChildren([
+    indexRoute,
+    placeholderRoute("/analytics/sales", "Sales & Revenue"),
+    placeholderRoute("/analytics/traffic", "Traffic & Engagement"),
+    usersRoute,
+    placeholderRoute("/users/roles", "Roles & Permissions"),
+    placeholderRoute("/users/sellers", "Seller Accounts"),
+    placeholderRoute("/catalog/review-queue", "Review Queue"),
+    placeholderRoute("/catalog/categories", "Categories"),
+    placeholderRoute("/catalog/flagged", "Flagged Listings"),
+    placeholderRoute("/system/promotions", "Promotions & Vouchers"),
+    placeholderRoute("/system/settings", "Site Settings"),
+    placeholderRoute("/system/audit-log", "Audit Log"),
+    placeholderRoute("/profile", "Profile"),
+  ]),
   loginRoute,
   forbiddenRoute,
 ]);
