@@ -1,7 +1,7 @@
 "use client";
 
-import { PixelButton, Field, Form, FormField } from "@website/shared/ui";
-import { Gamepad2 } from "lucide-react";
+import { Card, PixelButton, Field, Form, FormField } from "@website/shared/ui";
+import { ShoppingBag } from "lucide-react";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -18,6 +18,8 @@ const getPasswordStrength = (password: string): number => {
   if (/[0-9]/.test(password)) score += 1;
   return score;
 };
+
+const STRENGTH_COLORS = ["bg-primary/40", "bg-primary/60", "bg-primary/80", "bg-primary"];
 
 const RegisterForm = () => {
   const [formError, setFormError] = useState<string | null>(null);
@@ -49,22 +51,24 @@ const RegisterForm = () => {
   };
 
   return (
-    <div className='grid min-h-screen place-items-center retro-grid scanlines px-4 py-10'>
+    <div className='grid min-h-screen place-items-center bg-secondary/20 px-4 py-10'>
       <div className='w-full max-w-md'>
         <Link href='/' className='mb-6 flex items-center justify-center gap-2'>
-          <span className='grid h-10 w-10 place-items-center bg-neon-pink pixel-border'>
-            <Gamepad2 className='h-5 w-5 text-background' />
+          <span className='grid h-10 w-10 place-items-center rounded-lg bg-primary text-primary-foreground'>
+            <ShoppingBag className='h-5 w-5' strokeWidth={1.5} />
           </span>
-          <span className='font-pixel text-sm text-neon-pink glow-pink'>
-            PIXELMART
+          <span className='font-display text-lg font-bold text-foreground'>
+            Pixel<span className='text-primary'>Mart</span>
           </span>
         </Link>
-        <div className='pixel-border-pink bg-card p-8'>
+        <Card className='p-8'>
           <div className='text-center'>
-            <div className='font-pixel text-[9px] text-neon-cyan'>
-              NEW PLAYER
+            <div className='text-xs font-semibold uppercase tracking-wide text-primary'>
+              Create your account
             </div>
-            <h1 className='mt-2 font-pixel text-xl'>CREATE ACCOUNT</h1>
+            <h1 className='mt-2 font-display text-2xl font-bold text-foreground'>
+              Join PixelMart
+            </h1>
           </div>
           <Form {...methods}>
             <form
@@ -76,9 +80,9 @@ const RegisterForm = () => {
                 name='email'
                 render={({ field }) => (
                   <Field
-                    label='EMAIL'
+                    label='Email'
                     type='email'
-                    placeholder='player1@email.com'
+                    placeholder='you@email.com'
                     autoComplete='email'
                     {...field}
                   />
@@ -89,9 +93,9 @@ const RegisterForm = () => {
                 name='password'
                 render={({ field }) => (
                   <Field
-                    label='PASSWORD'
+                    label='Password'
                     type='password'
-                    placeholder='********'
+                    placeholder='••••••••'
                     autoComplete='new-password'
                     {...field}
                   />
@@ -101,24 +105,18 @@ const RegisterForm = () => {
                 <div className='grid grid-cols-4 gap-1'>
                   {[0, 1, 2, 3].map((i) => {
                     const isActive = passwordStrength > i;
-                    const activeColors = [
-                      "bg-[#14532d]",
-                      "bg-[#15803d]",
-                      "bg-[#22c55e]",
-                      "bg-neon-green",
-                    ];
                     return (
                       <span
                         key={i}
-                        className={`h-2 border-2 border-foreground ${
-                          isActive ? activeColors[i] : "bg-input"
+                        className={`h-1.5 rounded-full ${
+                          isActive ? STRENGTH_COLORS[i] : "bg-muted"
                         }`}
                       />
                     );
                   })}
                 </div>
-                <p className='mt-1 font-retro text-sm text-neon-green'>
-                  Strength: {passwordIsStrong ? "STRONG" : "BUILDING"}
+                <p className='mt-1 text-sm text-muted-foreground'>
+                  Strength: {passwordIsStrong ? "Strong" : "Building"}
                 </p>
               </div>
               <FormField
@@ -126,35 +124,35 @@ const RegisterForm = () => {
                 name='confirmPassword'
                 render={({ field }) => (
                   <Field
-                    label='CONFIRM PASSWORD'
+                    label='Confirm password'
                     type='password'
-                    placeholder='********'
+                    placeholder='••••••••'
                     autoComplete='new-password'
                     {...field}
                   />
                 )}
               />
               {formError && (
-                <div className='border-[3px] border-destructive bg-destructive/10 p-3 font-retro text-base text-destructive'>
+                <div className='rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive'>
                   {formError}
                 </div>
               )}
               <PixelButton
-                variant='pink'
+                variant='cyan'
                 className='w-full disabled:cursor-not-allowed disabled:opacity-60'
                 disabled={isPending}
               >
-                {isPending ? "LOADING..." : "> CREATE ACCOUNT"}
+                {isPending ? "Creating account…" : "Create account"}
               </PixelButton>
             </form>
           </Form>
-          <div className='mt-6 text-center font-retro text-base text-muted-foreground'>
-            Already a player?{" "}
-            <Link href='/login' className='text-neon-cyan glow-cyan'>
-              Login
+          <div className='mt-6 text-center text-sm text-muted-foreground'>
+            Already have an account?{" "}
+            <Link href='/login' className='font-medium text-primary hover:underline'>
+              Log in
             </Link>
           </div>
-        </div>
+        </Card>
       </div>
     </div>
   );

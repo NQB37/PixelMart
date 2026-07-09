@@ -1,23 +1,27 @@
-import { Gamepad2 } from "lucide-react";
+import { ShoppingBag } from "lucide-react";
 
 const Footer = () => {
   return (
-    <footer className='mt-24 border-t-[3px] border-foreground bg-sidebar'>
-      <div className='mx-auto grid max-w-7xl grid-cols-2 gap-8 px-4 py-12 md:grid-cols-4'>
-        <div>
+    <footer className='mt-24 border-t border-border bg-secondary/40'>
+      <div className='mx-auto grid max-w-7xl grid-cols-2 gap-8 px-4 py-12 md:grid-cols-4 md:px-6 lg:px-8'>
+        <div className='col-span-2 md:col-span-1'>
           <div className='flex items-center gap-2'>
-            <span className='grid h-8 w-8 place-items-center bg-neon-cyan pixel-border'>
-              <Gamepad2 className='h-4 w-4 text-background' />
+            <span className='grid h-8 w-8 place-items-center rounded-lg bg-primary text-primary-foreground'>
+              <ShoppingBag className='h-4 w-4' strokeWidth={1.5} />
             </span>
-            <span className='font-pixel text-xs text-neon-cyan'>PIXELMART</span>
+            <span className='font-display text-base font-bold text-foreground'>
+              Pixel<span className='text-primary'>Mart</span>
+            </span>
           </div>
-          <p className='mt-3 font-retro text-base text-muted-foreground'>
-            Retro vibes. Modern tech. Press start to upgrade your loadout.
+          <p className='mt-3 text-sm text-muted-foreground'>
+            Everyday tech, picked for performance and priced to make sense.
           </p>
         </div>
         <div>
-          <h4 className='font-pixel text-[10px] text-neon-pink'>SHOP</h4>
-          <ul className='mt-3 space-y-2 font-retro text-base text-muted-foreground'>
+          <h4 className='font-display text-sm font-semibold text-foreground'>
+            Shop
+          </h4>
+          <ul className='mt-3 space-y-2 text-sm text-muted-foreground'>
             <li>Smartphones</li>
             <li>Laptops</li>
             <li>Gaming PCs</li>
@@ -25,9 +29,8 @@ const Footer = () => {
           </ul>
         </div>
       </div>
-      <div className='border-t-[3px] border-foreground py-4 text-center font-pixel text-[8px] text-muted-foreground'>
-        © {new Date().getFullYear()} PIXELMART — INSERT COIN TO CONTINUE{" "}
-        <span className='blink text-neon-cyan'>▮</span>
+      <div className='border-t border-border py-4 text-center text-xs text-muted-foreground'>
+        © {new Date().getFullYear()} PixelMart. All rights reserved.
       </div>
     </footer>
   );

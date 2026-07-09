@@ -4,8 +4,8 @@ import { LoginInput, loginSchema } from "../schemas/auth.schema";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
-import { Gamepad2 } from "lucide-react";
-import { PixelButton, Form, FormField, Field } from "@website/shared/ui";
+import { ShoppingBag } from "lucide-react";
+import { Card, PixelButton, Form, FormField, Field } from "@website/shared/ui";
 import { useLogin } from "../hooks/useLogin";
 
 const LoginForm = () => {
@@ -19,32 +19,31 @@ const LoginForm = () => {
     },
   });
 
-  const {
-    handleSubmit,
-    control,
-  } = methods;
+  const { handleSubmit, control } = methods;
 
   const onSubmit = async (data: LoginInput) => {
     login(data);
   };
 
   return (
-    <div className='grid min-h-screen place-items-center retro-grid scanlines px-4 py-10'>
+    <div className='grid min-h-screen place-items-center bg-secondary/20 px-4 py-10'>
       <div className='w-full max-w-md'>
         <Link href='/' className='mb-6 flex items-center justify-center gap-2'>
-          <span className='grid h-10 w-10 place-items-center bg-neon-cyan pixel-border'>
-            <Gamepad2 className='h-5 w-5 text-background' />
+          <span className='grid h-10 w-10 place-items-center rounded-lg bg-primary text-primary-foreground'>
+            <ShoppingBag className='h-5 w-5' strokeWidth={1.5} />
           </span>
-          <span className='font-pixel text-sm text-neon-cyan glow-cyan'>
-            PIXELMART
+          <span className='font-display text-lg font-bold text-foreground'>
+            Pixel<span className='text-primary'>Mart</span>
           </span>
         </Link>
-        <div className='pixel-border-cyan bg-card p-8'>
+        <Card className='p-8'>
           <div className='text-center'>
-            <div className='font-pixel text-[9px] text-neon-pink'>
-              PLAYER LOGIN
+            <div className='text-xs font-semibold uppercase tracking-wide text-primary'>
+              Welcome back
             </div>
-            <h1 className='mt-2 font-pixel text-xl'>PRESS START</h1>
+            <h1 className='mt-2 font-display text-2xl font-bold text-foreground'>
+              Log in to your account
+            </h1>
           </div>
           <Form {...methods}>
             <form className='mt-6 space-y-4' onSubmit={handleSubmit(onSubmit)}>
@@ -53,9 +52,9 @@ const LoginForm = () => {
                 name='email'
                 render={({ field }) => (
                   <Field
-                    label='EMAIL'
+                    label='Email'
                     type='email'
-                    placeholder='player1@email.com'
+                    placeholder='you@email.com'
                     autoComplete='email'
                     {...field}
                   />
@@ -66,43 +65,53 @@ const LoginForm = () => {
                 name='password'
                 render={({ field }) => (
                   <Field
-                    label='PASSWORD'
+                    label='Password'
                     type='password'
-                    placeholder='********'
+                    placeholder='••••••••'
                     autoComplete='current-password'
                     {...field}
                   />
                 )}
               />
-              <div className='flex items-center justify-between font-retro text-base'>
-                <label className='flex items-center gap-2'>
-                  <span className='grid h-4 w-4 place-items-center border-2 border-foreground bg-input' />
+              <div className='flex items-center justify-between text-sm'>
+                <label className='flex items-center gap-2 text-muted-foreground'>
+                  <input
+                    type='checkbox'
+                    className='h-4 w-4 rounded border-input accent-primary'
+                  />
                   Remember me
                 </label>
-                <a className='text-neon-cyan hover:glow-cyan'>Forgot?</a>
+                <a className='font-medium text-primary hover:underline'>
+                  Forgot password?
+                </a>
               </div>
               <PixelButton
                 variant='cyan'
                 className='w-full disabled:cursor-not-allowed disabled:opacity-60'
                 disabled={isPending}
               >
-                {isPending ? "LOADING..." : "> LOGIN"}
+                {isPending ? "Logging in…" : "Log in"}
               </PixelButton>
+              <div className='flex items-center gap-3 text-xs font-medium text-muted-foreground'>
+                <div className='h-px flex-1 bg-border' />
+                OR
+                <div className='h-px flex-1 bg-border' />
+              </div>
               <button
                 type='button'
-                className='w-full border-[3px] border-foreground bg-card px-4 py-3 font-pixel text-[10px] hover:bg-neon-yellow hover:text-background'
+                className='w-full rounded-md border border-input bg-card px-4 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-accent'
               >
-                CONTINUE WITH GOOGLE
+                Continue with Google
               </button>
             </form>
           </Form>
-          <div className='mt-6 text-center font-retro text-base text-muted-foreground'>
-            New player?{" "}
-            <Link href='/register' className='text-neon-pink glow-pink'>
-              Register
+          <div className='mt-6 text-center text-sm text-muted-foreground'>
+            New here?{" "}
+            <Link href='/register' className='font-medium text-primary hover:underline'>
+              Create an account
             </Link>
           </div>
-        </div>
+        </Card>
       </div>
     </div>
   );

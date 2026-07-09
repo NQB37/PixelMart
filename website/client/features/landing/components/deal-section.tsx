@@ -1,69 +1,58 @@
 import { Product, ProductCard } from "@/components/shared/ProductCard";
 import { SectionHeader } from "@website/shared/ui";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Keyboard, Laptop, Monitor, Smartphone } from "lucide-react";
 import Link from "next/link";
 
-const DealSection = () => {
-  const DEALS: Product[] = [
-    {
-      id: "1",
-      name: "ARCADE-X PRO PHONE",
-      category: "Smartphones",
-      price: 699,
-      oldPrice: 899,
-      rating: 4.6,
-      badge: "HOT",
-      emoji: "📱",
-      accent: "pink",
-    },
-    {
-      id: "2",
-      name: "PIXEL BLADE LAPTOP 16",
-      category: "Laptops",
-      price: 1299,
-      oldPrice: 1599,
-      rating: 4.8,
-      badge: "SALE",
-      emoji: "💻",
-      accent: "cyan",
-    },
-    {
-      id: "3",
-      name: "NEON RIG TOWER RTX",
-      category: "Gaming PCs",
-      price: 1899,
-      oldPrice: 2299,
-      rating: 4.9,
-      emoji: "🖥️",
-      accent: "green",
-    },
-    {
-      id: "4",
-      name: "8-BIT MECH KEYBOARD",
-      category: "Accessories",
-      price: 119,
-      oldPrice: 159,
-      rating: 4.7,
-      badge: "NEW",
-      emoji: "⌨️",
-      accent: "yellow",
-    },
-  ];
+const DEALS: Product[] = [
+  {
+    id: "1",
+    name: "Pixel Phone 12 Pro",
+    category: "Smartphones",
+    price: 699,
+    oldPrice: 899,
+    rating: 4.6,
+    icon: Smartphone,
+  },
+  {
+    id: "2",
+    name: "Nimbus Laptop 16",
+    category: "Laptops",
+    price: 1299,
+    oldPrice: 1599,
+    rating: 4.8,
+    icon: Laptop,
+  },
+  {
+    id: "3",
+    name: "Vertex Gaming Tower",
+    category: "Gaming PCs",
+    price: 1899,
+    oldPrice: 2299,
+    rating: 4.9,
+    icon: Monitor,
+  },
+  {
+    id: "4",
+    name: "AeroType Mechanical Keyboard",
+    category: "Accessories",
+    price: 119,
+    oldPrice: 159,
+    rating: 4.7,
+    icon: Keyboard,
+  },
+];
 
+const DealSection = () => {
   return (
-    <section className='border-y-[3px] border-foreground bg-sidebar py-16'>
-      <div className='mx-auto max-w-7xl px-4'>
+    <section className='bg-secondary/30 py-16'>
+      <div className='mx-auto max-w-7xl px-4 md:px-6 lg:px-8'>
         <div className='flex items-end justify-between'>
-          <SectionHeader
-            eyebrow={["🔥", "HOT DEALS"]}
-            title='POWER-UP SALE'
-            accent='pink'
-          />
+          <SectionHeader eyebrow={["Hot deals"]} title='Flash deals' accent='pink' />
           <Link
             href='/products'
-            className='hidden items-center gap-1 font-pixel text-[10px] text-neon-cyan hover:glow-cyan md:flex'
+            className='hidden items-center gap-1 text-sm font-medium text-primary hover:underline md:flex'
           >
-            SEE ALL <ChevronRight className='h-3 w-3' />
+            See all <ChevronRight className='h-4 w-4' />
           </Link>
         </div>
         <div className='mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4'>

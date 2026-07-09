@@ -1,17 +1,19 @@
 "use client";
 
-import { Gamepad2, Menu, Search, ShoppingCart, User } from "lucide-react";
+import { Menu, Search, ShoppingBag, ShoppingCart, User } from "lucide-react";
 import Link from "next/link";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  Input,
 } from "@website/shared/ui";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { useAuthStore } from "@/features/auth/stores/auth.store";
 import { useLogout } from "@/features/auth/hooks/useLogout";
+import ThemeToggle from "./theme-toggle";
 
 const NAV = [
   { to: "/", label: "Home" },
@@ -26,18 +28,18 @@ const Header = () => {
   const { mutate: logout, isPending } = useLogout();
 
   return (
-    <header className='sticky top-0 z-40 border-b-[3px] border-foreground bg-background/95 backdrop-blur'>
-      <div className='mx-auto flex h-16 max-w-7xl items-center gap-4 px-4'>
+    <header className='sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur'>
+      <div className='mx-auto flex h-16 max-w-7xl items-center gap-4 px-4 md:px-6 lg:px-8'>
         <Link href='/' className='flex items-center gap-2'>
-          <span className='grid h-9 w-9 place-items-center bg-neon-cyan pixel-border'>
-            <Gamepad2 className='h-5 w-5 text-background' />
+          <span className='grid h-9 w-9 place-items-center rounded-lg bg-primary text-primary-foreground'>
+            <ShoppingBag className='h-5 w-5' strokeWidth={1.5} />
           </span>
-          <span className='font-pixel text-sm text-neon-cyan glow-cyan'>
-            PIXEL<span className='text-neon-pink glow-pink'>MART</span>
+          <span className='font-display text-lg font-bold text-foreground'>
+            Pixel<span className='text-primary'>Mart</span>
           </span>
         </Link>
 
-        <nav className='ml-6 hidden items-center gap-5 md:flex'>
+        <nav className='ml-6 hidden items-center gap-6 md:flex'>
           {NAV.map((n) => {
             const isActive = pathname === n.to;
             return (
@@ -46,8 +48,8 @@ const Header = () => {
                 href={n.to}
                 className={
                   isActive
-                    ? "font-pixel text-[10px] uppercase text-neon-cyan glow-cyan"
-                    : "font-pixel text-[10px] uppercase tracking-wide text-foreground hover:text-neon-cyan"
+                    ? "font-display text-sm font-semibold text-primary"
+                    : "font-display text-sm font-medium text-foreground/70 hover:text-primary"
                 }
               >
                 {n.label}
@@ -56,21 +58,19 @@ const Header = () => {
           })}
         </nav>
 
-        <div className='ml-auto hidden items-center gap-2 md:flex'>
+        <div className='ml-auto hidden items-center gap-3 md:flex'>
           <div className='relative'>
-            <Search className='absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground' />
-            <input
-              placeholder='search gear...'
-              className='h-10 w-56 border-[3px] border-foreground bg-input pl-8 pr-2 font-retro text-base text-foreground outline-none focus:border-neon-cyan'
-            />
+            <Search className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground' />
+            <Input placeholder='Search products…' className='w-56 pl-9' />
           </div>
+          <ThemeToggle />
           <Link
             href='/cart'
-            className='relative grid h-10 w-10 place-items-center border-[3px] border-foreground bg-card hover:bg-neon-yellow hover:text-background'
+            className='relative grid h-10 w-10 place-items-center rounded-full bg-secondary text-secondary-foreground transition-colors hover:bg-accent'
             aria-label='Cart'
           >
-            <ShoppingCart className='h-4 w-4' />
-            <span className='absolute -right-2 -top-2 grid h-5 min-w-5 place-items-center bg-neon-pink px-1 font-pixel text-[8px] text-background pixel-border'>
+            <ShoppingCart className='h-4 w-4' strokeWidth={1.5} />
+            <span className='absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-primary px-1 text-xs font-semibold text-primary-foreground'>
               3
             </span>
           </Link>
@@ -79,30 +79,18 @@ const Header = () => {
               <DropdownMenuTrigger asChild>
                 <button
                   type='button'
-                  className='flex h-10 items-center gap-2 border-[3px] border-foreground bg-card px-3 font-pixel text-[10px] uppercase hover:bg-neon-cyan hover:text-background'
+                  className='grid h-10 w-10 place-items-center rounded-full bg-secondary text-secondary-foreground transition-colors hover:bg-accent'
                   aria-label='Open profile menu'
                   title={user?.email}
                 >
-                  <User className='h-4 w-4' />
+                  <User className='h-4 w-4' strokeWidth={1.5} />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent
-                align='end'
-                className='min-w-36 rounded-none border-[3px] border-foreground bg-card p-1'
-              >
+              <DropdownMenuContent align='end' className='min-w-36'>
                 <DropdownMenuItem asChild>
-                  <Link
-                    href='/profile'
-                    className='font-pixel text-[10px] uppercase focus:bg-neon-cyan focus:text-background'
-                  >
-                    Profile
-                  </Link>
+                  <Link href='/profile'>Profile</Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem
-                  onSelect={() => logout()}
-                  disabled={isPending}
-                  className='font-pixel text-[10px] uppercase focus:bg-neon-pink focus:text-background'
-                >
+                <DropdownMenuItem onSelect={() => logout()} disabled={isPending}>
                   Logout
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -110,7 +98,7 @@ const Header = () => {
           ) : (
             <Link
               href='/login'
-              className='flex h-10 items-center border-[3px] border-foreground bg-neon-green px-4 font-pixel text-[10px] uppercase text-background pixel-shadow hover:bg-neon-green/90'
+              className='inline-flex h-10 items-center rounded-md bg-primary px-4 font-display text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90'
               aria-label='Login'
             >
               Login
@@ -118,18 +106,21 @@ const Header = () => {
           )}
         </div>
 
-        <button
-          type='button'
-          onClick={() => setOpen(!open)}
-          className='ml-auto grid h-10 w-10 place-items-center border-[3px] border-foreground bg-card md:hidden'
-          aria-label='Open menu'
-        >
-          <Menu className='h-4 w-4' />
-        </button>
+        <div className='ml-auto flex items-center gap-2 md:hidden'>
+          <ThemeToggle />
+          <button
+            type='button'
+            onClick={() => setOpen(!open)}
+            className='grid h-10 w-10 place-items-center rounded-md text-foreground hover:bg-accent'
+            aria-label='Open menu'
+          >
+            <Menu className='h-5 w-5' />
+          </button>
+        </div>
       </div>
 
       {open && (
-        <div className='border-t-[3px] border-foreground bg-card md:hidden'>
+        <div className='border-t border-border bg-background md:hidden'>
           <nav className='flex flex-col p-4'>
             {NAV.map((n) => {
               const isActive = pathname === n.to;
@@ -137,10 +128,10 @@ const Header = () => {
                 <Link
                   key={n.label}
                   href={n.to}
-                  className={`py-2 font-pixel text-[10px] uppercase ${
+                  className={`py-2 font-display text-sm ${
                     isActive
-                      ? "text-neon-cyan glow-cyan"
-                      : "text-foreground hover:text-neon-cyan"
+                      ? "font-semibold text-primary"
+                      : "text-foreground/70 hover:text-primary"
                   }`}
                   onClick={() => setOpen(false)}
                 >
@@ -150,7 +141,7 @@ const Header = () => {
             })}
             <Link
               href='/cart'
-              className='py-2 font-pixel text-[10px] uppercase'
+              className='py-2 font-display text-sm text-foreground/70 hover:text-primary'
               onClick={() => setOpen(false)}
             >
               Cart
@@ -159,14 +150,14 @@ const Header = () => {
               <>
                 <Link
                   href='/profile'
-                  className='py-2 font-pixel text-[10px] uppercase'
+                  className='py-2 font-display text-sm text-foreground/70 hover:text-primary'
                   onClick={() => setOpen(false)}
                 >
                   Profile
                 </Link>
                 <button
                   type='button'
-                  className='py-2 text-left font-pixel text-[10px] uppercase disabled:cursor-not-allowed disabled:opacity-60'
+                  className='py-2 text-left font-display text-sm text-foreground/70 hover:text-primary disabled:cursor-not-allowed disabled:opacity-60'
                   onClick={() => logout()}
                   disabled={isPending}
                 >
@@ -176,7 +167,7 @@ const Header = () => {
             ) : (
               <Link
                 href='/login'
-                className='py-2 font-pixel text-[10px] uppercase'
+                className='py-2 font-display text-sm font-semibold text-primary'
                 onClick={() => setOpen(false)}
               >
                 Login

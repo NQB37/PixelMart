@@ -1,4 +1,5 @@
-import { Star, ShoppingCart } from "lucide-react";
+import { Badge, Card } from "@website/shared/ui";
+import { LucideIcon, ShoppingCart, Star } from "lucide-react";
 
 export interface Product {
   id: string;
@@ -8,72 +9,70 @@ export interface Product {
   oldPrice?: number;
   rating: number;
   badge?: string;
-  emoji: string;
-  accent: "cyan" | "pink" | "green" | "yellow";
+  icon: LucideIcon;
 }
-
-const accentMap = {
-  cyan: "pixel-border-cyan",
-  pink: "pixel-border-pink",
-  green: "pixel-border-green",
-  yellow: "pixel-border",
-};
 
 export function ProductCard({ p }: { p: Product }) {
   const discount = p.oldPrice
     ? Math.round((1 - p.price / p.oldPrice) * 100)
     : 0;
+  const Icon = p.icon;
+
   return (
-    <div
-      className={`group relative flex flex-col bg-card transition-transform hover:-translate-y-1 ${accentMap[p.accent]}`}
-    >
-      {p.badge && (
-        <span className='absolute left-2 top-2 z-10 bg-neon-pink px-2 py-1 font-pixel text-[8px] text-background pixel-border'>
-          {p.badge}
-        </span>
-      )}
-      {discount > 0 && (
-        <span className='absolute right-2 top-2 z-10 bg-neon-yellow px-2 py-1 font-pixel text-[8px] text-background pixel-border'>
-          -{discount}%
-        </span>
-      )}
-      <div className='flex h-44 items-center justify-center bg-linear-to-br from-secondary to-muted text-6xl'>
-        <span className='float-pixel'>{p.emoji}</span>
+    <Card className='group flex flex-col overflow-hidden transition-shadow hover:shadow-lg hover:shadow-primary/10'>
+      <div className='relative flex aspect-square items-center justify-center bg-muted'>
+        <Icon
+          className='h-14 w-14 text-muted-foreground/50 transition-transform group-hover:scale-105'
+          strokeWidth={1}
+        />
+        {discount > 0 ? (
+          <Badge variant='highlight' className='absolute left-2 top-2'>
+            -{discount}%
+          </Badge>
+        ) : (
+          p.badge && (
+            <Badge className='absolute left-2 top-2'>{p.badge}</Badge>
+          )
+        )}
       </div>
-      <div className='flex flex-1 flex-col gap-2 border-t-[3px] border-foreground p-4'>
-        <span className='font-pixel text-[8px] uppercase text-neon-cyan'>
+      <div className='flex flex-1 flex-col gap-1.5 p-4'>
+        <span className='text-xs uppercase tracking-wide text-muted-foreground'>
           {p.category}
         </span>
-        <h3 className='font-pixel text-[11px] leading-snug text-foreground'>
+        <h3 className='font-display text-lg font-semibold leading-snug text-foreground line-clamp-2'>
           {p.name}
         </h3>
         <div className='flex items-center gap-1'>
           {Array.from({ length: 5 }).map((_, i) => (
             <Star
               key={i}
-              className={`h-3 w-3 ${i < Math.round(p.rating) ? "fill-neon-yellow text-neon-yellow" : "text-muted-foreground"}`}
+              className={`h-3.5 w-3.5 ${i < Math.round(p.rating) ? "fill-warning text-warning" : "text-muted-foreground/40"}`}
             />
           ))}
-          <span className='ml-1 font-retro text-sm text-muted-foreground'>
+          <span className='ml-1 text-sm text-muted-foreground'>
             ({p.rating.toFixed(1)})
           </span>
         </div>
         <div className='mt-auto flex items-end justify-between pt-2'>
           <div>
             {p.oldPrice && (
-              <div className='font-retro text-base text-muted-foreground line-through'>
+              <div className='text-sm text-muted-foreground line-through tabular-nums'>
                 ${p.oldPrice}
               </div>
             )}
-            <div className='font-pixel text-sm text-neon-green glow-green'>
+            <div className='font-display text-xl font-bold text-primary tabular-nums'>
               ${p.price}
             </div>
           </div>
-          <button className='grid h-10 w-10 place-items-center border-[3px] border-foreground bg-neon-cyan text-background hover:bg-neon-pink'>
-            <ShoppingCart className='h-4 w-4' />
+          <button
+            type='button'
+            className='grid h-10 w-10 place-items-center rounded-full bg-primary text-primary-foreground transition-colors hover:bg-primary/90'
+            aria-label={`Add ${p.name} to cart`}
+          >
+            <ShoppingCart className='h-4 w-4' strokeWidth={1.5} />
           </button>
         </div>
       </div>
-    </div>
+    </Card>
   );
 }
