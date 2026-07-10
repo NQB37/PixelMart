@@ -97,4 +97,70 @@ describe("User Management Integration Tests", () => {
       await cleanupUser(targetEmail);
     }
   });
+
+  it("soft deletes, restores, and permanently deletes a user for an admin", async () => {
+    const adminEmail = `test-user-admin-del-${Date.now()}@example.com`;
+    const targetEmail = `test-user-target-del-${Date.now()}@example.com`;
+    await cleanupUser(adminEmail);
+    await cleanupUser(targetEmail);
+
+    try {
+      const adminId = await registerUser(adminEmail);
+      await makeAdmin(adminId);
+      const adminToken = await loginAs(adminEmail);
+
+      const targetId = await registerUser(targetEmail);
+
+      const selfDeleteRes = await request(app)
+        .delete(`/api/v1/users/${adminId}`)
+        .set("Authorization", `Bearer ${adminToken}`);
+      expect(selfDeleteRes.status).toBe(400);
+
+      const permanentBeforeSoftDeleteRes = await request(app)
+        .delete(`/api/v1/users/${targetId}/permanent`)
+        .set("Authorization", `Bearer ${adminToken}`);
+      expect(permanentBeforeSoftDeleteRes.status).toBe(400);
+
+      const deleteRes = await request(app)
+        .delete(`/api/v1/users/${targetId}`)
+        .set("Authorization", `Bearer ${adminToken}`);
+      expect(deleteRes.status).toBe(200);
+      expect(deleteRes.body.data.isActive).toBe(false);
+      expect(deleteRes.body.data.deletedAt).not.toBeNull();
+
+      const deletedListRes = await request(app)
+        .get("/api/v1/users")
+        .query({ search: targetEmail })
+        .set("Authorization", `Bearer ${adminToken}`);
+      expect(deletedListRes.body.data.users).toHaveLength(0);
+
+      const deletedFilterRes = await request(app)
+        .get("/api/v1/users")
+        .query({ search: targetEmail, isDeleted: "true" })
+        .set("Authorization", `Bearer ${adminToken}`);
+      expect(deletedFilterRes.body.data.users).toHaveLength(1);
+
+      const restoreRes = await request(app)
+        .patch(`/api/v1/users/${targetId}/restore`)
+        .set("Authorization", `Bearer ${adminToken}`);
+      expect(restoreRes.status).toBe(200);
+      expect(restoreRes.body.data.isActive).toBe(true);
+      expect(restoreRes.body.data.deletedAt).toBeNull();
+
+      await request(app)
+        .delete(`/api/v1/users/${targetId}`)
+        .set("Authorization", `Bearer ${adminToken}`);
+
+      const permanentRes = await request(app)
+        .delete(`/api/v1/users/${targetId}/permanent`)
+        .set("Authorization", `Bearer ${adminToken}`);
+      expect(permanentRes.status).toBe(204);
+
+      const afterPermanentDelete = await prisma.user.findUnique({ where: { id: targetId } });
+      expect(afterPermanentDelete).toBeNull();
+    } finally {
+      await cleanupUser(adminEmail);
+      await cleanupUser(targetEmail);
+    }
+  });
 });

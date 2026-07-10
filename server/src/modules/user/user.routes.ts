@@ -16,5 +16,8 @@ router.patch(
   validate(updateUserStatusSchema),
   userController.updateUserStatus,
 );
+router.patch('/:id/restore', userController.restoreUser);
+router.delete('/:id/permanent', userController.permanentlyDeleteUser);
+router.delete('/:id', userController.deleteUser);
 
 export const userRoutes = router;

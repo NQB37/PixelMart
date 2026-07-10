@@ -20,4 +20,22 @@ const updateUserStatus = asyncHandler(async (req, res) => {
   ApiResponse.success(res, user, 'User status updated successfully');
 });
 
-export { listUsers, updateUserStatus };
+const deleteUser = asyncHandler(async (req, res) => {
+  const user = await userService.softDelete(req.params.id as string, req.user!.userId);
+
+  ApiResponse.success(res, user, 'User deleted successfully');
+});
+
+const restoreUser = asyncHandler(async (req, res) => {
+  const user = await userService.restore(req.params.id as string);
+
+  ApiResponse.success(res, user, 'User restored successfully');
+});
+
+const permanentlyDeleteUser = asyncHandler(async (req, res) => {
+  await userService.permanentlyDelete(req.params.id as string, req.user!.userId);
+
+  ApiResponse.noContent(res);
+});
+
+export { listUsers, updateUserStatus, deleteUser, restoreUser, permanentlyDeleteUser };
