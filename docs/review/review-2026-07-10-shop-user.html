@@ -1,0 +1,903 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PixelMart — Shop Approval &amp; User Soft-Delete Review</title>
+<meta name="description" content="Adversarially-verified review of the shop approval workflow, user soft-delete/ban logic, and the seller/admin portal changes on top of main." />
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#030307;
+  --surface:#0b0b14;
+  --surface2:#121225;
+  --border:#1e1e3b;
+  --border2:#2d2d5a;
+  --text:#e2e2f6;
+  --muted:#8b8bbd;
+  --dim:#606096;
+  --crit:#ff2b5e;
+  --high:#ff6ea8;
+  --med:#ffb800;
+  --low:#00e5ff;
+  --info:#8a8ac8;
+  --green:#00f59b;
+  --code:#05050f;
+}
+html{font-size:15px;scroll-behavior:smooth}
+body{
+  background:var(--bg);
+  color:var(--text);
+  line-height:1.65;
+  font-family:'Plus Jakarta Sans', sans-serif;
+  -webkit-font-smoothing:antialiased;
+  padding:0 1.5rem 6rem;
+}
+body::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  z-index:-1;
+  pointer-events:none;
+  background:
+    linear-gradient(rgba(30, 30, 60, 0.15) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(30, 30, 60, 0.15) 1px, transparent 1px),
+    radial-gradient(900px 500px at 80% -10%,rgba(255,43,94,.04),transparent),
+    radial-gradient(700px 500px at 0% 10%,rgba(0,229,255,.03),transparent);
+  background-size: 32px 32px, 32px 32px, 100% 100%, 100% 100%;
+}
+.page{max-width:1180px;margin:0 auto}
+a{color:var(--low);text-decoration:none;transition:color 0.2s ease}
+a:hover{color:#fff;text-decoration:underline}
+
+/* header */
+header.hero{
+  padding:4rem 0 2.5rem;
+  border-bottom:1px solid var(--border);
+  margin-bottom:2.5rem;
+  position:relative;
+}
+.eyebrow{
+  font-size:.75rem;
+  letter-spacing:.2em;
+  text-transform:uppercase;
+  color:var(--muted);
+  margin-bottom:1rem;
+  font-family:'Space Grotesk', sans-serif;
+  font-weight:600;
+}
+.eyebrow b{color:var(--crit);text-shadow:0 0 8px rgba(255,43,94,0.4)}
+h1{
+  font-size:2.6rem;
+  line-height:1.15;
+  letter-spacing:-.02em;
+  color:#fff;
+  font-weight:800;
+  text-wrap:balance;
+  font-family:'Space Grotesk', sans-serif;
+}
+h1 .px{color:var(--med);text-shadow:0 0 20px rgba(255,184,0,.35)}
+.sub{color:var(--muted);margin-top:1.1rem;max-width:75ch;font-size:.95rem;line-height:1.6}
+.meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:.75rem 1.75rem;
+  margin-top:1.75rem;
+  font-size:.82rem;
+  color:var(--dim);
+  font-family:'Space Grotesk', sans-serif;
+}
+.meta b{color:var(--text);font-weight:600}
+
+/* stat tiles */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(130px,1fr));
+  gap:.8rem;
+  margin:2.5rem 0 1rem;
+}
+.stat{
+  background:var(--surface);
+  border:1px solid var(--border);
+  padding:1.25rem 1.4rem;
+  border-radius:6px;
+  position:relative;
+  overflow:hidden;
+  transition:all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.stat::before{
+  content:"";
+  position:absolute;
+  top:0;
+  left:0;
+  width:100%;
+  height:3px;
+  background:var(--border2);
+  transition:background 0.3s ease;
+}
+.stat:hover{
+  border-color:var(--border2);
+  transform:translateY(-2px);
+}
+.stat.crit::before{background:var(--crit)}
+.stat.high::before{background:var(--high)}
+.stat.med::before{background:var(--med)}
+.stat.low::before{background:var(--low)}
+.stat.info::before{background:var(--info)}
+.stat.total::before{background:#fff}
+
+.stat.crit:hover{box-shadow: 0 10px 30px -15px rgba(255,43,94,.25), inset 0 0 10px rgba(255,43,94,.05)}
+.stat.high:hover{box-shadow: 0 10px 30px -15px rgba(255,110,168,.25), inset 0 0 10px rgba(255,110,168,.05)}
+.stat.med:hover{box-shadow: 0 10px 30px -15px rgba(255,184,0,.25), inset 0 0 10px rgba(255,184,0,.05)}
+.stat.low:hover{box-shadow: 0 10px 30px -15px rgba(0,229,255,.25), inset 0 0 10px rgba(0,229,255,.05)}
+.stat.info:hover{box-shadow: 0 10px 30px -15px rgba(138,138,200,.25), inset 0 0 10px rgba(138,138,200,.05)}
+.stat.total:hover{box-shadow: 0 10px 30px -15px rgba(255,255,255,.15), inset 0 0 10px rgba(255,255,255,.05)}
+
+.stat.active-filter {
+  border-color: var(--text) !important;
+  background: var(--surface2) !important;
+  box-shadow: 0 0 15px rgba(255,255,255,.08) !important;
+}
+
+.stat .n{
+  font-size:2.2rem;
+  font-weight:800;
+  line-height:1;
+  font-family:'Space Grotesk', sans-serif;
+  letter-spacing:-0.03em;
+}
+.stat .l{
+  font-size:.7rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+  margin-top:.6rem;
+  font-family:'Space Grotesk', sans-serif;
+  font-weight:600;
+}
+.stat.crit .n{color:var(--crit)}.stat.high .n{color:var(--high)}.stat.med .n{color:var(--med)}
+.stat.low .n{color:var(--low)}.stat.info .n{color:var(--info)}.stat.total .n{color:#fff}
+
+.bar{
+  display:flex;
+  height:12px;
+  margin:.5rem 0 2.5rem;
+  border:1px solid var(--border);
+  border-radius:6px;
+  overflow:hidden;
+  background:var(--surface);
+}
+.bar span{display:block;transition:all 0.5s ease}
+.bar .b-crit{background:var(--crit)}.bar .b-high{background:var(--high)}.bar .b-med{background:var(--med)}
+.bar .b-low{background:var(--low)}.bar .b-info{background:var(--info)}
+
+/* callout */
+.callout{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-left:3px solid var(--med);
+  border-radius:6px;
+  padding:1.25rem 1.5rem;
+  margin:1.5rem 0;
+  font-size:.92rem;
+  color:var(--muted);
+}
+.callout b{color:var(--text)}
+.callout.method{border-left-color:var(--low)}
+
+/* priorities */
+.prio{
+  background:linear-gradient(180deg,rgba(255,43,94,.04),transparent);
+  border:1px solid rgba(255,43,94,0.15);
+  border-radius:8px;
+  padding:1.5rem 1.75rem;
+  margin:1.8rem 0 2.5rem;
+}
+.prio h3{
+  font-size:.8rem;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+  color:var(--crit);
+  margin-bottom:1.25rem;
+  font-family:'Space Grotesk', sans-serif;
+  font-weight:700;
+}
+.prio ul{list-style:none}
+.prio li{
+  display:flex;
+  gap:1rem;
+  align-items:flex-start;
+  padding:.75rem 0;
+  border-top:1px dashed var(--border);
+}
+.prio li:first-child{border-top:none}
+.prio .pt{display:block;color:var(--text);font-size:.95rem;font-weight:500}
+.prio .pf{
+  display:block;
+  color:var(--dim);
+  font-size:.76rem;
+  margin-top:.25rem;
+  font-family:'JetBrains Mono', monospace;
+}
+
+/* nav */
+nav.toc{
+  display:flex;
+  flex-wrap:wrap;
+  gap:.5rem;
+  margin:0 0 2.5rem;
+  padding: 0.75rem;
+  background: rgba(10, 10, 20, 0.4);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  position: sticky;
+  top: 1rem;
+  z-index: 100;
+  box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
+}
+nav.toc a{
+  background:rgba(255,255,255,0.02);
+  border:1px solid var(--border);
+  border-radius:4px;
+  padding:.5rem .8rem;
+  font-size:.78rem;
+  color:var(--muted);
+  font-family:'Space Grotesk', sans-serif;
+  font-weight:500;
+  transition:all 0.2s ease;
+  display:flex;
+  align-items:center;
+  gap:0.5rem;
+}
+nav.toc a:hover{
+  border-color:var(--low);
+  background:rgba(0, 229, 255, 0.05);
+  color:#fff;
+  text-decoration:none;
+  box-shadow:0 0 15px rgba(0, 229, 255, 0.1);
+}
+nav.toc .nc{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  background:rgba(255,255,255,0.05);
+  border-radius:20px;
+  padding:0.1rem 0.4rem;
+  font-size:.7rem;
+  font-weight:700;
+  color:var(--dim);
+}
+nav.toc a:hover .nc {
+  background: rgba(0, 229, 255, 0.15);
+  color: var(--low);
+}
+
+/* subsystem */
+.subsystem{margin:0 0 4rem;scroll-margin-top:6.5rem}
+.s-head{display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:0.5rem}
+.s-head h2{
+  font-size:1.45rem;
+  color:#fff;
+  font-weight:700;
+  font-family:'Space Grotesk', sans-serif;
+}
+.s-tag{
+  font-size:.65rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  padding:.25rem .6rem;
+  border:1px solid var(--border2);
+  border-radius:4px;
+  color:var(--muted);
+  font-family:'Space Grotesk', sans-serif;
+  font-weight:700;
+}
+.tag-server{color:#7ee0ff;border-color:#1d4a5a;background:rgba(126,224,255,0.05)}
+.tag-client{color:#ff9ecb;border-color:#5a2440;background:rgba(255,158,203,0.05)}
+.tag-portal{color:#ffe07a;border-color:#5a4e1d;background:rgba(255,224,122,0.05)}
+.tag-cross{color:#b69cff;border-color:#3d2f5a;background:rgba(182,156,255,0.05)}
+.tag-repo{color:#9affc4;border-color:#1d5a3a;background:rgba(154,255,196,0.05)}
+.s-chips{margin:.6rem 0 .8rem;display:flex;gap:.5rem;flex-wrap:wrap}
+.s-summary{color:var(--muted);font-size:.95rem;max-width:90ch;margin-bottom:1.25rem;line-height:1.6}
+details.strengths{background:var(--surface);border:1px solid var(--border);border-radius:6px;margin-bottom:1.5rem;overflow:hidden}
+details.strengths summary{
+  cursor:pointer;
+  padding:.8rem 1.25rem;
+  font-size:.8rem;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  color:var(--green);
+  background:rgba(0, 245, 155, 0.02);
+  font-family:'Space Grotesk', sans-serif;
+  font-weight:600;
+  user-select:none;
+  transition:background 0.2s ease;
+}
+details.strengths summary:hover{background:rgba(0, 245, 155, 0.05)}
+details.strengths ul{padding:1rem 1.5rem 1.25rem 2.2rem;color:var(--muted);font-size:.9rem;line-height:1.6}
+details.strengths li{margin:.5rem 0}
+
+/* findings */
+.findings{display:flex;flex-direction:column;gap:1.1rem}
+.finding{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-left:4px solid var(--border2);
+  border-radius:6px;
+  padding:1.4rem 1.5rem;
+  transition:all 0.2s ease;
+}
+.finding:hover{
+  border-color:var(--border2);
+  box-shadow:0 8px 30px -10px rgba(0,0,0,0.6);
+  transform:translateX(4px);
+}
+.finding.sev-critical{border-left-color:var(--crit)}
+.finding.sev-high{border-left-color:var(--high)}
+.finding.sev-medium{border-left-color:var(--med)}
+.finding.sev-low{border-left-color:var(--low)}
+.finding.sev-info{border-left-color:var(--info)}
+
+.finding.sev-critical:hover{box-shadow: inset 4px 0 0 var(--crit), 0 8px 30px -10px rgba(255,43,94,0.06)}
+.finding.sev-high:hover{box-shadow: inset 4px 0 0 var(--high), 0 8px 30px -10px rgba(255,110,168,0.06)}
+.finding.sev-medium:hover{box-shadow: inset 4px 0 0 var(--med), 0 8px 30px -10px rgba(255,184,0,0.06)}
+.finding.sev-low:hover{box-shadow: inset 4px 0 0 var(--low), 0 8px 30px -10px rgba(0,229,255,0.06)}
+.finding.sev-info:hover{box-shadow: inset 4px 0 0 var(--info), 0 8px 30px -10px rgba(138,138,200,0.06)}
+
+.finding.is-refuted{opacity:.45}
+.finding.is-refuted .f-title{text-decoration:line-through;text-decoration-color:var(--dim)}
+.f-top{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;margin-bottom:.7rem}
+.sev{
+  font-size:.65rem;
+  font-weight:700;
+  letter-spacing:.08em;
+  padding:.22rem .55rem;
+  border-radius:4px;
+  color:#080810;
+  font-family:'Space Grotesk', sans-serif;
+}
+.sev.sev-critical{background:var(--crit)}
+.sev.sev-high{background:var(--high)}
+.sev.sev-medium{background:var(--med)}
+.sev.sev-low{background:var(--low)}
+.sev.sev-info{background:var(--info);color:#fff}
+.sev.mini{font-size:.6rem;padding:.16rem .42rem}
+.cat{
+  font-size:.7rem;
+  font-weight:600;
+  color:var(--muted);
+  border:1px solid var(--border);
+  background:rgba(138,138,200,0.05);
+  padding:.22rem .6rem;
+  border-radius:4px;
+  text-transform:uppercase;
+  letter-spacing:0.05em;
+  font-family:'Space Grotesk', sans-serif;
+}
+.vb{
+  font-size:.68rem;
+  font-weight:500;
+  padding:.22rem .6rem;
+  border:1px solid var(--border);
+  border-radius:4px;
+  font-family:'Space Grotesk', sans-serif;
+}
+.vb-c{color:var(--green);border-color:rgba(0, 245, 155, 0.2);background:rgba(0, 245, 155, 0.04)}
+.vb-a{color:var(--med);border-color:rgba(255, 184, 0, 0.2);background:rgba(255, 184, 0, 0.04)}
+.vb-r{color:var(--dim);border-color:var(--border);background:rgba(255,255,255,0.01)}
+.vb-u{color:var(--muted);border-color:var(--border);background:rgba(255,255,255,0.02)}
+.adj{font-size:.66rem;color:var(--dim);font-family:'Space Grotesk', sans-serif;font-weight:500}
+.f-title{
+  font-size:1.1rem;
+  color:#fff;
+  font-weight:700;
+  margin-bottom:.4rem;
+  line-height:1.4;
+  font-family:'Space Grotesk', sans-serif;
+}
+.file-ref{
+  font-size:.8rem;
+  color:var(--low);
+  background:rgba(0,229,255,0.03);
+  border:1px dashed rgba(0,229,255,0.15);
+  padding:.35rem .6rem;
+  border-radius:4px;
+  display:inline-flex;
+  align-items:center;
+  gap:.4rem;
+  margin-bottom:.8rem;
+  font-family:'JetBrains Mono', monospace;
+  word-break:break-all;
+}
+.file-ref::before {
+  content: '📄';
+  font-size: 0.85rem;
+  filter: hue-rotate(180deg);
+}
+.desc{font-size:.92rem;color:var(--text);margin-bottom:.8rem;line-height:1.6}
+.impact,.reco{
+  font-size:.9rem;
+  color:var(--muted);
+  margin-bottom:.6rem;
+  padding:.6rem .8rem;
+  border-radius:4px;
+  line-height:1.55;
+}
+.impact{
+  background:rgba(255,110,168,0.02);
+  border-left:2px solid rgba(255,110,168,0.3);
+}
+.reco{
+  background:rgba(0,245,155,0.02);
+  border-left:2px solid rgba(0,245,155,0.3);
+}
+.lab{
+  display:inline-block;
+  font-size:.72rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  font-weight:700;
+  margin-right:.5rem;
+  font-family:'Space Grotesk', sans-serif;
+}
+.impact .lab{color:var(--high)}.reco .lab{color:var(--green)}
+
+.code{
+  margin:.9rem 0 0;
+  border:1px solid var(--border);
+  border-radius:6px;
+  background:var(--code);
+  overflow:hidden;
+}
+.code-h{
+  font-size:.7rem;
+  font-weight:600;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--dim);
+  background:rgba(255,255,255,0.02);
+  padding:.5rem .9rem;
+  border-bottom:1px solid var(--border);
+  font-family:'Space Grotesk', sans-serif;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+.code-h::before {
+  content: '⚠️ CURRENT CODE';
+}
+.code.fix {
+  border-color: rgba(0, 245, 155, 0.3);
+}
+.code.fix .code-h {
+  color:var(--green);
+  background:rgba(0, 245, 155, 0.02);
+  border-bottom-color:rgba(0, 245, 155, 0.15);
+}
+.code.fix .code-h::before {
+  content: '✅ SUGGESTED FIX';
+}
+.code pre{
+  padding:.8rem 1rem;
+  overflow-x:auto;
+  font-size:.82rem;
+  line-height:1.6;
+  color:#cbd5e1;
+  white-space:pre;
+  font-family:'JetBrains Mono', monospace;
+}
+.code.fix pre{color:#a7f3d0}
+footer{border-top:1px solid var(--border);margin-top:4rem;padding:2rem 0;color:var(--dim);font-size:.78rem;line-height:1.6}
+footer b{color:var(--muted)}
+@media(max-width:768px){
+  h1{font-size:2rem}
+  html{font-size:14px}
+  nav.toc{position:static;margin-bottom:1.5rem}
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+<header class="hero">
+  <div class="eyebrow">PixelMart · <b>Code Review</b> · Pending changes on <code>main</code></div>
+  <h1>Shop approval &amp; user soft-delete <span class="px">logic</span> review</h1>
+  <p class="sub">Xhigh-effort, adversarially-verified review of the uncommitted work on top of <code>main</code>: the seller shop-approval workflow (<code>server/src/modules/shop</code>), the new user soft-delete/ban model (<code>server/src/modules/user</code> + migration <code>20260709114510_add_user_soft_delete</code>), and the admin/seller portal UI built on top of them. 31 subagents ran across 3 phases — 6 independent finders, 22 verifiers, one refute-or-confirm pass per distinct <code>file:line</code>.</p>
+  <div class="meta">
+    <span>Date <b>2026-07-10</b></span>
+    <span>Branch <b>main</b> (uncommitted working tree)</span>
+    <span>Method <b>6 finders → 22 verifiers, xhigh effort</b></span>
+    <span>Scope <b>server/shop · server/user · website/admin · website/seller</b></span>
+  </div>
+</header>
+
+<div class="stats">
+  <div class="stat total"><div class="n">13</div><div class="l">Findings</div></div>
+  <div class="stat crit"><div class="n">0</div><div class="l">Critical</div></div>
+  <div class="stat high"><div class="n">3</div><div class="l">High</div></div>
+  <div class="stat med"><div class="n">7</div><div class="l">Medium</div></div>
+  <div class="stat low"><div class="n">3</div><div class="l">Low</div></div>
+  <div class="stat info"><div class="n">0</div><div class="l">Info</div></div>
+</div>
+<div class="bar">
+  <span class="b-high" style="flex:3"></span>
+  <span class="b-med" style="flex:7"></span>
+  <span class="b-low" style="flex:3"></span>
+</div>
+
+<div class="callout method">
+  <b>How this was produced.</b> Six independent finders each read the full diff plus surrounding call sites (not just the changed lines), grouped by angle (correctness, security, cross-cutting UX, cleanup). Every candidate went to its own verifier — a separate agent re-reading the actual code to confirm, refute, or downgrade. 25 candidates were verified: 23 kept (11 confirmed outright, 2 downgraded to plausible-not-proven), 2 refuted as pure style with no functional defect (a duplicated Zod schema, a nested ternary) and dropped from this report.
+</div>
+
+<div class="callout">
+  <b>Verdict.</b> No critical vulnerabilities, but three <b>business-logic breaks</b> that will hit real users: a rejected seller has no way back into the funnel, and the admin's restore/status endpoints can silently undo a ban that was never meant to be lifted. The rest of the tier is UX correctness around the shop-approval flow (token refresh races, a swallowed error state, a missing admin tab) plus a currently-broken ESLint config in both portals. Closing tier is small cleanup: duplicated code, an inconsistent route-guard pattern, unrequested reformatting.
+</div>
+
+<div class="prio">
+  <h3>⚡ Fix these first (3)</h3>
+  <ul>
+    <li class="sev-high"><span class="sev sev-high mini">HIGH</span>
+      <div><span class="pt">restore() unconditionally sets isActive: true, silently lifting a ban that had nothing to do with the soft-delete</span><span class="pf">server/src/modules/user/user.service.ts:90</span></div></li>
+    <li class="sev-high"><span class="sev sev-high mini">HIGH</span>
+      <div><span class="pt">updateStatus() has no guard against a soft-deleted user, so it can produce an active-but-invisible account</span><span class="pf">server/src/modules/user/user.service.ts:45</span></div></li>
+    <li class="sev-high"><span class="sev sev-high mini">HIGH</span>
+      <div><span class="pt">A rejected seller has no UI path back into onboarding — the frontend never checks REJECTED and createShop's conflict check never accounts for approval status</span><span class="pf">website/seller/src/pages/RegisterShop.tsx:44</span></div></li>
+  </ul>
+</div>
+
+<nav class="toc"><a href="#s0">Server · User Module — Soft-Delete &amp; Ban Logic<span class="nc">3</span></a><a href="#s1">Cross-Cutting · Seller Onboarding Approval Flow<span class="nc">3</span></a><a href="#s2">Seller Portal · Registration &amp; Session Refresh UX<span class="nc">3</span></a><a href="#s3">Tooling · ESLint Flat Config<span class="nc">1</span></a><a href="#s4">Cleanup · Code Hygiene<span class="nc">3</span></a></nav>
+
+<section class="subsystem" id="s0">
+  <div class="s-head">
+    <span class="s-tag tag-server">server</span>
+    <h2>Server · User Module — Soft-Delete &amp; Ban Logic</h2>
+  </div>
+  <div class="s-chips"><span class="sev sev-high mini">2 HIGH</span> <span class="sev sev-medium mini">1 MEDIUM</span></div>
+  <p class="s-summary">The new soft-delete migration (<code>deletedAt</code> on <code>User</code>) is bolted onto the existing <code>isActive</code> ban flag without reconciling the two as independent states. <code>restore()</code> and <code>updateStatus()</code> each write <code>isActive</code> without checking the other field, so a soft-deleted account and a banned account can flip each other's state in ways no admin explicitly asked for.</p>
+  <details class="strengths">
+    <summary>What's done well (2)</summary>
+    <ul>
+      <li><code>softDelete()</code>, <code>restore()</code> and <code>permanentlyDelete()</code> all correctly reject self-targeting and re-check the row exists / is in the right prior state (<code>if (!user.deletedAt) throw badRequest(...)</code>) before acting.</li>
+      <li><code>listUsers</code>'s search/role/isActive filters compose cleanly with spread-conditionals — easy to extend without an if/else ladder.</li>
+    </ul>
+  </details>
+  <div class="findings">
+
+    <div class="finding sev-high">
+      <div class="f-top">
+        <span class="sev sev-high">HIGH</span>
+        <span class="cat">correctness</span>
+        <span class="vb vb-c" title="Re-read the code and confirmed">✓ verified</span>
+      </div>
+      <div class="f-title">restore() unconditionally reactivates a user, silently lifting a ban that existed independently of the soft-delete</div>
+      <div class="file-ref">server/src/modules/user/user.service.ts:79</div>
+      <p class="desc">The schema has exactly one <code>isActive</code> boolean shared by both the ban control and the soft-delete state. <code>softDelete()</code> sets <code>isActive: false</code> alongside <code>deletedAt</code>, but that doesn't distinguish "deleted" from "was already banned before being deleted." <code>restore()</code> only checks <code>if (!user.deletedAt) throw badRequest('User is not deleted')</code> — it never reads what <code>isActive</code> was before the delete, and unconditionally writes <code>isActive: true</code>.</p>
+      <p class="impact"><span class="lab">Impact</span> Admin bans a user (isActive=false), later soft-deletes that same user (isActive stays false, deletedAt set). Clicking Restore from the Deleted filter — intending only to undo the deletion — reactivates the account <b>and</b> clears the ban in one step. The previously-banned user regains full access with no separate unban action ever taken.</p>
+      <p class="reco"><span class="lab">Fix</span> Track ban state independently of soft-delete (e.g. a separate <code>bannedAt</code>/flag), or have <code>restore()</code> only clear <code>deletedAt</code> and leave <code>isActive</code> untouched — require a distinct PATCH /status call to actually unban.</p>
+      <div class="code"><div class="code-h">current</div><pre>public async restore(userId: string) {
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) {
+    throw ApiError.notFound('User not found');
+  }
+  if (!user.deletedAt) {
+    throw ApiError.badRequest('User is not deleted');
+  }
+
+  return prisma.user.update({
+    where: { id: userId },
+    data: { isActive: true, deletedAt: null },
+    select: { id: true, email: true, isActive: true, deletedAt: true },
+  });
+}</pre></div><div class="code fix"><div class="code-h">suggested fix</div><pre>public async restore(userId: string) {
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) {
+    throw ApiError.notFound('User not found');
+  }
+  if (!user.deletedAt) {
+    throw ApiError.badRequest('User is not deleted');
+  }
+
+  // Only undoes the deletion — a separate PATCH /status call is required
+  // to lift a ban that predates it.
+  return prisma.user.update({
+    where: { id: userId },
+    data: { deletedAt: null },
+    select: { id: true, email: true, isActive: true, deletedAt: true },
+  });
+}</pre></div>
+    </div>
+
+    <div class="finding sev-high">
+      <div class="f-top">
+        <span class="sev sev-high">HIGH</span>
+        <span class="cat">correctness</span>
+        <span class="vb vb-c" title="Re-read the code and confirmed">✓ verified</span>
+      </div>
+      <div class="f-title">updateStatus() has no guard against being called on a soft-deleted user, producing an active-but-hidden account</div>
+      <div class="file-ref">server/src/modules/user/user.service.ts:45</div>
+      <p class="desc"><code>updateStatus()</code> loads the user and writes <code>isActive</code> with no check of <code>user.deletedAt</code>. <code>listUsers</code>'s default view filters <code>deletedAt: null</code>, so a soft-deleted user stays out of the default admin list regardless of <code>isActive</code> — but <code>login</code>/<code>refreshToken</code> only ever check <code>isActive</code>, not <code>deletedAt</code>.</p>
+      <p class="impact"><span class="lab">Impact</span> PATCH /users/:id/status {isActive:true} on a soft-deleted user leaves isActive:true + deletedAt non-null: the account can log in and act normally, yet is invisible in the admin's default user list and unreachable via the intended restore-then-manage flow.</p>
+      <p class="reco"><span class="lab">Fix</span> Reject (400) if <code>user.deletedAt</code> is set — status changes should route through restore first, mirroring the pattern already used by <code>permanentlyDelete()</code>.</p>
+      <div class="code"><div class="code-h">current</div><pre>public async updateStatus(userId: string, isActive: boolean, requesterId: string) {
+  if (userId === requesterId) {
+    throw ApiError.badRequest('You cannot change your own account status');
+  }
+
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) {
+    throw ApiError.notFound('User not found');
+  }
+
+  return prisma.user.update({
+    where: { id: userId },
+    data: { isActive },
+    select: { id: true, email: true, isActive: true },
+  });
+}</pre></div><div class="code fix"><div class="code-h">suggested fix</div><pre>  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) {
+    throw ApiError.notFound('User not found');
+  }
+  if (user.deletedAt) {
+    throw ApiError.badRequest('Restore the user before changing their status');
+  }
+
+  return prisma.user.update({ ... });</pre></div>
+    </div>
+
+    <div class="finding sev-medium">
+      <div class="f-top">
+        <span class="sev sev-medium">MEDIUM</span>
+        <span class="cat">correctness</span>
+        <span class="vb vb-c" title="Re-read the code and confirmed">✓ verified</span>
+      </div>
+      <div class="f-title">listUsers treats an omitted isDeleted param the same as isDeleted=false, so the admin's "All statuses" option can never actually show every user</div>
+      <div class="file-ref">server/src/modules/user/user.service.ts:8</div>
+      <p class="desc"><code>deletedAt: isDeleted ? { not: null } : null</code> has no third branch for "don't filter on deletedAt at all." When the admin UI's "All statuses" dropdown sends no <code>isDeleted</code> param, axios drops the undefined field entirely, and the ternary falls to <code>deletedAt: null</code> — silently excluding soft-deleted accounts from a filter labeled "All".</p>
+      <p class="impact"><span class="lab">Impact</span> An admin has no single view that shows active + banned + deleted users together — only the separate "Deleted" tab shows deleted accounts, and "All statuses" is actually "all statuses among non-deleted users."</p>
+      <p class="reco"><span class="lab">Fix</span> Use a three-way branch: <code>isDeleted === undefined ? undefined : isDeleted ? { not: null } : null</code>.</p>
+    </div>
+
+  </div>
+</section>
+
+<section class="subsystem" id="s1">
+  <div class="s-head">
+    <span class="s-tag tag-cross">cross-cutting</span>
+    <h2>Cross-Cutting · Seller Onboarding Approval Flow</h2>
+  </div>
+  <div class="s-chips"><span class="sev sev-high mini">1 HIGH</span> <span class="sev sev-medium mini">2 MEDIUM</span></div>
+  <p class="s-summary">The approval state machine is PENDING → APPROVED | REJECTED, but REJECTED was only half-wired through the stack: the backend conflict check, the seller-facing wizard, and the admin's own shop list all only reason about PENDING/APPROVED.</p>
+  <div class="findings">
+
+    <div class="finding sev-high">
+      <div class="f-top">
+        <span class="sev sev-high">HIGH</span>
+        <span class="cat">correctness</span>
+        <span class="vb vb-c" title="Re-read the code and confirmed">✓ verified</span>
+      </div>
+      <div class="f-title">A rejected seller is permanently locked out of onboarding — frontend has no REJECTED branch, and createShop's conflict check never accounts for approval status</div>
+      <div class="file-ref">website/seller/src/pages/RegisterShop.tsx:44 · server/src/modules/shop/shop.service.ts:39</div>
+      <p class="desc">RegisterShop only branches on <code>PENDING</code> (line 44) and <code>APPROVED</code> (line 27, via the refresh effect); everything else — including <code>REJECTED</code> — falls through to <code>return &lt;RegisterShopForm /&gt;</code>, a blank wizard with no rejection reason shown. Resubmitting hits <code>createShop</code>'s <code>if (existingShop) throw ApiError.conflict('You already have a shop')</code>, which finds the shop by <code>ownerId</code> alone with no <code>approvalStatus</code> check.</p>
+      <p class="impact"><span class="lab">Impact</span> Admin rejects a shop via PATCH /shops/:id/reject. The seller logs back in, sees an empty registration form (no explanation), fills it out again, and gets a generic 409 error. There is no code path that lets a rejected seller ever create a shop again or learn why they were rejected — they are stuck indefinitely.</p>
+      <p class="reco"><span class="lab">Fix</span> Add a REJECTED branch in RegisterShop.tsx showing <code>shop.rejectedReason</code> with a way to resubmit. On the backend, either delete/soft-reset the shop row on rejection, or make createShop overwrite an existing REJECTED shop instead of unconditionally conflicting.</p>
+      <div class="code"><div class="code-h">current</div><pre>// website/seller/src/pages/RegisterShop.tsx
+if (shop?.approvalStatus === "PENDING") {
+  return &lt;PendingReviewScreen /&gt;;
+}
+return &lt;RegisterShopForm /&gt;;   // REJECTED falls through here too
+
+// server/src/modules/shop/shop.service.ts
+const existingShop = await prisma.shop.findUnique({ where: { ownerId: userId } });
+if (existingShop) {
+  throw ApiError.conflict('You already have a shop');   // no approvalStatus check
+}</pre></div>
+    </div>
+
+    <div class="finding sev-medium">
+      <div class="f-top">
+        <span class="sev sev-medium">MEDIUM</span>
+        <span class="cat">correctness</span>
+        <span class="vb vb-a" title="Verified as real, but requires a race window to trigger">◂ plausible</span> <span class="adj">needs a race window</span>
+      </div>
+      <div class="f-title">approveShop/rejectShop each re-check PENDING via a separate findUnique with no lock, so two concurrent reviews can leave the SELLER role granted from an approve that should have lost to a reject</div>
+      <div class="file-ref">server/src/modules/shop/shop.service.ts:138</div>
+      <p class="desc"><code>findPendingShop()</code> is a plain read (not part of a transaction, no row lock) called separately at the top of both <code>approveShop</code> and <code>rejectShop</code>. If both fire for the same PENDING shop close together, both pass the PENDING check before either writes: <code>approveShop</code>'s transaction sets APPROVED and upserts the SELLER role; <code>rejectShop</code>'s plain update then overwrites <code>approvalStatus=REJECTED</code>.</p>
+      <p class="impact"><span class="lab">Impact</span> Two admins reviewing the same queue (or one admin double-clicking) can leave a shop REJECTED in the DB while its owner has already been granted and keeps the SELLER role — a rejected applicant with seller permissions.</p>
+      <p class="reco"><span class="lab">Fix</span> Make the PENDING check part of the same transaction as the write (e.g. <code>tx.shop.updateMany({ where: { id, approvalStatus: PENDING }, data: {...} })</code> and check the affected count), so approve and reject are mutually exclusive at the DB level.</p>
+    </div>
+
+    <div class="finding sev-medium">
+      <div class="f-top">
+        <span class="sev sev-medium">MEDIUM</span>
+        <span class="cat">correctness</span>
+        <span class="vb vb-c" title="Re-read the code and confirmed">✓ verified</span>
+      </div>
+      <div class="f-title">Admin's Sellers list has no REJECTED tab, so a rejected shop becomes permanently unreachable in the admin UI</div>
+      <div class="file-ref">website/admin/src/pages/Sellers.tsx:8</div>
+      <p class="desc"><code>TABS</code> only defines <code>APPROVED</code> and <code>PENDING</code>. Rejecting a shop from its detail page invalidates the <code>["shops"]</code> query, which refetches the PENDING list the admin came from — the shop drops out (no longer PENDING) and no tab will ever list it again.</p>
+      <p class="impact"><span class="lab">Impact</span> The only way to reopen a rejected shop's detail page (e.g. to review the rejection reason, or re-approve after a mistake) is to still have the exact shopId/URL open elsewhere — otherwise it's effectively lost to the admin UI, even though the backend fully supports <code>?approvalStatus=REJECTED</code>.</p>
+      <p class="reco"><span class="lab">Fix</span> Add a third "Rejected" tab to <code>TABS</code>.</p>
+      <div class="code"><div class="code-h">current</div><pre>const TABS: { key: ApprovalStatus; label: string }[] = [
+  { key: "APPROVED", label: "Verified" },
+  { key: "PENDING", label: "Pending" },
+];</pre></div><div class="code fix"><div class="code-h">suggested fix</div><pre>const TABS: { key: ApprovalStatus; label: string }[] = [
+  { key: "APPROVED", label: "Verified" },
+  { key: "PENDING", label: "Pending" },
+  { key: "REJECTED", label: "Rejected" },
+];</pre></div>
+    </div>
+
+  </div>
+</section>
+
+<section class="subsystem" id="s2">
+  <div class="s-head">
+    <span class="s-tag tag-portal">seller portal</span>
+    <h2>Seller Portal · Registration &amp; Session Refresh UX</h2>
+  </div>
+  <div class="s-chips"><span class="sev sev-medium mini">3 MEDIUM</span></div>
+  <p class="s-summary">Approving a shop mid-request requires reissuing the seller's JWT to pick up the new SELLER role. The refactor that moved this refresh logic from <code>useRegisterShop</code>'s <code>onSuccess</code> into a <code>useEffect</code> in <code>RegisterShop.tsx</code> introduced three related gaps: nothing reliably triggers the refetch that would flip the effect, the refresh chain has no error handling, and the "no shop yet" 404 is suppressed too broadly.</p>
+  <div class="findings">
+
+    <div class="finding sev-medium">
+      <div class="f-top">
+        <span class="sev sev-medium">MEDIUM</span>
+        <span class="cat">correctness</span>
+        <span class="vb vb-c" title="Re-read the code and confirmed">✓ verified</span>
+      </div>
+      <div class="f-title">The token-refresh-on-approval logic was moved out of useRegisterShop's onSuccess but nothing now reliably triggers it</div>
+      <div class="file-ref">website/seller/src/features/shop/hooks/useRegisterShop.ts:5</div>
+      <p class="desc">The diff removes a synchronous <code>refreshToken()/getMe()/setAuth()</code> call that used to run right after registration succeeded. Its replacement lives in RegisterShop.tsx's <code>useEffect</code>, gated on <code>shop?.approvalStatus === "APPROVED"</code> — but that only re-evaluates when <code>useMyShop()</code>'s query actually refetches, and <code>useMyShop</code> sets <code>refetchOnWindowFocus: false</code> with no polling interval.</p>
+      <p class="impact"><span class="lab">Impact</span> A seller sits on the pending-review screen with the tab open while an admin approves their shop elsewhere. The query never refetches while the component stays mounted, so <code>approvalStatus</code> never flips client-side, the refresh-and-navigate effect never fires, and the seller is stuck holding a CUSTOMER-only token until they manually reload.</p>
+      <p class="reco"><span class="lab">Fix</span> Add a <code>refetchInterval</code> to <code>useMyShop</code> while status is PENDING (poll every 10–30s), or re-enable <code>refetchOnWindowFocus</code> so returning to the tab picks up the change.</p>
+    </div>
+
+    <div class="finding sev-medium">
+      <div class="f-top">
+        <span class="sev sev-medium">MEDIUM</span>
+        <span class="cat">correctness</span>
+        <span class="vb vb-c" title="Re-read the code and confirmed">✓ verified</span>
+      </div>
+      <div class="f-title">The refreshToken()/getMe() chain on approval has no .catch(), and the ref is latched before it runs — a failed refresh leaves the approved seller stuck with no retry</div>
+      <div class="file-ref">website/seller/src/pages/RegisterShop.tsx:27</div>
+      <p class="desc"><code>hasRefreshed.current = true</code> is set synchronously, then <code>authApi.refreshToken().then(...)</code> runs with no attached <code>.catch()</code>. If the refresh call rejects (expired cookie, transient network error, reuse-detection tripped by a raced concurrent call), the rejection is unhandled and the effect will not retry on re-render because the ref is already latched.</p>
+      <p class="impact"><span class="lab">Impact</span> shop.approvalStatus is APPROVED (not PENDING), so the component falls through to render the empty <code>RegisterShopForm</code> to an already-approved seller who can neither resubmit (409 conflict) nor reach the dashboard — a dead end with no visible error.</p>
+      <p class="reco"><span class="lab">Fix</span> Add a <code>.catch()</code> that surfaces an error state (e.g. "couldn't refresh your session — reload the page") and only sets <code>hasRefreshed.current = true</code> on success, so a failed attempt can retry.</p>
+      <div class="code"><div class="code-h">current</div><pre>if (shop?.approvalStatus === "APPROVED" && !hasRefreshed.current) {
+  hasRefreshed.current = true;
+  authApi.refreshToken().then(async ({ accessToken }) => {
+    const user = await authApi.getMe();
+    setAuth(user, accessToken);
+    navigate({ to: "/", replace: true });
+  });
+}</pre></div><div class="code fix"><div class="code-h">suggested fix</div><pre>if (shop?.approvalStatus === "APPROVED" && !hasRefreshed.current) {
+  hasRefreshed.current = true;
+  authApi.refreshToken()
+    .then(async ({ accessToken }) => {
+      const user = await authApi.getMe();
+      setAuth(user, accessToken);
+      navigate({ to: "/", replace: true });
+    })
+    .catch(() => {
+      hasRefreshed.current = false; // allow retry
+      // surface an error state to the user here
+    });
+}</pre></div>
+    </div>
+
+    <div class="finding sev-medium">
+      <div class="f-top">
+        <span class="sev sev-medium">MEDIUM</span>
+        <span class="cat">correctness</span>
+        <span class="vb vb-c" title="Re-read the code and confirmed">✓ verified</span>
+      </div>
+      <div class="f-title">skipErrorToast on getMyShop() suppresses the toast for every error status, not just the expected 404</div>
+      <div class="file-ref">website/seller/src/features/shop/services/shop.service.ts:21</div>
+      <p class="desc"><code>getMyShop()</code> passes <code>skipErrorToast: true</code> to silence the expected "no shop yet" 404 — but the flag applies to the whole request regardless of response status, and <code>RegisterShop.tsx</code> only destructures <code>{ data, isLoading }</code> from <code>useMyShop()</code>, ignoring <code>isError</code>.</p>
+      <p class="impact"><span class="lab">Impact</span> If GET /shops/me fails for a real reason (500, timeout), no toast shows and no error is read anywhere; <code>shop</code> is undefined and <code>isLoading</code> resolves false, so the component falls through past both the PENDING and APPROVED branches straight to the empty registration wizard — silently presenting "no shop yet" to a seller who actually has one.</p>
+      <p class="reco"><span class="lab">Fix</span> Check the status code in the client's error interceptor rather than a blanket per-request flag, or have RegisterShop.tsx read <code>isError</code> from <code>useMyShop()</code> and render a distinct error state instead of falling through to the wizard.</p>
+    </div>
+
+  </div>
+</section>
+
+<section class="subsystem" id="s3">
+  <div class="s-head">
+    <span class="s-tag tag-repo">tooling</span>
+    <h2>Tooling · ESLint Flat Config</h2>
+  </div>
+  <div class="s-chips"><span class="sev sev-medium mini">1 MEDIUM</span></div>
+  <p class="s-summary">Both website/admin and website/seller picked up an identical, currently-broken <code>eslint.config.js</code> change — <code>pnpm lint</code> does not run in either app right now.</p>
+  <div class="findings">
+
+    <div class="finding sev-medium">
+      <div class="f-top">
+        <span class="sev sev-medium">MEDIUM</span>
+        <span class="cat">correctness</span>
+        <span class="vb vb-c" title="Reproduced by actually running pnpm lint">✓ verified (reproduced)</span>
+      </div>
+      <div class="f-title">Two stacked bugs break pnpm lint entirely, in both admin and seller</div>
+      <div class="file-ref">website/admin/eslint.config.js:21 · website/seller/eslint.config.js:21</div>
+      <p class="desc">Two separate problems, confirmed by actually running the linter: (1) <code>parserOptions</code> was added as a top-level sibling of <code>languageOptions</code> instead of nested under <code>languageOptions.parserOptions</code> — flat config (ESLint 10) doesn't support a top-level <code>parserOptions</code> key at all. (2) Even after moving it under <code>languageOptions</code>, <code>project: "./tsconfig.json"</code> points at the solution-style root tsconfig (<code>files: []</code>, only <code>references</code> to <code>tsconfig.app.json</code>/<code>tsconfig.node.json</code>) — no source file is ever a member of that program, so every <code>.ts</code>/<code>.tsx</code> file still fails to parse.</p>
+      <p class="impact"><span class="lab">Impact</span> <code>pnpm lint</code> fails immediately with "A config object is using the 'parserOptions' key, which is not supported in flat config system." CLAUDE.md requires running the linter before declaring work done — that evidently didn't happen for either app in this change.</p>
+      <p class="reco"><span class="lab">Fix</span> Move <code>parserOptions</code> under <code>languageOptions</code>, and point <code>project</code> at <code>tsconfig.app.json</code> (or switch to <code>projectService: true</code>, which auto-resolves the right tsconfig per file and needs no <code>project</code> path at all).</p>
+      <div class="code"><div class="code-h">current</div><pre>languageOptions: {
+  globals: globals.browser,
+},
+parserOptions: {
+  project: "./tsconfig.json",
+  tsconfigRootDir: import.meta.dirname,
+},</pre></div><div class="code fix"><div class="code-h">suggested fix</div><pre>languageOptions: {
+  globals: globals.browser,
+  parserOptions: {
+    project: "./tsconfig.app.json",
+    tsconfigRootDir: import.meta.dirname,
+  },
+},</pre></div>
+    </div>
+
+  </div>
+</section>
+
+<section class="subsystem" id="s4">
+  <div class="s-head">
+    <span class="s-tag tag-repo">cleanup</span>
+    <h2>Cleanup · Code Hygiene</h2>
+  </div>
+  <div class="s-chips"><span class="sev sev-low mini">3 LOW</span></div>
+  <p class="s-summary">Lower-severity items: no user-facing risk today, but each adds friction the next time this code is touched.</p>
+  <div class="findings">
+
+    <div class="finding sev-low">
+      <div class="f-top">
+        <span class="sev sev-low">LOW</span>
+        <span class="cat">cleanup</span>
+        <span class="vb vb-c" title="Re-read the code and confirmed">✓ verified</span>
+      </div>
+      <div class="f-title">Admin-only shop routes repeat isAuth + requireRole individually instead of the router.use() pattern already used by user.routes.ts</div>
+      <div class="file-ref">server/src/modules/shop/shop.routes.ts:17</div>
+      <p class="desc"><code>isAuth, requireRole(ROLE.ADMIN)</code> is pasted on 4 separate route registrations in shop.routes.ts, whereas the sibling <code>user.routes.ts</code> (added in the same diff) already established <code>router.use(isAuth, requireRole(ROLE.ADMIN))</code> once for its whole admin sub-router.</p>
+      <p class="impact"><span class="lab">Impact</span> Adding a 5th admin-only shop route later requires remembering to paste both middlewares again; forgetting them makes the route silently accessible to any authenticated non-admin user instead of failing closed.</p>
+      <p class="reco"><span class="lab">Fix</span> Split admin-only shop routes onto their own sub-router with a single <code>router.use(isAuth, requireRole(ROLE.ADMIN))</code>, matching user.routes.ts.</p>
+    </div>
+
+    <div class="finding sev-low">
+      <div class="f-top">
+        <span class="sev sev-low">LOW</span>
+        <span class="cat">cleanup</span>
+        <span class="vb vb-c" title="Re-read the code and confirmed">✓ verified</span>
+      </div>
+      <div class="f-title">ApprovalStatus is declared independently in website/admin instead of living in @website/shared</div>
+      <div class="file-ref">website/admin/src/features/sellers/types/shop.ts:1</div>
+      <p class="desc">The identical union already exists inline on <code>Shop.approvalStatus</code> in <code>website/seller/src/features/shop/services/shop.service.ts:8</code>. CLAUDE.md is explicit that code used by more than one of client/admin/seller belongs in <code>@website/shared</code>, not duplicated per app.</p>
+      <p class="impact"><span class="lab">Impact</span> If the backend ever adds a new ApprovalStatus value, it must be updated independently in both apps; missing one lets the new value silently fall through as an untyped string wherever it wasn't updated.</p>
+      <p class="reco"><span class="lab">Fix</span> Move <code>ApprovalStatus</code> to <code>@website/shared</code> and import it from both admin and seller.</p>
+    </div>
+
+    <div class="finding sev-low">
+      <div class="f-top">
+        <span class="sev sev-low">LOW</span>
+        <span class="cat">cleanup</span>
+        <span class="vb vb-c" title="Re-read the code and confirmed">✓ verified</span>
+      </div>
+      <div class="f-title">Unrelated wholesale quote reformatting in two seller-portal files, against CLAUDE.md's "Surgical Changes" rule</div>
+      <div class="file-ref">website/seller/src/features/shop/components/RegisterShopForm.tsx:85 · website/seller/src/pages/Forbidden.tsx:6</div>
+      <p class="desc">Every double-quoted JSX attribute string in both files was rewritten to single quotes with no functional change (confirmed via diff — e.g. <code>heading="Register your shop"</code> → <code>heading='Register your shop'</code>). No other seller <code>.tsx</code> file uses single-quoted JSX attributes.</p>
+      <p class="impact"><span class="lab">Impact</span> The codebase's quote convention is now inconsistent for no functional benefit, and future diffs on these two files will be noisier than necessary.</p>
+      <p class="reco"><span class="lab">Fix</span> Revert the unrelated quote changes; keep only the lines with actual content changes (e.g. the added rejection-reason copy).</p>
+    </div>
+
+  </div>
+</section>
+
+<footer>
+  <b>Scope note.</b> This review targeted the uncommitted working-tree diff against <code>main</code> (39 changed files: server/shop, server/user, prisma schema + migration, website/admin, website/seller, and website/shared's apiClient). It does not re-cover ground already reported in <a href="./index.html">the 2026-07-03 full codebase review</a> (auth/token lifecycle, client architecture, project hygiene) except where this diff touches the same code.
+</footer>
+
+</div>
+</body>
+</html>
