@@ -56,7 +56,10 @@ const registerShopRoute = createRoute({
     if (!context.auth.isAuthenticated || !context.auth.user) {
       throw redirect({ to: "/login" });
     }
-    // Already a seller — no need to register a shop again.
+    // Already a seller — no need to register a shop again. A seller whose
+    // shop was *just* approved (role not yet reissued) still falls through
+    // to here; RegisterShop's own effect bounces them once it sees the
+    // shop's approval status, which isn't available synchronously here.
     if (isSeller(context.auth.user)) {
       throw redirect({ to: "/" });
     }

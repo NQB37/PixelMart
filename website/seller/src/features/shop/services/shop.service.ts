@@ -16,7 +16,9 @@ export type RegisterShopPayload = RegisterShopInput & {
 
 export const shopApi = {
   getMyShop: async (): Promise<Shop> => {
-    const response = await api.get<Shop>("shops/me");
+    // A brand-new seller has no shop yet — the server 404s, which is an
+    // expected state here (not an error to surface as a toast).
+    const response = await api.get<Shop>("shops/me", { skipErrorToast: true });
     return response.data;
   },
   register: async (data: RegisterShopPayload): Promise<Shop> => {

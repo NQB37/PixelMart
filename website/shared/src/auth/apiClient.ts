@@ -1,5 +1,12 @@
 import axios, { type AxiosInstance } from "axios";
 
+declare module "axios" {
+  export interface AxiosRequestConfig {
+    /** Skip the global error toast for this request (e.g. an expected 404). */
+    skipErrorToast?: boolean;
+  }
+}
+
 type FailedRequest = {
   resolve: (token: string) => void;
   reject: (err: unknown) => void;
@@ -85,7 +92,7 @@ export function createAuthApiClient(config: {
         }
       }
 
-      if (error.response?.status !== 401) {
+      if (error.response?.status !== 401 && !originalRequest?.skipErrorToast) {
         config.notifyError(error.response?.data?.message || error?.message);
       }
 

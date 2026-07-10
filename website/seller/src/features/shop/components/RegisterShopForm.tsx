@@ -17,7 +17,10 @@ import IdentityBankStep from "./IdentityBankStep";
 
 const STEPS = [
   { label: "Shop information", description: "Name, pickup address, contact" },
-  { label: "Identity & bank", description: "ID verification and payout account" },
+  {
+    label: "Identity & bank",
+    description: "ID verification and payout account",
+  },
   { label: "Finish", description: "Review and submit" },
 ];
 const NO_ERRORS = {};
@@ -79,44 +82,44 @@ export default function RegisterShopForm() {
 
   return (
     <AuthShell
-      heading="Register your shop"
-      description="Tell us about your business to start selling on PixelMart."
+      heading='Register your shop'
+      description='Tell us about your business to start selling on PixelMart.'
       steps={STEPS}
       currentStepIndex={step - 1}
     >
       {(error || uploadError) && (
-        <Alert variant="destructive" className="mb-6">
+        <Alert variant='destructive' className='mb-6'>
           <AlertDescription>{uploadError || error?.message}</AlertDescription>
         </Alert>
       )}
 
       {step === 3 ? (
-        <div className="flex flex-col items-center py-4 text-center">
-          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-success/15 text-success">
-            <CheckCircle2 className="h-8 w-8" strokeWidth={1.5} />
+        <div className='flex flex-col items-center py-4 text-center'>
+          <div className='mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-success/15 text-success'>
+            <CheckCircle2 className='h-8 w-8' strokeWidth={1.5} />
           </div>
-          <h2 className="font-display text-lg font-bold text-foreground">
+          <h2 className='font-display text-lg font-bold text-foreground'>
             Registration submitted
           </h2>
-          <p className="mt-2 text-sm text-muted-foreground">
+          <p className='mt-2 text-sm text-muted-foreground'>
             Your shop is pending review. We&apos;ll notify you once our team
             approves it.
           </p>
           <PixelButton
-            variant="cyan"
-            className="mt-6 w-full"
+            variant='cyan'
+            className='mt-6 w-full'
             onClick={() => navigate({ to: "/", replace: true })}
           >
             Go to Dashboard
           </PixelButton>
         </div>
       ) : (
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className='space-y-4'>
           <div>
-            <h2 className="font-display text-xl font-bold text-foreground">
+            <h2 className='font-display text-xl font-bold text-foreground'>
               {STEPS[step - 1].label}
             </h2>
-            <p className="mt-1 text-sm text-muted-foreground">
+            <p className='mt-1 text-sm text-muted-foreground'>
               {STEPS[step - 1].description}
             </p>
           </div>
@@ -147,25 +150,30 @@ export default function RegisterShopForm() {
             />
           </div>
 
-          <div className="flex gap-3 pt-2">
+          <div className='flex gap-3 pt-2'>
             {step === 2 && (
               <PixelButton
-                type="button"
-                variant="ghost"
-                className="w-full border border-input"
+                type='button'
+                variant='ghost'
+                className='w-full border border-input'
                 onClick={() => setStep(1)}
               >
                 Back
               </PixelButton>
             )}
             {step === 1 ? (
-              <PixelButton type="button" variant="cyan" className="w-full" onClick={goNext}>
+              <PixelButton
+                type='button'
+                variant='cyan'
+                className='w-full'
+                onClick={goNext}
+              >
                 Continue
               </PixelButton>
             ) : (
               <PixelButton
-                variant="cyan"
-                className="w-full"
+                variant='cyan'
+                className='w-full'
                 disabled={isPending || isUploading}
                 onClick={() => setStep2Attempted(true)}
               >
