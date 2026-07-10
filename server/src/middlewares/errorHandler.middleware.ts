@@ -1,6 +1,6 @@
-import { Request, Response, NextFunction } from "express";
-import { ApiError } from "@/utils/ApiError";
-import { env } from "@/config/env";
+import { Request, Response, NextFunction } from 'express';
+import { ApiError } from '@/utils/ApiError';
+import { env } from '@/config/env';
 
 export const errorHandler = (
   err: Error,
@@ -17,18 +17,18 @@ export const errorHandler = (
   }
 
   // Zod validation errors
-  if (err.name === "ZodError") {
+  if (err.name === 'ZodError') {
     return res.status(400).json({
       success: false,
-      message: "Validation failed",
+      message: 'Validation failed',
       errors: (err as any).errors,
     });
   }
 
-  console.error("Unhandled Error:", err);
+  console.error('Unhandled Error:', err);
   return res.status(500).json({
     success: false,
     message:
-      env.nodeEnv === "production" ? "Internal server error" : err.message,
+      env.nodeEnv === 'production' ? 'Internal server error' : err.message,
   });
 };
