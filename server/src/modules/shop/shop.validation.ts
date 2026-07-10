@@ -1,4 +1,5 @@
 import z from 'zod';
+import { ApprovalStatus } from '@/generated/prisma/client';
 
 export const createShopSchema = z.object({
   shopName: z
@@ -34,4 +35,17 @@ export const createShopSchema = z.object({
     .regex(/^(0[1-9]|1[0-2])\/\d{2}$/, 'Format must be MM/YY'),
 });
 
+export const listShopsQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(10),
+  search: z.string().trim().optional(),
+  approvalStatus: z.enum(ApprovalStatus),
+});
+
+export const rejectShopSchema = z.object({
+  rejectedReason: z.string().trim().min(1, 'Rejection reason is required').max(500),
+});
+
 export type CreateShopInput = z.infer<typeof createShopSchema>;
+export type ListShopsQuery = z.infer<typeof listShopsQuerySchema>;
+export type RejectShopInput = z.infer<typeof rejectShopSchema>;
