@@ -10,6 +10,8 @@ import Login from "@/pages/Login";
 import Forbidden from "@/pages/Forbidden";
 import Dashboard from "@/pages/Dashboard";
 import Users from "@/pages/Users";
+import Sellers from "@/pages/Sellers";
+import SellerDetail from "@/pages/SellerDetail";
 import Placeholder from "@/pages/Placeholder";
 import AdminLayout from "@/components/layout/AdminLayout";
 import { hasRole, type UserInfo } from "@website/shared/auth";
@@ -67,6 +69,18 @@ const usersRoute = createRoute({
   component: Users,
 });
 
+const sellersRoute = createRoute({
+  getParentRoute: () => adminLayoutRoute,
+  path: "/users/sellers",
+  component: Sellers,
+});
+
+const sellerDetailRoute = createRoute({
+  getParentRoute: () => adminLayoutRoute,
+  path: "/users/sellers/$shopId",
+  component: SellerDetail,
+});
+
 const placeholderRoute = (path: string, title: string) =>
   createRoute({
     getParentRoute: () => adminLayoutRoute,
@@ -81,7 +95,8 @@ const routeTree = rootRoute.addChildren([
     placeholderRoute("/analytics/traffic", "Traffic & Engagement"),
     usersRoute,
     placeholderRoute("/users/roles", "Roles & Permissions"),
-    placeholderRoute("/users/sellers", "Seller Accounts"),
+    sellersRoute,
+    sellerDetailRoute,
     placeholderRoute("/catalog/review-queue", "Review Queue"),
     placeholderRoute("/catalog/categories", "Categories"),
     placeholderRoute("/catalog/flagged", "Flagged Listings"),
