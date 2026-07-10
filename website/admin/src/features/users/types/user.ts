@@ -7,6 +7,7 @@ export interface AdminUser {
   avatarUrl: string | null;
   roles: UserRole[];
   isActive: boolean;
+  deletedAt: string | null;
   createdAt: string;
 }
 
@@ -16,6 +17,7 @@ export interface ListUsersParams {
   search?: string;
   role?: UserRole;
   isActive?: boolean;
+  isDeleted?: boolean;
 }
 
 export interface ListUsersMeta {

@@ -10,4 +10,15 @@ export const userApi = {
     const response = await api.patch<AdminUser>(`users/${id}/status`, { isActive });
     return response.data;
   },
+  delete: async (id: string): Promise<AdminUser> => {
+    const response = await api.delete<AdminUser>(`users/${id}`);
+    return response.data;
+  },
+  restore: async (id: string): Promise<AdminUser> => {
+    const response = await api.patch<AdminUser>(`users/${id}/restore`);
+    return response.data;
+  },
+  permanentlyDelete: async (id: string): Promise<void> => {
+    await api.delete(`users/${id}/permanent`);
+  },
 };

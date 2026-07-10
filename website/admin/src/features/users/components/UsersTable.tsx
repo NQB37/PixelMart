@@ -1,4 +1,5 @@
 import { createColumnHelper, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
+import { Ban, RotateCcw, Trash2 } from "lucide-react";
 import { Badge, PixelButton, cn } from "@website/shared/ui";
 import type { AdminUser } from "../types/user";
 
@@ -15,10 +16,27 @@ interface UsersTableProps {
   users: AdminUser[];
   isLoading: boolean;
   togglingId: string | null;
+  deletingId: string | null;
+  restoringId: string | null;
+  permanentlyDeletingId: string | null;
   onToggleStatus: (user: AdminUser) => void;
+  onDelete: (user: AdminUser) => void;
+  onRestore: (user: AdminUser) => void;
+  onPermanentDelete: (user: AdminUser) => void;
 }
 
-export function UsersTable({ users, isLoading, togglingId, onToggleStatus }: UsersTableProps) {
+export function UsersTable({
+  users,
+  isLoading,
+  togglingId,
+  deletingId,
+  restoringId,
+  permanentlyDeletingId,
+  onToggleStatus,
+  onDelete,
+  onRestore,
+  onPermanentDelete,
+}: UsersTableProps) {
   const columns = [
     columnHelper.display({
       id: "user",
@@ -58,12 +76,15 @@ export function UsersTable({ users, isLoading, togglingId, onToggleStatus }: Use
     }),
     columnHelper.accessor("isActive", {
       header: "Status",
-      cell: ({ getValue }) =>
-        getValue() ? (
+      cell: ({ row }) => {
+        const user = row.original;
+        if (user.deletedAt) return <Badge variant="destructive">Deleted</Badge>;
+        return user.isActive ? (
           <Badge variant="success">Active</Badge>
         ) : (
           <Badge variant="destructive">Banned</Badge>
-        ),
+        );
+      },
     }),
     columnHelper.accessor("createdAt", {
       header: "Joined",
@@ -78,19 +99,64 @@ export function UsersTable({ users, isLoading, togglingId, onToggleStatus }: Use
       header: "",
       cell: ({ row }) => {
         const user = row.original;
+
+        if (user.deletedAt) {
+          const isRestoring = restoringId === user.id;
+          const isPermanentlyDeleting = permanentlyDeletingId === user.id;
+          return (
+            <div className="flex justify-end gap-2">
+              <PixelButton
+                variant="green"
+                className="p-2"
+                disabled={isRestoring}
+                onClick={() => onRestore(user)}
+                title="Restore user"
+                aria-label="Restore user"
+              >
+                <RotateCcw className="h-4 w-4" />
+              </PixelButton>
+              <PixelButton
+                variant="ghost"
+                className="p-2 text-destructive hover:bg-destructive/10"
+                disabled={isPermanentlyDeleting}
+                onClick={() => onPermanentDelete(user)}
+                title="Delete forever"
+                aria-label="Delete forever"
+              >
+                <Trash2 className="h-4 w-4" />
+              </PixelButton>
+            </div>
+          );
+        }
+
         const isToggling = togglingId === user.id;
+        const isDeleting = deletingId === user.id;
         return (
-          <PixelButton
-            variant={user.isActive ? "ghost" : "green"}
-            className={cn(
-              "px-3 py-1.5 text-xs",
-              user.isActive && "text-destructive hover:bg-destructive/10",
-            )}
-            disabled={isToggling}
-            onClick={() => onToggleStatus(user)}
-          >
-            {isToggling ? "…" : user.isActive ? "Ban" : "Unban"}
-          </PixelButton>
+          <div className="flex justify-end gap-2">
+            <PixelButton
+              variant={user.isActive ? "ghost" : "green"}
+              className={cn(
+                "p-2",
+                user.isActive && "text-destructive hover:bg-destructive/10",
+              )}
+              disabled={isToggling}
+              onClick={() => onToggleStatus(user)}
+              title={user.isActive ? "Ban user" : "Unban user"}
+              aria-label={user.isActive ? "Ban user" : "Unban user"}
+            >
+              <Ban className="h-4 w-4" />
+            </PixelButton>
+            <PixelButton
+              variant="ghost"
+              className="p-2 text-destructive hover:bg-destructive/10"
+              disabled={isDeleting}
+              onClick={() => onDelete(user)}
+              title="Delete user"
+              aria-label="Delete user"
+            >
+              <Trash2 className="h-4 w-4" />
+            </PixelButton>
+          </div>
         );
       },
     }),
