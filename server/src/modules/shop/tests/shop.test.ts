@@ -128,7 +128,7 @@ describe("Admin Shop Management Integration Tests", () => {
       update: {},
       create: { name: ROLE.ADMIN },
     });
-    await prisma.userRoles.create({ data: { userId, roleId: adminRole.id } });
+    await prisma.roles.create({ data: { userId, roleId: adminRole.id } });
   };
 
   const shopPayload = (shopName: string) => ({

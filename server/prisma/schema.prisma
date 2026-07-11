@@ -25,7 +25,7 @@ model User {
 
   profile        Profile?
   refreshTokens  RefreshToken[]
-  roles          UserRoles[]
+  roles          Roles[]
   addresses      Address[]
   shop           Shop?
   deliveryPerson DeliveryPerson?
@@ -82,7 +82,7 @@ model Role {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  userRoles       UserRoles[]
+  roles           Roles[]
   rolePermissions RolePermissions[]
 
   @@index([name])
@@ -96,7 +96,7 @@ enum ROLE {
   DELIVERY_PERSON
 }
 
-model UserRoles {
+model Roles {
   userId String
   roleId String
 

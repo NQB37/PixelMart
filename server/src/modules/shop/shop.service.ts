@@ -120,7 +120,7 @@ class ShopService {
         create: { name: ROLE.SELLER },
       });
 
-      await tx.userRoles.upsert({
+      await tx.roles.upsert({
         where: {
           userId_roleId: { userId: pendingShop.ownerId, roleId: sellerRole.id },
         },
