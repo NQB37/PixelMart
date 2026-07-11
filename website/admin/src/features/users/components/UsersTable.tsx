@@ -16,9 +16,7 @@ interface UsersTableProps {
   users: AdminUser[];
   isLoading: boolean;
   togglingId: string | null;
-  deletingId: string | null;
   restoringId: string | null;
-  permanentlyDeletingId: string | null;
   onToggleStatus: (user: AdminUser) => void;
   onDelete: (user: AdminUser) => void;
   onRestore: (user: AdminUser) => void;
@@ -29,9 +27,7 @@ export function UsersTable({
   users,
   isLoading,
   togglingId,
-  deletingId,
   restoringId,
-  permanentlyDeletingId,
   onToggleStatus,
   onDelete,
   onRestore,
@@ -102,7 +98,6 @@ export function UsersTable({
 
         if (user.deletedAt) {
           const isRestoring = restoringId === user.id;
-          const isPermanentlyDeleting = permanentlyDeletingId === user.id;
           return (
             <div className="flex justify-end gap-2">
               <Button
@@ -118,7 +113,6 @@ export function UsersTable({
               <Button
                 variant="ghost"
                 className="p-2 text-destructive hover:bg-destructive/10"
-                disabled={isPermanentlyDeleting}
                 onClick={() => onPermanentDelete(user)}
                 title="Delete forever"
                 aria-label="Delete forever"
@@ -130,7 +124,6 @@ export function UsersTable({
         }
 
         const isToggling = togglingId === user.id;
-        const isDeleting = deletingId === user.id;
         return (
           <div className="flex justify-end gap-2">
             <Button
@@ -149,7 +142,6 @@ export function UsersTable({
             <Button
               variant="ghost"
               className="p-2 text-destructive hover:bg-destructive/10"
-              disabled={isDeleting}
               onClick={() => onDelete(user)}
               title="Delete user"
               aria-label="Delete user"
