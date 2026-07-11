@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
-import { Badge, Input, PixelButton } from "@website/shared/ui";
+import { Badge, Input, Button } from "@website/shared/ui";
 import { useShopDetail } from "@/features/sellers/hooks/useShopDetail";
 import { useReviewShop } from "@/features/sellers/hooks/useReviewShop";
 import type { ApprovalStatus } from "@/features/sellers/types/shop";
@@ -74,21 +74,21 @@ export default function SellerDetail() {
 
       {shop.approvalStatus === "PENDING" && (
         <div className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-card p-4">
-          <PixelButton
-            variant="green"
+          <Button
+            variant="success"
             disabled={isPending}
             onClick={() => review({ action: "approve" })}
           >
             Approve
-          </PixelButton>
+          </Button>
           {!showRejectForm ? (
-            <PixelButton
+            <Button
               variant="ghost"
               className="text-destructive hover:bg-destructive/10"
               onClick={() => setShowRejectForm(true)}
             >
               Reject
-            </PixelButton>
+            </Button>
           ) : (
             <div className="flex flex-1 flex-wrap items-center gap-2">
               <Input
@@ -97,13 +97,13 @@ export default function SellerDetail() {
                 value={rejectReason}
                 onChange={(e) => setRejectReason(e.target.value)}
               />
-              <PixelButton
-                variant="pink"
+              <Button
+                variant="highlight"
                 disabled={isPending || !rejectReason.trim()}
                 onClick={() => review({ action: "reject", rejectedReason: rejectReason.trim() })}
               >
                 Confirm reject
-              </PixelButton>
+              </Button>
             </div>
           )}
         </div>

@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { ShoppingBag } from "lucide-react";
-import { Card, PixelButton, Form, FormField, Field } from "@website/shared/ui";
+import { Card, Button, Form, FormField, Field } from "@website/shared/ui";
 import { useLogin } from "../hooks/useLogin";
 
 const LoginForm = () => {
@@ -85,13 +85,13 @@ const LoginForm = () => {
                   Forgot password?
                 </a>
               </div>
-              <PixelButton
-                variant='cyan'
+              <Button
+                variant='default'
                 className='w-full disabled:cursor-not-allowed disabled:opacity-60'
                 disabled={isPending}
               >
                 {isPending ? "Logging in…" : "Log in"}
-              </PixelButton>
+              </Button>
               <div className='flex items-center gap-3 text-xs font-medium text-muted-foreground'>
                 <div className='h-px flex-1 bg-border' />
                 OR

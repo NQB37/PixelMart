@@ -1,5 +1,5 @@
 export { cn } from "./cn";
-export { PixelButton } from "./PixelButton";
+export { Button, buttonVariants } from "./button";
 export { default as SectionHeader } from "./SectionHeader";
 export { Field } from "./field";
 export { Label } from "./label";

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Search } from "lucide-react";
-import { Input, PixelButton, cn } from "@website/shared/ui";
+import { Input, Button, cn } from "@website/shared/ui";
 import { useShops } from "@/features/sellers/hooks/useShops";
 import { SellersTable } from "@/features/sellers/components/SellersTable";
 import type { ApprovalStatus } from "@/features/sellers/types/shop";
@@ -78,22 +78,22 @@ export default function Sellers() {
             Page {meta.page} of {meta.totalPages} · {meta.total} shops
           </span>
           <div className="flex gap-2">
-            <PixelButton
+            <Button
               variant="ghost"
               className="px-3 py-1.5 text-xs"
               disabled={page <= 1 || isFetching}
               onClick={() => setPage((p) => p - 1)}
             >
               Previous
-            </PixelButton>
-            <PixelButton
+            </Button>
+            <Button
               variant="ghost"
               className="px-3 py-1.5 text-xs"
               disabled={page >= meta.totalPages || isFetching}
               onClick={() => setPage((p) => p + 1)}
             >
               Next
-            </PixelButton>
+            </Button>
           </div>
         </div>
       )}

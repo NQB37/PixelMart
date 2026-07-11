@@ -2,7 +2,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Link } from "@tanstack/react-router";
 import { Headset, Lock, Mail, ShieldCheck, Wallet } from "lucide-react";
-import { Alert, AlertDescription, PixelButton, TextField } from "@website/shared/ui";
+import { Alert, AlertDescription, Button, TextField } from "@website/shared/ui";
 import AuthShell from "./AuthShell";
 import { useLogin } from "../hooks/useLogin";
 import { loginSchema, type LoginInput } from "../schemas/auth.schema";
@@ -61,9 +61,9 @@ export default function LoginForm() {
           error={errors.password?.message}
           {...register("password")}
         />
-        <PixelButton variant="cyan" className="w-full" disabled={isPending}>
+        <Button variant="default" className="w-full" disabled={isPending}>
           {isPending ? "Signing in…" : "Sign in"}
-        </PixelButton>
+        </Button>
       </form>
 
       <p className="mt-6 text-center text-sm text-muted-foreground">

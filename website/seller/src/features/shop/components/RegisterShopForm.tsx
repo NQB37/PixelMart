@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "@tanstack/react-router";
 import { CheckCircle2 } from "lucide-react";
-import { Alert, AlertDescription, PixelButton } from "@website/shared/ui";
+import { Alert, AlertDescription, Button } from "@website/shared/ui";
 import AuthShell from "@/features/auth/components/AuthShell";
 import { useRegisterShop } from "../hooks/useRegisterShop";
 import { shopApi } from "../services/shop.service";
@@ -105,13 +105,13 @@ export default function RegisterShopForm() {
             Your shop is pending review. We&apos;ll notify you once our team
             approves it.
           </p>
-          <PixelButton
-            variant='cyan'
+          <Button
+            variant='default'
             className='mt-6 w-full'
             onClick={() => navigate({ to: "/", replace: true })}
           >
             Go to Dashboard
-          </PixelButton>
+          </Button>
         </div>
       ) : (
         <form onSubmit={handleSubmit(onSubmit)} className='space-y-4'>
@@ -152,27 +152,27 @@ export default function RegisterShopForm() {
 
           <div className='flex gap-3 pt-2'>
             {step === 2 && (
-              <PixelButton
+              <Button
                 type='button'
                 variant='ghost'
                 className='w-full border border-input'
                 onClick={() => setStep(1)}
               >
                 Back
-              </PixelButton>
+              </Button>
             )}
             {step === 1 ? (
-              <PixelButton
+              <Button
                 type='button'
-                variant='cyan'
+                variant='default'
                 className='w-full'
                 onClick={goNext}
               >
                 Continue
-              </PixelButton>
+              </Button>
             ) : (
-              <PixelButton
-                variant='cyan'
+              <Button
+                variant='default'
                 className='w-full'
                 disabled={isPending || isUploading}
                 onClick={() => setStep2Attempted(true)}
@@ -182,7 +182,7 @@ export default function RegisterShopForm() {
                   : isPending
                     ? "Registering…"
                     : "Complete registration"}
-              </PixelButton>
+              </Button>
             )}
           </div>
         </form>

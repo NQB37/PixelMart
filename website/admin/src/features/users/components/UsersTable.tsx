@@ -1,6 +1,6 @@
 import { createColumnHelper, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { Ban, RotateCcw, Trash2 } from "lucide-react";
-import { Badge, PixelButton, cn } from "@website/shared/ui";
+import { Badge, Button, cn } from "@website/shared/ui";
 import type { AdminUser } from "../types/user";
 
 const ROLE_BADGE_VARIANT: Record<AdminUser["roles"][number], "default" | "secondary" | "highlight"> = {
@@ -105,8 +105,8 @@ export function UsersTable({
           const isPermanentlyDeleting = permanentlyDeletingId === user.id;
           return (
             <div className="flex justify-end gap-2">
-              <PixelButton
-                variant="green"
+              <Button
+                variant="success"
                 className="p-2"
                 disabled={isRestoring}
                 onClick={() => onRestore(user)}
@@ -114,8 +114,8 @@ export function UsersTable({
                 aria-label="Restore user"
               >
                 <RotateCcw className="h-4 w-4" />
-              </PixelButton>
-              <PixelButton
+              </Button>
+              <Button
                 variant="ghost"
                 className="p-2 text-destructive hover:bg-destructive/10"
                 disabled={isPermanentlyDeleting}
@@ -124,7 +124,7 @@ export function UsersTable({
                 aria-label="Delete forever"
               >
                 <Trash2 className="h-4 w-4" />
-              </PixelButton>
+              </Button>
             </div>
           );
         }
@@ -133,8 +133,8 @@ export function UsersTable({
         const isDeleting = deletingId === user.id;
         return (
           <div className="flex justify-end gap-2">
-            <PixelButton
-              variant={user.isActive ? "ghost" : "green"}
+            <Button
+              variant={user.isActive ? "ghost" : "success"}
               className={cn(
                 "p-2",
                 user.isActive && "text-destructive hover:bg-destructive/10",
@@ -145,8 +145,8 @@ export function UsersTable({
               aria-label={user.isActive ? "Ban user" : "Unban user"}
             >
               <Ban className="h-4 w-4" />
-            </PixelButton>
-            <PixelButton
+            </Button>
+            <Button
               variant="ghost"
               className="p-2 text-destructive hover:bg-destructive/10"
               disabled={isDeleting}
@@ -155,7 +155,7 @@ export function UsersTable({
               aria-label="Delete user"
             >
               <Trash2 className="h-4 w-4" />
-            </PixelButton>
+            </Button>
           </div>
         );
       },

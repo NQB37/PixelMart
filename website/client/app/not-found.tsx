@@ -1,6 +1,6 @@
 import { ShoppingBag } from "lucide-react";
 import Link from "next/link";
-import { PixelButton } from "@website/shared/ui";
+import { Button } from "@website/shared/ui";
 
 export default function NotFound() {
   return (
@@ -21,7 +21,7 @@ export default function NotFound() {
         </p>
         <div className='mt-8'>
           <Link href='/'>
-            <PixelButton variant='cyan'>Back to home</PixelButton>
+            <Button variant='default'>Back to home</Button>
           </Link>
         </div>
       </div>

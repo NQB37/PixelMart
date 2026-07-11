@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { CheckCircle2 } from "lucide-react";
-import { PixelButton } from "@website/shared/ui";
+import { Button } from "@website/shared/ui";
 import AuthShell from "@/features/auth/components/AuthShell";
 import RegisterShopForm from "@/features/shop/components/RegisterShopForm";
 import { useMyShop } from "@/features/shop/hooks/useMyShop";
@@ -52,13 +52,13 @@ export default function RegisterShop() {
             Your shop is pending review. We&apos;ll notify you once our team
             approves it.
           </p>
-          <PixelButton
+          <Button
             variant='ghost'
             className='mt-6 w-full border border-input'
             onClick={() => logout()}
           >
             Log out
-          </PixelButton>
+          </Button>
         </div>
       </AuthShell>
     );

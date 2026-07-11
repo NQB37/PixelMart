@@ -5,7 +5,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { useNavigate } from "@tanstack/react-router";
-import { Badge, PixelButton } from "@website/shared/ui";
+import { Badge, Button } from "@website/shared/ui";
 import type { AdminShop } from "../types/shop";
 
 const STATUS_BADGE_VARIANT: Record<
@@ -93,7 +93,7 @@ export function SellersTable({ shops, isLoading }: SellersTableProps) {
       id: "actions",
       header: "",
       cell: ({ row }) => (
-        <PixelButton
+        <Button
           variant='ghost'
           className='px-3 py-1.5 text-xs'
           onClick={() =>
@@ -104,7 +104,7 @@ export function SellersTable({ shops, isLoading }: SellersTableProps) {
           }
         >
           View
-        </PixelButton>
+        </Button>
       ),
     }),
   ];

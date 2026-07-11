@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { PixelButton } from "@website/shared/ui";
+import { Button } from "@website/shared/ui";
 
 interface ConfirmModalProps {
   open: boolean;
@@ -45,12 +45,12 @@ export function ConfirmModal({
           <h2 className="font-display text-lg font-semibold">{title}</h2>
           <p className="mt-2 text-sm text-muted-foreground">{description}</p>
           <div className="mt-6 flex justify-end gap-2">
-            <PixelButton variant="ghost" disabled={isPending} onClick={onClose}>
+            <Button variant="ghost" disabled={isPending} onClick={onClose}>
               Cancel
-            </PixelButton>
-            <PixelButton variant="pink" disabled={isPending} onClick={onConfirm}>
+            </Button>
+            <Button variant="highlight" disabled={isPending} onClick={onConfirm}>
               {isPending ? pendingLabel : confirmLabel}
-            </PixelButton>
+            </Button>
           </div>
         </div>
       )}

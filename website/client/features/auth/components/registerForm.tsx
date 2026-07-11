@@ -1,6 +1,6 @@
 "use client";
 
-import { Card, PixelButton, Field, Form, FormField } from "@website/shared/ui";
+import { Card, Button, Field, Form, FormField } from "@website/shared/ui";
 import { ShoppingBag } from "lucide-react";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
@@ -137,13 +137,13 @@ const RegisterForm = () => {
                   {formError}
                 </div>
               )}
-              <PixelButton
-                variant='cyan'
+              <Button
+                variant='default'
                 className='w-full disabled:cursor-not-allowed disabled:opacity-60'
                 disabled={isPending}
               >
                 {isPending ? "Creating account…" : "Create account"}
-              </PixelButton>
+              </Button>
             </form>
           </Form>
           <div className='mt-6 text-center text-sm text-muted-foreground'>

@@ -1,4 +1,4 @@
-import { Input, PixelButton } from "@website/shared/ui";
+import { Input, Button } from "@website/shared/ui";
 
 const NewsletterSection = () => {
   return (
@@ -19,7 +19,7 @@ const NewsletterSection = () => {
             placeholder='you@email.com'
             className='h-12 flex-1 bg-white/95'
           />
-          <PixelButton variant='pink'>Subscribe</PixelButton>
+          <Button variant='highlight'>Subscribe</Button>
         </form>
       </div>
     </section>

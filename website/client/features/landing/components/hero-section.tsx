@@ -1,4 +1,4 @@
-import { PixelButton } from "@website/shared/ui";
+import { Button } from "@website/shared/ui";
 import { Headphones, Laptop, Sparkles } from "lucide-react";
 import Link from "next/link";
 
@@ -26,10 +26,10 @@ const HeroSection = () => {
           </p>
           <div className='flex flex-wrap gap-4'>
             <Link href='/products'>
-              <PixelButton variant='cyan'>Shop now</PixelButton>
+              <Button variant='default'>Shop now</Button>
             </Link>
             <Link href='/products'>
-              <PixelButton variant='ghost'>View deals</PixelButton>
+              <Button variant='ghost'>View deals</Button>
             </Link>
           </div>
           <div className='mt-2 flex flex-wrap gap-6'>
