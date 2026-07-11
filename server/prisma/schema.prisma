@@ -182,6 +182,7 @@ model Shop {
   deletedAt      DateTime?
 
   user         User              @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  products     Product[]
   verification ShopVerification?
 
   @@index([ownerId])
@@ -254,4 +255,82 @@ enum DeliveryActivityStatus {
   ONLINE
   OFFLINE
   BUSY
+}
+
+// ============ PRODUCT & CATEGORY ============
+model Category {
+  id          String   @id @default(uuid())
+  name        String
+  slug        String   @unique
+  description String?
+  imageUrl    String?
+  parentId    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  parent            Category?         @relation("CategoryToCategory", fields: [parentId], references: [id], onDelete: Cascade)
+  children          Category[]        @relation("CategoryToCategory")
+  productCategories ProductCategory[]
+
+  @@index([parentId])
+  @@map("categories")
+}
+
+model Product {
+  id          String        @id @default(uuid())
+  shopId      String
+  categoryId  String
+  name        String
+  slug        String        @unique
+  description String?       @db.Text
+  status      ProductStatus @default(DRAFT)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  // Relations
+  shop              Shop              @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  images            ProductImage[]
+  productCategories ProductCategory[]
+
+  @@index([shopId])
+  @@map("products")
+}
+
+model ProductCategory {
+  id         String   @id @default(uuid())
+  productId  String
+  categoryId String
+  isMain     Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  product  Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@index([categoryId])
+  @@map("product_categories")
+}
+
+model ProductImage {
+  id        String   @id @default(uuid())
+  productId String
+  url       String
+  isMain    Boolean  @default(false)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@map("product_images")
+}
+
+enum ProductStatus {
+  DRAFT
+  ACTIVE
+  OUT_OF_STOCK
+  BANNED
 }
