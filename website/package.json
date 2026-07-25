@@ -1,0 +1,12 @@
+{
+  "name": "@website/root",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --parallel --filter \"./admin\" --filter \"./client\" --filter \"./seller\" dev",
+    "dev:admin": "pnpm --filter @website/admin dev",
+    "dev:client": "pnpm --filter @website/client dev",
+    "dev:seller": "pnpm --filter @website/seller dev",
+    "build": "pnpm -r build",
+    "lint": "pnpm -r lint"
+  }
+}
