@@ -12,14 +12,17 @@ function InnerApp() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
   return (
-    <RouterProvider router={router} context={{ auth: { user, isAuthenticated } }} />
+    <RouterProvider
+      router={router}
+      context={{ auth: { user, isAuthenticated } }}
+    />
   );
 }
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <ToastContainer position="top-right" autoClose={3000} hideProgressBar />
+      <ToastContainer position='top-right' autoClose={3000} hideProgressBar />
       <InnerApp />
     </QueryClientProvider>
   );
