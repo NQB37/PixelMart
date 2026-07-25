@@ -1,14 +1,16 @@
 export { cn } from "./cn";
 export { Button, buttonVariants } from "./button";
 export { default as SectionHeader } from "./SectionHeader";
-export { Field } from "./field";
+export { Field, FieldError } from "./field";
 export { Label } from "./label";
 export { Input } from "./input";
 export { Badge, badgeVariants } from "./badge";
 export * from "./card";
 export * from "./form";
 export * from "./dropdown-menu";
+export * from "./dialog";
 export { Alert, AlertDescription } from "./alert";
 export { TextField } from "./text-field";
 export { Stepper, type StepperStep } from "./stepper";
 export { ImageDropzone } from "./image-dropzone";
+export { Spinner } from "./spinner";
