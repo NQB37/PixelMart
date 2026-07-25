@@ -257,7 +257,22 @@ enum DeliveryActivityStatus {
   BUSY
 }
 
-// ============ PRODUCT & CATEGORY ============
+// ============ BRAND ============
+model Brand {
+  id   String @id @default(uuid())
+  name String @unique
+  slug String @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  products Product[]
+
+  @@map("brands")
+}
+
+// ============ CATEGORY ============
 model Category {
   id          String   @id @default(uuid())
   name        String
@@ -277,14 +292,29 @@ model Category {
   @@map("categories")
 }
 
+// ============ PRODUCT ============
 model Product {
-  id          String        @id @default(uuid())
-  vendorId    String
-  categoryId  String
+  id       String  @id @default(uuid())
+  vendorId String
+  brandId  String?
+
+  // General info
   name        String
   slug        String        @unique
+  sku         String?
   description String?       @db.Text
   status      ProductStatus @default(DRAFT)
+
+  // SEO
+  metaTitle       String?
+  metaDescription String?
+
+  // Moderation
+  approvalStatus ApprovalStatus @default(PENDING)
+  rejectedReason String?
+
+  // Media
+  thumbnail String?
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -292,10 +322,13 @@ model Product {
 
   // Relations
   vendor            Vendor            @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  brand             Brand?            @relation(fields: [brandId], references: [id], onDelete: SetNull)
   images            ProductImage[]
   productCategories ProductCategory[]
 
+  @@unique([vendorId, sku])
   @@index([vendorId])
+  @@index([brandId])
   @@map("products")
 }
 
