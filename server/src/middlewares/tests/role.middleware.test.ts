@@ -7,7 +7,7 @@ const mockReq = (roles: string[]) => ({ user: { roles } }) as unknown as Request
 describe("requireRole middleware", () => {
   it("calls next() with no error when user has an allowed role", () => {
     const next = vi.fn();
-    requireRole("ADMIN", "SELLER")(mockReq(["SELLER"]), {} as Response, next);
+    requireRole("ADMIN", "VENDOR")(mockReq(["VENDOR"]), {} as Response, next);
     expect(next).toHaveBeenCalledWith();
   });
 

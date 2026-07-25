@@ -4,7 +4,7 @@ import type { UserRole } from "@website/shared/auth";
 
 const ROLE_OPTIONS: UserRole[] = [
   "CUSTOMER",
-  "SELLER",
+  "VENDOR",
   "ADMIN",
   "DELIVERY_PERSON",
 ];

@@ -11,7 +11,7 @@ export const env = {
   port: Number(process.env.PORT || 8000),
   // website urls
   clientWebUrl: process.env.CLIENT_WEB_URL,
-  sellerWebUrl: process.env.SELLER_WEB_URL,
+  vendorWebUrl: process.env.VENDOR_WEB_URL,
   adminWebUrl: process.env.ADMIN_WEB_URL,
   // jwt
   jwtAccessSecret: process.env.JWT_ACCESS_SECRET,

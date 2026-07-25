@@ -5,7 +5,7 @@ import type { AdminUser } from "../types/user";
 
 const ROLE_BADGE_VARIANT: Record<AdminUser["roles"][number], "default" | "secondary" | "highlight"> = {
   ADMIN: "default",
-  SELLER: "highlight",
+  VENDOR: "highlight",
   CUSTOMER: "secondary",
   DELIVERY_PERSON: "secondary",
 };

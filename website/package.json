@@ -2,10 +2,10 @@
   "name": "@website/root",
   "private": true,
   "scripts": {
-    "dev": "pnpm --parallel --filter \"./admin\" --filter \"./client\" --filter \"./seller\" dev",
+    "dev": "pnpm --parallel --filter \"./admin\" --filter \"./client\" --filter \"./vendor\" dev",
     "dev:admin": "pnpm --filter @website/admin dev",
     "dev:client": "pnpm --filter @website/client dev",
-    "dev:seller": "pnpm --filter @website/seller dev",
+    "dev:vendor": "pnpm --filter @website/vendor dev",
     "build": "pnpm -r build",
     "lint": "pnpm -r lint"
   }

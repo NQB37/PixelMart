@@ -24,7 +24,7 @@ describe("Upload Integration Tests", () => {
   it("rejects upload without authentication", async () => {
     const res = await request(app)
       .post("/api/v1/uploads")
-      .field("folder", "shops/logos");
+      .field("folder", "vendors/logos");
 
     expect(res.status).toBe(401);
   });
@@ -39,7 +39,7 @@ describe("Upload Integration Tests", () => {
       const res = await request(app)
         .post("/api/v1/uploads")
         .set("Authorization", `Bearer ${accessToken}`)
-        .field("folder", "shops/logos");
+        .field("folder", "vendors/logos");
 
       expect(res.status).toBe(400);
     } finally {

@@ -16,7 +16,7 @@ export type AuthState = {
 /**
  * `persistIsAuthenticated` matches each app's pre-existing persist shape:
  * client only persisted `user` (relies on a refresh-token round trip to
- * re-derive auth), admin/seller also persisted `isAuthenticated`.
+ * re-derive auth), admin/vendor also persisted `isAuthenticated`.
  */
 export function createAuthStore(
   storageKey: string,

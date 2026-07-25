@@ -9,7 +9,7 @@ import { loginSchema, type LoginInput } from "../schemas/auth.schema";
 const TRUST_POINTS = [
   { icon: ShieldCheck, text: "Full audit trail on every action" },
   { icon: KeyRound, text: "Role-based access control across the platform" },
-  { icon: Activity, text: "Real-time visibility into orders and sellers" },
+  { icon: Activity, text: "Real-time visibility into orders and vendors" },
 ];
 
 export default function LoginForm() {

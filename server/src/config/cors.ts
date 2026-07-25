@@ -1,6 +1,6 @@
 import { env } from './env';
 
-const origins = [env.clientWebUrl!, env.sellerWebUrl!, env.adminWebUrl!];
+const origins = [env.clientWebUrl!, env.vendorWebUrl!, env.adminWebUrl!];
 
 const allowedOrigins = origins.flatMap((origin) =>
   origin && origin.includes('localhost')

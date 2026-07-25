@@ -27,7 +27,7 @@ model User {
   refreshTokens  RefreshToken[]
   roles          Roles[]
   addresses      Address[]
-  shop           Shop?
+  vendor         Vendor?
   deliveryPerson DeliveryPerson?
 
   @@index([email])
@@ -91,7 +91,7 @@ model Role {
 
 enum ROLE {
   CUSTOMER
-  SELLER
+  VENDOR
   ADMIN
   DELIVERY_PERSON
 }
@@ -133,7 +133,7 @@ model RolePermissions {
   @@map("role_permissions")
 }
 
-// ============ ADDRESS (Customer + Shop) ============
+// ============ ADDRESS (Customer + Vendor) ============
 model Address {
   id            String           @id @default(uuid())
   ownerId       String
@@ -156,7 +156,7 @@ model Address {
 
 enum AddressOwnerType {
   USER
-  SHOP
+  VENDOR
 }
 
 enum AddressLabel {
@@ -167,33 +167,33 @@ enum AddressLabel {
   OTHER
 }
 
-// ============ SHOP ============
-model Shop {
+// ============ VENDOR ============
+model Vendor {
   id             String         @id @default(uuid())
   ownerId        String         @unique
-  shopName       String
+  vendorName     String
   logoUrl        String?
   rating         Float          @default(0)
   approvalStatus ApprovalStatus @default(PENDING)
   rejectedReason String?
-  status         ShopStatus     @default(ACTIVE)
+  status         VendorStatus   @default(ACTIVE)
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
   deletedAt      DateTime?
 
-  user         User              @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  user         User                @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   products     Product[]
-  verification ShopVerification?
+  verification VendorVerification?
 
   @@index([ownerId])
-  @@map("shops")
+  @@map("vendors")
 }
 
-// Pickup address + identity/bank KYC info collected at shop registration,
-// reviewed by admins before a shop's approvalStatus moves out of PENDING.
-model ShopVerification {
+// Pickup address + identity/bank KYC info collected at vendor registration,
+// reviewed by admins before a vendor's approvalStatus moves out of PENDING.
+model VendorVerification {
   id                String   @id @default(uuid())
-  shopId            String   @unique
+  vendorId          String   @unique
   recipientName     String
   phone             String
   street            String
@@ -208,9 +208,9 @@ model ShopVerification {
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
-  shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  vendor Vendor @relation(fields: [vendorId], references: [id], onDelete: Cascade)
 
-  @@map("shop_verifications")
+  @@map("vendor_verifications")
 }
 
 enum ApprovalStatus {
@@ -219,7 +219,7 @@ enum ApprovalStatus {
   REJECTED
 }
 
-enum ShopStatus {
+enum VendorStatus {
   ACTIVE
   SUSPENDED
   INACTIVE
@@ -235,7 +235,7 @@ model DeliveryPerson {
   approvalStatus      ApprovalStatus         @default(PENDING)
   rejectedReason      String?
   activityStatus      DeliveryActivityStatus @default(OFFLINE)
-  status              ShopStatus             @default(ACTIVE)
+  status              VendorStatus           @default(ACTIVE)
   createdAt           DateTime               @default(now())
   updatedAt           DateTime               @updatedAt
 
@@ -279,7 +279,7 @@ model Category {
 
 model Product {
   id          String        @id @default(uuid())
-  shopId      String
+  vendorId    String
   categoryId  String
   name        String
   slug        String        @unique
@@ -291,11 +291,11 @@ model Product {
   deletedAt DateTime?
 
   // Relations
-  shop              Shop              @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  vendor            Vendor            @relation(fields: [vendorId], references: [id], onDelete: Cascade)
   images            ProductImage[]
   productCategories ProductCategory[]
 
-  @@index([shopId])
+  @@index([vendorId])
   @@map("products")
 }
 

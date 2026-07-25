@@ -8,7 +8,7 @@ PixelMart is a modern, minimalist **Mint Fresh** themed e-commerce platform (you
 
 - `website/client` — Next.js 16 App Router (Customer-facing frontend)
 - `website/admin` — Vite + React + TanStack Router (Admin portal)
-- `website/seller` — Vite + React + TanStack Router (Seller portal)
+- `website/vendor` — Vite + React + TanStack Router (Vendor portal)
 - `website/shared` (`@website/shared`) — code shared across the three `website/*` apps (auth store/API client/schemas, generic UI components)
 - `server` — Express.js v5 + Prisma ORM (Backend)
 - `mobile` — TBD (empty)
@@ -66,12 +66,12 @@ pnpm prisma migrate dev --name <name>   # Create migration + regenerate client
 pnpm prisma generate  # Regenerate Prisma client only
 ```
 
-### Client / Admin / Seller (`website/{client,admin,seller}/`)
+### Client / Admin / Vendor (`website/{client,admin,vendor}/`)
 
-Run `pnpm install` once from `website/` (single workspace lockfile). Then, from each app's directory (or `pnpm --filter <client|admin|seller> <script>` from `website/`):
+Run `pnpm install` once from `website/` (single workspace lockfile). Then, from each app's directory (or `pnpm --filter <client|admin|vendor> <script>` from `website/`):
 
 ```bash
-pnpm dev              # Dev server (Next.js for client, Vite for admin/seller)
+pnpm dev              # Dev server (Next.js for client, Vite for admin/vendor)
 pnpm build            # Production build
 pnpm test             # Run vitest (client only)
 pnpm lint             # ESLint
@@ -128,11 +128,11 @@ Shared components (used across features): `components/shared/`. Always use `Pixe
 
 ### `website/shared` (`@website/shared`)
 
-Code used by more than one of `client`/`admin`/`seller` lives here, not duplicated per app:
+Code used by more than one of `client`/`admin`/`vendor` lives here, not duplicated per app:
 
 - `@website/shared/auth` — `createAuthStore()` (Zustand factory, parameterized by localStorage key), `createAuthApiClient()` (axios instance + refresh-on-401 interceptor factory), `createAuthApi()` (login/register/logout/refreshToken/getMe), `loginSchema`/`registerSchema` (Zod), shared `UserRole`/`UserInfo` types, and `hasRole()` for role checks.
 - `@website/shared/ui` — generic mint-theme UI (`PixelButton`, `SectionHeader`, `cn`, and the shadcn `Form`/`Field`/`Label`/`DropdownMenu` wrappers). Note: `PixelButton` keeps its name for API stability but now renders a mint-system button.
-- `@website/shared/styles/theme.css` — the **Mint Fresh** Tailwind v4 theme tokens (OKLCH); all three apps (`client`/`admin`/`seller`) import it. Legacy `neon-*`/`pixel-*` utilities remain temporarily during the client component sweep.
+- `@website/shared/styles/theme.css` — the **Mint Fresh** Tailwind v4 theme tokens (OKLCH); all three apps (`client`/`admin`/`vendor`) import it. Legacy `neon-*`/`pixel-*` utilities remain temporarily during the client component sweep.
 
 Each app still owns anything framework-specific (Next.js route guards vs TanStack Router `beforeLoad`, per-app toast copy, per-app env var names) as a thin wrapper around the shared factories — only add to `website/shared` when a piece of logic is truly framework-agnostic and used by more than one app.
 
@@ -180,6 +180,6 @@ Full spec + token tables: **`DESIGN.md`** (repo root). Tokens live in `@website/
 
 ## Environment Variables
 
-Server requires: `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`, `ACCESS_TOKEN_EXPIRES_IN`, `REFRESH_TOKEN_EXPIRES_IN`, `DATABASE_URL`, and optional `CLIENT_WEB_URL`, `SELLER_WEB_URL`, `ADMIN_WEB_URL`.
+Server requires: `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`, `ACCESS_TOKEN_EXPIRES_IN`, `REFRESH_TOKEN_EXPIRES_IN`, `DATABASE_URL`, and optional `CLIENT_WEB_URL`, `VENDOR_WEB_URL`, `ADMIN_WEB_URL`.
 
 Client requires: `NEXT_PUBLIC_BASE_API_URL` (defaults to `http://localhost:8000/api/v1`).
