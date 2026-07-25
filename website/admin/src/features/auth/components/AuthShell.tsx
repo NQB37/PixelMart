@@ -15,7 +15,7 @@ interface AuthShellProps {
 }
 
 // Split-panel shell for the admin login page: a mint-gradient brand panel
-// alongside the actual form on a plain canvas (mirrors the seller AuthShell).
+// alongside the actual form on a plain canvas (mirrors the vendor AuthShell).
 export default function AuthShell({
   heading,
   description,

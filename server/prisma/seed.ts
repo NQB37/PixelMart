@@ -5,7 +5,7 @@ import { ROLE } from "@/generated/prisma/client";
 
 const ACCOUNTS = [
   { email: "admin@pixelmart.test", password: "Admin123!", role: ROLE.ADMIN },
-  { email: "seller@pixelmart.test", password: "Seller123!", role: ROLE.SELLER },
+  { email: "vendor@pixelmart.test", password: "Vendor123!", role: ROLE.VENDOR },
 ];
 
 async function main() {

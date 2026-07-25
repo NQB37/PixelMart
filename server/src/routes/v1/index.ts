@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { ApiResponse } from '@/utils/ApiResponse';
 import { authRoutes } from '@/modules/auth/auth.routes';
-import { shopRoutes } from '@/modules/shop/shop.routes';
+import { vendorRoutes } from '@/modules/vendor/vendor.routes';
 import { uploadRoutes } from '@/modules/upload/upload.routes';
 import { userRoutes } from '@/modules/user/user.routes';
 import { categoryRoutes } from '@/modules/category/category.routes';
@@ -13,7 +13,7 @@ router.get('/health', (_req, res) => {
 });
 
 router.use('/auth', authRoutes);
-router.use('/shops', shopRoutes);
+router.use('/vendors', vendorRoutes);
 router.use('/uploads', uploadRoutes);
 router.use('/users', userRoutes);
 router.use('/categories', categoryRoutes);

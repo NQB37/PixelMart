@@ -2,8 +2,8 @@ import z from 'zod';
 
 export const UPLOAD_FOLDERS = [
   'categories',
-  'shops/logos',
-  'shops/identity',
+  'vendors/logos',
+  'vendors/identity',
   'products',
   'avatars',
 ] as const;

@@ -33,7 +33,7 @@ Tài liệu này định nghĩa các nguyên tắc bắt buộc cho mọi AI Age
 Dự án PixelMart là một hệ thống thương mại điện tử phong cách **Mint Fresh** (trẻ trung, tối giản, hiện đại; màu mint chủ đạo), bao gồm các thành phần sau:
 * **website/client**: Next.js App Router — Frontend cho người mua (Buyer Storefront)
 * **website/admin**: Vite + React + TanStack Router — Cổng quản trị (Admin)
-* **website/seller**: Vite + React + TanStack Router — Cổng người bán (Seller)
+* **website/vendor**: Vite + React + TanStack Router — Cổng người bán (Vendor)
 * **website/shared** (`@website/shared`): code dùng chung cho 3 app `website/*` (auth store / API client / schemas, UI component chung)
 * **server**: Express.js v5 & Prisma ORM — Backend
 * **mobile**: Ứng dụng di động (TBD - hiện đang để trống)

@@ -39,7 +39,7 @@ interface NavItem {
 }
 
 const OVERVIEW: NavItem = { to: "/", label: "Overview", icon: LayoutDashboard };
-// ponytail: widened to `string`, same circular-type-resolution quirk noted in the seller Sidebar.
+// ponytail: widened to `string`, same circular-type-resolution quirk noted in the vendor Sidebar.
 const PROFILE_PATH: string = "/profile";
 
 const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
@@ -55,7 +55,7 @@ const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
     items: [
       { to: "/users", label: "All Users", icon: Users },
       { to: "/users/roles", label: "Roles & Permissions", icon: KeyRound },
-      { to: "/users/sellers", label: "Seller Accounts", icon: Store },
+      { to: "/users/vendors", label: "Vendor Accounts", icon: Store },
     ],
   },
   {

@@ -164,7 +164,7 @@ Dùng hoàn toàn class Tailwind. `from-primary` / `to-highlight`… hoạt đ�
 | Body (mô tả, form, meta) | **Inter** | Trung tính, dễ đọc ở size nhỏ, hỗ trợ số tốt. |
 | Numeric *(tùy chọn)* | **Geist Mono** | Cho giá tiền / SKU / mã đơn — hoặc dùng Inter + `tabular-nums` để số thẳng cột. |
 
-Font được nạp qua Google Fonts `@import` ở đầu mỗi entry CSS (`client/app/globals.css`, `admin|seller/src/index.css`); token font khai báo trong `@theme inline` của `theme.css`:
+Font được nạp qua Google Fonts `@import` ở đầu mỗi entry CSS (`client/app/globals.css`, `admin|vendor/src/index.css`); token font khai báo trong `@theme inline` của `theme.css`:
 
 ```css
 /* trong @theme inline (theme.css) */

@@ -10,8 +10,8 @@ import Login from "@/pages/Login";
 import Forbidden from "@/pages/Forbidden";
 import Dashboard from "@/pages/Dashboard";
 import Users from "@/pages/Users";
-import Sellers from "@/pages/Sellers";
-import SellerDetail from "@/pages/SellerDetail";
+import Vendors from "@/pages/Vendors";
+import VendorDetail from "@/pages/VendorDetail";
 import Categories from "@/pages/Categories";
 import Placeholder from "@/pages/Placeholder";
 import AdminLayout from "@/components/layout/AdminLayout";
@@ -70,16 +70,16 @@ const usersRoute = createRoute({
   component: Users,
 });
 
-const sellersRoute = createRoute({
+const vendorsRoute = createRoute({
   getParentRoute: () => adminLayoutRoute,
-  path: "/users/sellers",
-  component: Sellers,
+  path: "/users/vendors",
+  component: Vendors,
 });
 
-const sellerDetailRoute = createRoute({
+const vendorDetailRoute = createRoute({
   getParentRoute: () => adminLayoutRoute,
-  path: "/users/sellers/$shopId",
-  component: SellerDetail,
+  path: "/users/vendors/$vendorId",
+  component: VendorDetail,
 });
 
 const categoriesRoute = createRoute({
@@ -102,8 +102,8 @@ const routeTree = rootRoute.addChildren([
     placeholderRoute("/analytics/traffic", "Traffic & Engagement"),
     usersRoute,
     placeholderRoute("/users/roles", "Roles & Permissions"),
-    sellersRoute,
-    sellerDetailRoute,
+    vendorsRoute,
+    vendorDetailRoute,
     placeholderRoute("/catalog/review-queue", "Review Queue"),
     categoriesRoute,
     placeholderRoute("/catalog/flagged", "Flagged Listings"),
