@@ -5,6 +5,7 @@ import {
 } from './category.validation';
 import { prisma } from '@/libs/prisma';
 import { ApiError } from '@/utils/ApiError';
+import type { Category } from '@/generated/prisma/client';
 
 class CategoryService {
   // =========== PUBLIC ===========
@@ -59,7 +60,7 @@ class CategoryService {
     }
 
     // Check if slug already exists
-    if (data.slug) {
+    if (data.slug && data.slug !== category.slug) {
       const slugExists = await prisma.category.findUnique({
         where: { slug: data.slug },
       });
@@ -75,8 +76,8 @@ class CategoryService {
     }
 
     // Cannot create circular reference
-    if (data.parentId === id) {
-      throw ApiError.badRequest('Category cannot be its own parent');
+    if (await this.checkCycle(id, data.parentId)) {
+      throw ApiError.conflict('Cannot create circular reference');
     }
 
     return prisma.category.update({ where: { id }, data });
@@ -95,6 +96,32 @@ class CategoryService {
     await prisma.category.delete({ where: { id } });
 
     return { deleted: true };
+  }
+
+  // =========== PRIVATE ===========
+  private async checkCycle(categoryId: string, newParentId?: string | null) {
+    // Cannot set parent to itself
+    if (categoryId === newParentId) return true;
+
+    let currentParentId: string | null | undefined = newParentId;
+
+    // Traverse up the parent chain to detect cycle
+    while (currentParentId) {
+      // Detect cycle: current parent is the same as the category
+      if (currentParentId === categoryId) return true;
+
+      // Get the parent of the current parent
+      const parent: Category | null = await prisma.category.findUnique({
+        where: { id: currentParentId },
+      });
+
+      if (!parent) break;
+
+      // Move up to the next parent
+      currentParentId = parent.parentId;
+    }
+
+    return false;
   }
 }
 

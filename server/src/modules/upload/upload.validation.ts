@@ -1,10 +1,11 @@
 import z from 'zod';
 
 export const UPLOAD_FOLDERS = [
+  'categories',
   'shops/logos',
   'shops/identity',
-  'avatars',
   'products',
+  'avatars',
 ] as const;
 
 export const uploadImageSchema = z.object({

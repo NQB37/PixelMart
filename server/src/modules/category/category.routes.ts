@@ -3,6 +3,11 @@ import * as categoryController from './category.controller';
 import { isAuth } from '@/middlewares/auth.middleware';
 import { requireRole } from '@/middlewares/role.middleware';
 import { ROLE } from '@/generated/prisma/enums';
+import { validate } from '@/middlewares/validate.middleware';
+import {
+  createCategorySchema,
+  updateCategorySchema,
+} from './category.validation';
 
 const router = Router();
 
@@ -15,12 +20,14 @@ router.post(
   '/',
   isAuth,
   requireRole(ROLE.ADMIN),
+  validate(createCategorySchema),
   categoryController.createCategory,
 );
-router.put(
+router.patch(
   '/:id',
   isAuth,
   requireRole(ROLE.ADMIN),
+  validate(updateCategorySchema),
   categoryController.updateCategory,
 );
 router.delete(
