@@ -26,41 +26,41 @@ export default function LoginForm() {
 
   return (
     <AuthShell
-      heading="Admin control, made simple."
-      description="Sign in to manage users, catalog, and platform settings."
+      heading='Admin control, made simple.'
+      description='Sign in to manage users, catalog, and platform settings.'
       trustPoints={TRUST_POINTS}
     >
-      <div className="text-xs font-semibold uppercase tracking-wide text-primary">
+      <div className='text-xs font-semibold uppercase tracking-wide text-primary'>
         Admin console
       </div>
-      <h2 className="mt-2 font-display text-2xl font-bold text-foreground">
+      <h2 className='mt-2 font-display text-2xl font-bold text-foreground'>
         Sign in to the control panel
       </h2>
 
       {error && (
-        <Alert variant="destructive" className="mt-6">
+        <Alert variant='destructive' className='mt-6'>
           <AlertDescription>{error.message}</AlertDescription>
         </Alert>
       )}
 
-      <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-4">
+      <form onSubmit={handleSubmit(onSubmit)} className='mt-6 space-y-4'>
         <TextField
-          label="Email"
-          type="email"
+          label='Email'
+          type='email'
           icon={Mail}
-          autoComplete="email"
+          autoComplete='email'
           error={errors.email?.message}
           {...register("email")}
         />
         <TextField
-          label="Password"
-          type="password"
+          label='Password'
+          type='password'
           icon={Lock}
-          autoComplete="current-password"
+          autoComplete='current-password'
           error={errors.password?.message}
           {...register("password")}
         />
-        <Button variant="default" className="w-full" disabled={isPending}>
+        <Button variant='default' className='w-full' loading={isPending}>
           {isPending ? "Signing in…" : "Sign in"}
         </Button>
       </form>

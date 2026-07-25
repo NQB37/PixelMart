@@ -48,7 +48,7 @@ export function ConfirmModal({
             <Button variant="ghost" disabled={isPending} onClick={onClose}>
               Cancel
             </Button>
-            <Button variant="highlight" disabled={isPending} onClick={onConfirm}>
+            <Button variant="highlight" loading={isPending} onClick={onConfirm}>
               {isPending ? pendingLabel : confirmLabel}
             </Button>
           </div>

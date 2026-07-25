@@ -140,7 +140,7 @@ const RegisterForm = () => {
               <Button
                 variant='default'
                 className='w-full disabled:cursor-not-allowed disabled:opacity-60'
-                disabled={isPending}
+                loading={isPending}
               >
                 {isPending ? "Creating account…" : "Create account"}
               </Button>

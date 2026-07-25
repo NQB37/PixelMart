@@ -88,7 +88,7 @@ const LoginForm = () => {
               <Button
                 variant='default'
                 className='w-full disabled:cursor-not-allowed disabled:opacity-60'
-                disabled={isPending}
+                loading={isPending}
               >
                 {isPending ? "Logging in…" : "Log in"}
               </Button>

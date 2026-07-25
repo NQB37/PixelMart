@@ -41,7 +41,7 @@ export default function SellerDetail() {
   const { shopId } = useParams({ from: "/admin-layout/users/sellers/$shopId" });
   const navigate = useNavigate();
   const { data: shop, isLoading } = useShopDetail(shopId);
-  const { mutate: review, isPending } = useReviewShop(shopId);
+  const { mutate: review, isPending, variables } = useReviewShop(shopId);
   const [showRejectForm, setShowRejectForm] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
 
@@ -76,6 +76,7 @@ export default function SellerDetail() {
         <div className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-card p-4">
           <Button
             variant="success"
+            loading={isPending && variables?.action === "approve"}
             disabled={isPending}
             onClick={() => review({ action: "approve" })}
           >
@@ -99,6 +100,7 @@ export default function SellerDetail() {
               />
               <Button
                 variant="highlight"
+                loading={isPending && variables?.action === "reject"}
                 disabled={isPending || !rejectReason.trim()}
                 onClick={() => review({ action: "reject", rejectedReason: rejectReason.trim() })}
               >
