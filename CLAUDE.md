@@ -44,6 +44,11 @@ Package manager: **pnpm** (required, do not use npm or yarn).
 - For multi-step tasks, maintain a task list and update its status as you go.
 - Always run the code, build, linter, or tests before declaring a task complete.
 
+### Safe Verification
+
+- Never strip, comment out, or short-circuit an auth guard, role check, or route protection (e.g. `beforeLoad` in `router.tsx`) just to reach a page for manual/browser testing — even temporarily, even if you intend to revert it. If a feature is behind login, ask the user for test credentials (or how to seed one) and log in through the real flow instead.
+- If you're unsure whether verifying something requires touching security-sensitive code, ask first rather than trying it and reverting after.
+
 ---
 
 ## Commands
@@ -130,6 +135,25 @@ Code used by more than one of `client`/`admin`/`seller` lives here, not duplicat
 - `@website/shared/styles/theme.css` — the **Mint Fresh** Tailwind v4 theme tokens (OKLCH); all three apps (`client`/`admin`/`seller`) import it. Legacy `neon-*`/`pixel-*` utilities remain temporarily during the client component sweep.
 
 Each app still owns anything framework-specific (Next.js route guards vs TanStack Router `beforeLoad`, per-app toast copy, per-app env var names) as a thin wrapper around the shared factories — only add to `website/shared` when a piece of logic is truly framework-agnostic and used by more than one app.
+
+### Modal / Dialog Pattern
+
+Every Add/Edit/Delete modal is a single **self-contained component** — no `forwardRef`/`useImperativeHandle`, no ref held by the parent page:
+
+- The component renders its own trigger `<Button>` wrapped in `<DialogTrigger asChild>` — importing `<XModal />` anywhere is enough to get a working button + modal.
+- It owns its own `isOpened` state via `useState`, wired to `<Dialog open={isOpened} onOpenChange={setIsOpened}>` (or a custom `handleOpenChange` — see below).
+- Build modals from `@website/shared/ui`'s `Dialog`/`DialogTrigger`/`DialogContent`/`DialogHeader`/`DialogFooter`/`DialogTitle`/`DialogDescription` (Radix `@radix-ui/react-dialog`, same shadcn-wrapper convention as `DropdownMenu`). Do not hand-roll a native `<dialog>` element.
+- For Edit modals seeded from a prop (e.g. `category: CategoryNode`), do **not** reset local form state from the prop inside a `useEffect` keyed on `isOpened` — that's a "sync prop into state" anti-pattern and trips the `react-hooks/set-state-in-effect` ESLint rule. Instead, reset the state inside the `onOpenChange` handler itself (only when opening), e.g.:
+  ```tsx
+  const handleOpenChange = (next: boolean) => {
+    if (next) {
+      setName(category.name);
+      // ...reset the rest of the form from the prop
+    }
+    setIsOpened(next);
+  };
+  ```
+- Reference implementation: `website/admin/src/features/categories/components/{CreateCategoryModal,UpdateCategoryModal,DeleteCategoryModal}.tsx`.
 
 ---
 
