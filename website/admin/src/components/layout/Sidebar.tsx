@@ -16,6 +16,7 @@ import {
   Settings2,
   ShieldCheck,
   Store,
+  Tag,
   TrendingUp,
   User,
   Users,
@@ -63,6 +64,7 @@ const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
     items: [
       { to: "/catalog/review-queue", label: "Review Queue", icon: PackageSearch },
       { to: "/catalog/categories", label: "Categories", icon: Layers },
+      { to: "/catalog/brands", label: "Brands", icon: Tag },
       { to: "/catalog/flagged", label: "Flagged Listings", icon: Flag },
     ],
   },

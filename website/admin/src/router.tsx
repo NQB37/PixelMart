@@ -13,6 +13,7 @@ import Users from "@/pages/Users";
 import Vendors from "@/pages/Vendors";
 import VendorDetail from "@/pages/VendorDetail";
 import Categories from "@/pages/Categories";
+import Brands from "@/pages/Brands";
 import Placeholder from "@/pages/Placeholder";
 import AdminLayout from "@/components/layout/AdminLayout";
 import { hasRole, type UserInfo } from "@website/shared/auth";
@@ -88,6 +89,12 @@ const categoriesRoute = createRoute({
   component: Categories,
 });
 
+const brandsRoute = createRoute({
+  getParentRoute: () => adminLayoutRoute,
+  path: "/catalog/brands",
+  component: Brands,
+});
+
 const placeholderRoute = (path: string, title: string) =>
   createRoute({
     getParentRoute: () => adminLayoutRoute,
@@ -106,6 +113,7 @@ const routeTree = rootRoute.addChildren([
     vendorDetailRoute,
     placeholderRoute("/catalog/review-queue", "Review Queue"),
     categoriesRoute,
+    brandsRoute,
     placeholderRoute("/catalog/flagged", "Flagged Listings"),
     placeholderRoute("/system/promotions", "Promotions & Vouchers"),
     placeholderRoute("/system/settings", "Site Settings"),
