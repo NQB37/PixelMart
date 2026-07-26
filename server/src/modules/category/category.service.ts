@@ -1,4 +1,3 @@
-import { generateSlug } from '@/utils/slug';
 import {
   CreateCategoryInput,
   UpdateCategoryInput,
@@ -29,9 +28,10 @@ class CategoryService {
 
   // =========== ADMIN ===========
   public async createCategory(data: CreateCategoryInput) {
-    // Check if name already exists
-    const slug = generateSlug(data.name);
-    const slugExists = await prisma.category.findUnique({ where: { slug } });
+    // Check if slug already exists
+    const slugExists = await prisma.category.findUnique({
+      where: { slug: data.slug },
+    });
     if (slugExists) throw ApiError.conflict('Category already exists');
 
     // Check if parent category exists
@@ -43,9 +43,7 @@ class CategoryService {
     }
 
     // Create category
-    const category = await prisma.category.create({
-      data: { ...data, slug },
-    });
+    const category = await prisma.category.create({ data });
 
     return category;
   }
@@ -53,11 +51,6 @@ class CategoryService {
   async updateCategory(id: string, data: UpdateCategoryInput) {
     const category = await prisma.category.findUnique({ where: { id } });
     if (!category) throw ApiError.notFound('Category not found');
-
-    // If name changes → update slug
-    if (data.name && data.name !== category.name) {
-      data.slug = generateSlug(data.name);
-    }
 
     // Check if slug already exists
     if (data.slug && data.slug !== category.slug) {

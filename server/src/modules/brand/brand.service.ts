@@ -1,7 +1,6 @@
 import { prisma } from '@/libs/prisma';
 import { CreateBrandInput, UpdateBrandInput } from './brand.validation';
 import { ApiError } from '@/utils/ApiError';
-import { generateSlug } from '@/utils/slug';
 
 class BrandService {
   // PUBLIC
@@ -24,9 +23,8 @@ class BrandService {
   // ADMIN
   async createBrand(data: CreateBrandInput) {
     // Check brand name/slug exist
-    const slug = generateSlug(data.name);
     const existingBrand = await prisma.brand.findFirst({
-      where: { OR: [{ name: data.name }, { slug }] },
+      where: { OR: [{ name: data.name }, { slug: data.slug }] },
     });
     if (existingBrand) throw ApiError.conflict('Brand already exists');
 
@@ -34,7 +32,7 @@ class BrandService {
     const brand = await prisma.brand.create({
       data: {
         name: data.name,
-        slug,
+        slug: data.slug,
       },
     });
 
@@ -46,8 +44,7 @@ class BrandService {
     if (!brand) throw ApiError.notFound('Brand not found');
 
     const name = data.name ?? brand.name;
-    const slug =
-      data.slug ?? (name !== brand.name ? generateSlug(name) : brand.slug);
+    const slug = data.slug ?? brand.slug;
     if (name === brand.name && slug === brand.slug) return brand;
 
     // Check brand name/slug taken by another brand

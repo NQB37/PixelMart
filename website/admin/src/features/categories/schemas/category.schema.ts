@@ -6,6 +6,7 @@ export const createCategorySchema = z.object({
     .min(2, "Category name must be at least 2 characters")
     .max(100, "Category name must be at most 100 characters")
     .trim(),
+  slug: z.string().min(2, "Slug must be at least 2 characters"),
   description: z
     .string()
     .max(500, "Category description must be at most 500 characters")
