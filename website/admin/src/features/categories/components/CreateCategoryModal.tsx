@@ -15,6 +15,7 @@ import {
   Label,
 } from "@website/shared/ui";
 import { flattenForParentSelect } from "../utils/categoryTree";
+import { slugify } from "@website/shared/utils";
 import type { CategoryNode } from "../types/category";
 import { useCreateCategory } from "../hooks/useCategories";
 import { categoryApi } from "../services/category.service";
@@ -40,6 +41,7 @@ export function CreateCategoryModal({
     register,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<CreateCategoryInput>({
     resolver: zodResolver(createCategorySchema),
@@ -63,6 +65,7 @@ export function CreateCategoryModal({
       const imageUrl = image ? await categoryApi.uploadImage(image) : undefined;
       await createCategory({
         ...data,
+        slug: slugify(data.slug),
         imageUrl,
         parentId: parent?.id ?? (data.parentId || undefined),
       });
@@ -128,9 +131,24 @@ export function CreateCategoryModal({
               className='mt-1.5'
               placeholder='e.g. Smartphones'
               autoFocus
-              {...register("name")}
+              {...register("name", {
+                onChange: (e) => setValue("slug", slugify(e.target.value)),
+              })}
             />
             <FieldError>{errors.name?.message}</FieldError>
+          </div>
+
+          <div>
+            <Label htmlFor='create-category-slug'>
+              Slug <span className='text-destructive'>*</span>
+            </Label>
+            <Input
+              id='create-category-slug'
+              className='mt-1.5 font-mono'
+              placeholder='e.g. smartphones'
+              {...register("slug")}
+            />
+            <FieldError>{errors.slug?.message}</FieldError>
           </div>
 
           <div>

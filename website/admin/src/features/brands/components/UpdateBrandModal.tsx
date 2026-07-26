@@ -35,6 +35,7 @@ export function UpdateBrandModal({ brand }: UpdateBrandModalProps) {
     register,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<UpdateBrandInput>({
     resolver: zodResolver(updateBrandSchema),
@@ -102,7 +103,9 @@ export function UpdateBrandModal({ brand }: UpdateBrandModalProps) {
               className='mt-1.5'
               placeholder='e.g. Logitech'
               autoFocus
-              {...register("name")}
+              {...register("name", {
+                onChange: (e) => setValue("slug", slugify(e.target.value)),
+              })}
             />
             <FieldError>{errors.name?.message}</FieldError>
           </div>

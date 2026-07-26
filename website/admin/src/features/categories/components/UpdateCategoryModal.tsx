@@ -47,6 +47,7 @@ export function UpdateCategoryModal({
     register,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<UpdateCategoryInput>({
     resolver: zodResolver(updateCategorySchema),
@@ -129,7 +130,9 @@ export function UpdateCategoryModal({
               className='mt-1.5'
               placeholder='e.g. Smartphones'
               autoFocus
-              {...register("name")}
+              {...register("name", {
+                onChange: (e) => setValue("slug", slugify(e.target.value)),
+              })}
             />
             <FieldError>{errors.name?.message}</FieldError>
           </div>

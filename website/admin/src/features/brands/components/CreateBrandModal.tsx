@@ -13,6 +13,7 @@ import {
   Input,
   Label,
 } from "@website/shared/ui";
+import { slugify } from "@website/shared/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
@@ -28,6 +29,7 @@ export function CreateBrandModal() {
     register,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<CreateBrandInput>({
     resolver: zodResolver(createBrandSchema),
@@ -42,7 +44,7 @@ export function CreateBrandModal() {
 
   const onSubmit = async (data: CreateBrandInput) => {
     try {
-      await createBrand(data);
+      await createBrand({ ...data, slug: slugify(data.slug) });
       toast.success(`Brand ${data.name} created successfully`);
       setIsOpened(false);
     } catch {
@@ -67,7 +69,7 @@ export function CreateBrandModal() {
           <div className='space-y-1.5'>
             <DialogTitle>Add brand</DialogTitle>
             <DialogDescription>
-              The slug is generated from the name.
+              The slug is filled in from the name — edit it if you need to.
             </DialogDescription>
           </div>
         </DialogHeader>
@@ -82,9 +84,24 @@ export function CreateBrandModal() {
               className='mt-1.5'
               placeholder='e.g. Logitech'
               autoFocus
-              {...register("name")}
+              {...register("name", {
+                onChange: (e) => setValue("slug", slugify(e.target.value)),
+              })}
             />
             <FieldError>{errors.name?.message}</FieldError>
+          </div>
+
+          <div>
+            <Label htmlFor='create-brand-slug'>
+              Slug <span className='text-destructive'>*</span>
+            </Label>
+            <Input
+              id='create-brand-slug'
+              className='mt-1.5 font-mono'
+              placeholder='e.g. logitech'
+              {...register("slug")}
+            />
+            <FieldError>{errors.slug?.message}</FieldError>
           </div>
 
           <DialogFooter className='pt-2'>
