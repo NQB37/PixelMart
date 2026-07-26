@@ -10,7 +10,7 @@ import {
 import { useGetAllCategories } from "@/features/categories/hooks/useCategories";
 
 export default function Categories() {
-  const { data: categories = [], isLoading, error } = useGetAllCategories();
+  const { data: categories = [], isLoading } = useGetAllCategories();
   const [search, setSearch] = useState("");
   // ponytail: track collapsed instead of expanded so everything is expanded by default
   const [collapsedIds, setCollapsedIds] = useState<Set<string>>(new Set());
