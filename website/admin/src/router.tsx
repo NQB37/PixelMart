@@ -15,6 +15,7 @@ import VendorDetail from "@/pages/VendorDetail";
 import Categories from "@/pages/Categories";
 import Brands from "@/pages/Brands";
 import Placeholder from "@/pages/Placeholder";
+import DesignSystem from "@/pages/DesignSystem";
 import AdminLayout from "@/components/layout/AdminLayout";
 import { hasRole, type UserInfo } from "@website/shared/auth";
 
@@ -95,6 +96,13 @@ const brandsRoute = createRoute({
   component: Brands,
 });
 
+// Unlinked on purpose — reachable at /design-system, not listed in the sidebar.
+const designSystemRoute = createRoute({
+  getParentRoute: () => adminLayoutRoute,
+  path: "/design-system",
+  component: DesignSystem,
+});
+
 const placeholderRoute = (path: string, title: string) =>
   createRoute({
     getParentRoute: () => adminLayoutRoute,
@@ -119,6 +127,7 @@ const routeTree = rootRoute.addChildren([
     placeholderRoute("/system/settings", "Site Settings"),
     placeholderRoute("/system/audit-log", "Audit Log"),
     placeholderRoute("/profile", "Profile"),
+    designSystemRoute,
   ]),
   loginRoute,
   forbiddenRoute,
