@@ -1,10 +1,5 @@
+import { slugSchema } from '@/utils/slug';
 import { z } from 'zod';
-
-const slugSchema = z
-  .string()
-  .min(2)
-  .max(100)
-  .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Slug must be lowercase, dash-separated');
 
 export const createCategorySchema = z.object({
   name: z.string().min(2).max(100).trim(),
