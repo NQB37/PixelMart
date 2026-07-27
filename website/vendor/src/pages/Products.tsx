@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Link } from "@tanstack/react-router";
 import { Plus } from "lucide-react";
 import { Button } from "@website/shared/ui";
 import { ProductsTable } from "@/features/products/components/ProductsTable";
@@ -53,8 +52,6 @@ const PRODUCTS: VendorProduct[] = [
 const CATEGORIES = ["Keyboards", "Monitors", "Mice", "Accessories"];
 const BRANDS = ["Keychron", "Dell", "Logitech"];
 
-const NEW_PRODUCT_PATH: string = "/products/new";
-
 export default function Products() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("");
@@ -72,10 +69,9 @@ export default function Products() {
             Manage the products listed in your vendor.
           </p>
         </div>
-        <Button asChild>
-          <Link to={NEW_PRODUCT_PATH} className='flex items-center gap-2'>
-            <Plus className='h-4 w-4' /> New Product
-          </Link>
+        {/* ponytail: no handler yet — becomes a CreateProductModal trigger */}
+        <Button>
+          <Plus className='h-4 w-4' /> New Product
         </Button>
       </div>
 

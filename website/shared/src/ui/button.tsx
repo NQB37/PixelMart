@@ -1,5 +1,4 @@
 import * as React from "react";
-import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "./cn";
@@ -19,7 +18,8 @@ const buttonVariants = cva(
           "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "bg-transparent text-primary hover:bg-accent",
         link: "text-primary underline-offset-4 hover:underline",
-        highlight: "bg-highlight text-highlight-foreground hover:bg-highlight/90",
+        highlight:
+          "bg-highlight text-highlight-foreground hover:bg-highlight/90",
         success: "bg-success text-white hover:bg-success/90",
         warning: "bg-warning text-foreground hover:bg-warning/90",
       },
@@ -31,39 +31,28 @@ const buttonVariants = cva(
 );
 
 export interface ButtonProps
-  extends React.ComponentProps<"button">,
-    VariantProps<typeof buttonVariants> {
-  asChild?: boolean;
+  extends React.ComponentProps<"button">, VariantProps<typeof buttonVariants> {
   loading?: boolean;
 }
 
 function Button({
   className,
   variant,
-  asChild = false,
   loading = false,
   disabled,
   children,
   ...props
 }: ButtonProps) {
-  const Comp = asChild ? Slot : "button";
   return (
-    <Comp
-      data-slot="button"
+    <button
+      data-slot='button'
       className={cn(buttonVariants({ variant, className }))}
-      disabled={asChild ? undefined : disabled || loading}
+      disabled={disabled || loading}
       {...props}
     >
-      {/* Slot needs exactly one child, so asChild gets no spinner slot */}
-      {asChild ? (
-        children
-      ) : (
-        <>
-          {loading && <Spinner className="text-current" />}
-          {children}
-        </>
-      )}
-    </Comp>
+      {loading && <Spinner className='text-current' />}
+      {children}
+    </button>
   );
 }
 
