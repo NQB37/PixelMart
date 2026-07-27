@@ -11,12 +11,12 @@ import {
   Package,
   PanelLeftClose,
   PanelLeftOpen,
-  PlusCircle,
   ShoppingBag,
   Star,
   Store,
   Ticket,
   Undo2,
+  Upload,
   User,
   Wallet,
   type LucideIcon,
@@ -64,7 +64,7 @@ const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
     label: "Product",
     items: [
       { to: "/products", label: "Products", icon: Boxes },
-      { to: "/products/new", label: "Add new product", icon: PlusCircle },
+      { to: "/products/import", label: "Import product (CSV)", icon: Upload },
     ],
   },
   {

@@ -51,12 +51,18 @@ function Button({
     <Comp
       data-slot="button"
       className={cn(buttonVariants({ variant, className }))}
-      disabled={disabled || loading}
+      disabled={asChild ? undefined : disabled || loading}
       {...props}
     >
-      {/* ponytail: asChild callers pass their own single child, so no spinner there */}
-      {loading && !asChild && <Spinner className="text-current" />}
-      {children}
+      {/* Slot needs exactly one child, so asChild gets no spinner slot */}
+      {asChild ? (
+        children
+      ) : (
+        <>
+          {loading && <Spinner className="text-current" />}
+          {children}
+        </>
+      )}
     </Comp>
   );
 }
