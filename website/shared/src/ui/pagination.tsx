@@ -1,8 +1,12 @@
 import * as React from "react";
-import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
+import {
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  MoreHorizontalIcon,
+} from "lucide-react";
 
-import { cn } from "./cn";
-import { buttonVariants } from "./button";
+import { cn } from "../utils/cn";
+import { Button } from "./button";
 
 function Pagination({ className, ...props }: React.ComponentProps<"nav">) {
   return (
@@ -10,17 +14,20 @@ function Pagination({ className, ...props }: React.ComponentProps<"nav">) {
       role='navigation'
       aria-label='pagination'
       data-slot='pagination'
-      className={cn("flex w-full justify-center", className)}
+      className={cn("mx-auto flex w-full justify-center", className)}
       {...props}
     />
   );
 }
 
-function PaginationContent({ className, ...props }: React.ComponentProps<"ul">) {
+function PaginationContent({
+  className,
+  ...props
+}: React.ComponentProps<"ul">) {
   return (
     <ul
       data-slot='pagination-content'
-      className={cn("flex flex-row items-center gap-1", className)}
+      className={cn("flex items-center gap-0.5", className)}
       {...props}
     />
   );
@@ -30,91 +37,67 @@ function PaginationItem({ ...props }: React.ComponentProps<"li">) {
   return <li data-slot='pagination-item' {...props} />;
 }
 
-// Explicit prop list rather than ComponentProps<"a" | "button">: the element
-// swaps at runtime, so a shared DOM-prop type would need casts at both branches.
 type PaginationLinkProps = {
-  children?: React.ReactNode;
-  className?: string;
-  href?: string;
   isActive?: boolean;
-  disabled?: boolean;
-  size?: "sm" | "default" | "icon" | "icon-sm";
-  onClick?: React.MouseEventHandler<HTMLElement>;
-  "aria-label"?: string;
-};
+} & Pick<React.ComponentProps<typeof Button>, "size"> &
+  React.ComponentProps<"a">;
 
-// ponytail: renders an <a> when it has an href (storefront listing pages) and a
-// <button> otherwise (admin tables paginate via onClick, and <a> can't be disabled).
 function PaginationLink({
   className,
   isActive,
-  disabled,
   size = "icon-sm",
-  href,
   ...props
 }: PaginationLinkProps) {
-  const classes = cn(
-    buttonVariants({
-      variant: isActive ? "outline" : "ghost",
-      size,
-    }),
-    "font-medium text-foreground/70 hover:text-foreground",
-    isActive && "border-primary bg-primary/10 text-primary hover:text-primary",
-    disabled && "pointer-events-none opacity-50",
-    className,
+  return (
+    <Button
+      variant={isActive ? "outline" : "ghost"}
+      size={size}
+      className={cn("min-w-9", className)}
+      nativeButton={false}
+      render={
+        <a
+          aria-current={isActive ? "page" : undefined}
+          data-slot='pagination-link'
+          data-active={isActive}
+          {...props}
+        />
+      }
+    />
   );
-
-  const shared = {
-    "aria-current": isActive ? ("page" as const) : undefined,
-    "data-slot": "pagination-link",
-    "data-active": isActive,
-    className: classes,
-  };
-
-  if (href) {
-    return (
-      <a
-        href={href}
-        aria-disabled={disabled || undefined}
-        {...shared}
-        {...props}
-      />
-    );
-  }
-
-  return <button type='button' disabled={disabled} {...shared} {...props} />;
 }
 
 function PaginationPrevious({
   className,
+  text = "Previous",
   ...props
-}: React.ComponentProps<typeof PaginationLink>) {
+}: React.ComponentProps<typeof PaginationLink> & { text?: string }) {
   return (
     <PaginationLink
       aria-label='Go to previous page'
       size='sm'
-      className={cn("gap-1 pl-2", className)}
+      className={className}
       {...props}
     >
-      <ChevronLeft strokeWidth={1.5} />
-      <span className='hidden sm:block'>Previous</span>
+      <ChevronLeftIcon />
+      <span className='hidden sm:block'>{text}</span>
     </PaginationLink>
   );
 }
 
 function PaginationNext({
   className,
+  text = "Next",
   ...props
-}: React.ComponentProps<typeof PaginationLink>) {
+}: React.ComponentProps<typeof PaginationLink> & { text?: string }) {
   return (
     <PaginationLink
       aria-label='Go to next page'
       size='sm'
-      className={cn("gap-1 pr-2", className)}
+      className={className}
       {...props}
     >
-      <span className='hidden sm:block'>Next</span>
-      <ChevronRight strokeWidth={1.5} />
+      <span className='hidden sm:block'>{text}</span>
+      <ChevronRightIcon />
     </PaginationLink>
   );
 }
@@ -128,12 +111,12 @@ function PaginationEllipsis({
       aria-hidden
       data-slot='pagination-ellipsis'
       className={cn(
-        "flex size-8 items-center justify-center text-muted-foreground",
+        "flex size-9 items-center justify-center text-muted-foreground [&_svg:not([class*='size-'])]:size-4",
         className,
       )}
       {...props}
     >
-      <MoreHorizontal className='size-4' />
+      <MoreHorizontalIcon />
       <span className='sr-only'>More pages</span>
     </span>
   );
@@ -142,9 +125,9 @@ function PaginationEllipsis({
 export {
   Pagination,
   PaginationContent,
-  PaginationLink,
-  PaginationItem,
-  PaginationPrevious,
-  PaginationNext,
   PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
 };

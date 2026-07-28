@@ -1,25 +1,21 @@
 "use client";
 
-import * as React from "react";
+import { Tabs as TabsPrimitive } from "@base-ui/react/tabs";
 import { cva, type VariantProps } from "class-variance-authority";
-import { Tabs as TabsPrimitive } from "radix-ui";
 
-import { cn } from "./cn";
+import { cn } from "../utils/cn";
 
-// shadcn/ui tabs (new-york-v4). `variant="segment"` is the filled segmented
-// control; `variant="underline"` is the mint underline tab.
 function Tabs({
   className,
   orientation = "horizontal",
   ...props
-}: React.ComponentProps<typeof TabsPrimitive.Root>) {
+}: TabsPrimitive.Root.Props) {
   return (
     <TabsPrimitive.Root
       data-slot='tabs'
       data-orientation={orientation}
-      orientation={orientation}
       className={cn(
-        "group/tabs flex gap-4 data-[orientation=horizontal]:flex-col",
+        "group/tabs flex gap-2 data-horizontal:flex-col",
         className,
       )}
       {...props}
@@ -28,27 +24,25 @@ function Tabs({
 }
 
 const tabsListVariants = cva(
-  "group/tabs-list inline-flex items-center text-muted-foreground group-data-[orientation=vertical]/tabs:h-fit group-data-[orientation=vertical]/tabs:flex-col",
+  "group/tabs-list inline-flex w-fit items-center justify-center rounded-lg p-1 text-muted-foreground group-data-horizontal/tabs:h-11 group-data-vertical/tabs:h-fit group-data-vertical/tabs:flex-col data-[variant=line]:rounded-none",
   {
     variants: {
       variant: {
-        segment: "w-fit justify-center gap-1 rounded-lg bg-muted p-1",
-        underline:
-          "w-full justify-start gap-5 border-b border-border group-data-[orientation=vertical]/tabs:w-fit group-data-[orientation=vertical]/tabs:border-b-0 group-data-[orientation=vertical]/tabs:border-l",
+        default: "bg-muted",
+        line: "gap-1 bg-transparent",
       },
     },
     defaultVariants: {
-      variant: "segment",
+      variant: "default",
     },
   },
 );
 
 function TabsList({
   className,
-  variant = "segment",
+  variant = "default",
   ...props
-}: React.ComponentProps<typeof TabsPrimitive.List> &
-  VariantProps<typeof tabsListVariants>) {
+}: TabsPrimitive.List.Props & VariantProps<typeof tabsListVariants>) {
   return (
     <TabsPrimitive.List
       data-slot='tabs-list'
@@ -59,20 +53,15 @@ function TabsList({
   );
 }
 
-function TabsTrigger({
-  className,
-  ...props
-}: React.ComponentProps<typeof TabsPrimitive.Trigger>) {
+function TabsTrigger({ className, ...props }: TabsPrimitive.Tab.Props) {
   return (
-    <TabsPrimitive.Trigger
+    <TabsPrimitive.Tab
       data-slot='tabs-trigger'
       className={cn(
-        "relative inline-flex items-center justify-center gap-2 whitespace-nowrap font-display text-sm font-semibold text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 data-[state=active]:text-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
-        // segment: filled card slides under the active tab
-        "group-data-[variant=segment]/tabs-list:rounded-md group-data-[variant=segment]/tabs-list:px-3.5 group-data-[variant=segment]/tabs-list:py-1.5 group-data-[variant=segment]/tabs-list:data-[state=active]:bg-card group-data-[variant=segment]/tabs-list:data-[state=active]:text-primary group-data-[variant=segment]/tabs-list:data-[state=active]:shadow-sm",
-        // underline: 2px mint rule sits on the list border
-        "group-data-[variant=underline]/tabs-list:px-0.5 group-data-[variant=underline]/tabs-list:pb-2.5 group-data-[variant=underline]/tabs-list:data-[state=active]:text-primary",
-        "group-data-[variant=underline]/tabs-list:after:absolute group-data-[variant=underline]/tabs-list:after:inset-x-0 group-data-[variant=underline]/tabs-list:after:-bottom-px group-data-[variant=underline]/tabs-list:after:h-0.5 group-data-[variant=underline]/tabs-list:after:rounded-full group-data-[variant=underline]/tabs-list:after:bg-primary group-data-[variant=underline]/tabs-list:after:opacity-0 group-data-[variant=underline]/tabs-list:after:transition-opacity group-data-[variant=underline]/tabs-list:data-[state=active]:after:opacity-100",
+        "relative inline-flex h-[calc(100%-1px)] flex-1 items-center justify-center gap-2 rounded-md border border-transparent px-3 py-1.5 font-display text-sm font-semibold whitespace-nowrap text-muted-foreground transition-colors group-data-vertical/tabs:w-full group-data-vertical/tabs:justify-start hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 group-data-[variant=default]/tabs-list:data-active:shadow-sm [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        "group-data-[variant=line]/tabs-list:bg-transparent group-data-[variant=line]/tabs-list:data-active:bg-transparent group-data-[variant=line]/tabs-list:data-active:shadow-none",
+        "data-active:bg-background data-active:text-foreground group-data-[variant=line]/tabs-list:data-active:text-primary",
+        "after:absolute after:bg-primary after:opacity-0 after:transition-opacity group-data-horizontal/tabs:after:inset-x-0 group-data-horizontal/tabs:after:bottom-[-5px] group-data-horizontal/tabs:after:h-0.5 group-data-vertical/tabs:after:inset-y-0 group-data-vertical/tabs:after:-right-1 group-data-vertical/tabs:after:w-0.5 group-data-[variant=line]/tabs-list:data-active:after:opacity-100",
         className,
       )}
       {...props}
@@ -80,14 +69,11 @@ function TabsTrigger({
   );
 }
 
-function TabsContent({
-  className,
-  ...props
-}: React.ComponentProps<typeof TabsPrimitive.Content>) {
+function TabsContent({ className, ...props }: TabsPrimitive.Panel.Props) {
   return (
-    <TabsPrimitive.Content
+    <TabsPrimitive.Panel
       data-slot='tabs-content'
-      className={cn("flex-1 outline-none", className)}
+      className={cn("flex-1 text-sm outline-none", className)}
       {...props}
     />
   );

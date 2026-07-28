@@ -59,7 +59,8 @@
   --font-pixel: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
   --font-mono-retro: "Inter", ui-sans-serif, system-ui, sans-serif;
 
-  /* Disclosure (Radix Accordion) height animation */
+  /* Disclosure (Base UI Accordion) height animation — the panel exposes its
+     measured height as --accordion-panel-height */
   --animate-accordion-down: accordion-down 200ms ease-out;
   --animate-accordion-up: accordion-up 200ms ease-out;
 
@@ -68,12 +69,12 @@
       height: 0;
     }
     to {
-      height: var(--radix-accordion-content-height);
+      height: var(--accordion-panel-height);
     }
   }
   @keyframes accordion-up {
     from {
-      height: var(--radix-accordion-content-height);
+      height: var(--accordion-panel-height);
     }
     to {
       height: 0;

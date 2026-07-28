@@ -1,18 +1,14 @@
-import * as React from "react";
 import { Loader2Icon } from "lucide-react";
 
-import { cn } from "./cn";
+import { cn } from "../utils/cn";
 
-export interface SpinnerProps extends React.SVGProps<SVGSVGElement> {
-  label?: string;
-}
-
-function Spinner({ className, label = "Loading", ...props }: SpinnerProps) {
+function Spinner({ className, ...props }: React.ComponentProps<"svg">) {
   return (
     <Loader2Icon
-      role="status"
-      aria-label={label}
-      className={cn("size-4 animate-spin text-primary", className)}
+      data-slot='spinner'
+      role='status'
+      aria-label='Loading'
+      className={cn("size-4 animate-spin", className)}
       {...props}
     />
   );

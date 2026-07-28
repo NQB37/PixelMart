@@ -1,25 +1,16 @@
 import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 
-import { cn } from "./cn";
+import { cn } from "../utils/cn";
 
-// Grid layout from shadcn/ui alert (new-york-v4): with a leading `<svg>` child the
-// first column becomes the icon gutter, without one it collapses to zero width.
-// `destructive` colours its text (login/form errors rely on it); the other tones
-// keep `text-foreground` so the copy stays at full contrast on the tint, and let
-// the tinted icon carry the meaning.
 const alertVariants = cva(
-  "relative grid w-full grid-cols-[0_1fr] items-start gap-y-0.5 rounded-md border px-4 py-3 text-sm has-[>svg]:grid-cols-[1rem_1fr] has-[>svg]:gap-x-3 [&>svg]:size-4 [&>svg]:translate-y-0.5",
+  "group/alert relative grid w-full gap-0.5 rounded-md border px-4 py-3 text-left text-sm has-data-[slot=alert-action]:relative has-data-[slot=alert-action]:pr-18 has-[>svg]:grid-cols-[auto_1fr] has-[>svg]:gap-x-3 *:[svg]:row-span-2 *:[svg]:translate-y-0.5 *:[svg]:text-current *:[svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
         default: "border-border bg-muted text-foreground",
-        destructive: "border-destructive/50 bg-destructive/10 text-destructive",
-        success:
-          "border-success/40 bg-success/10 text-foreground [&>svg]:text-success",
-        warning:
-          "border-warning/60 bg-warning/20 text-foreground [&>svg]:text-warning",
-        info: "border-info/40 bg-info/10 text-foreground [&>svg]:text-info",
+        destructive:
+          "border-destructive/50 bg-destructive/10 text-destructive *:data-[slot=alert-description]:text-destructive/90",
       },
     },
     defaultVariants: {
@@ -28,44 +19,58 @@ const alertVariants = cva(
   },
 );
 
-const Alert = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement> & VariantProps<typeof alertVariants>
->(({ className, variant, ...props }, ref) => (
-  <div
-    ref={ref}
-    role="alert"
-    className={cn(alertVariants({ variant }), className)}
-    {...props}
-  />
-));
-Alert.displayName = "Alert";
+function Alert({
+  className,
+  variant,
+  ...props
+}: React.ComponentProps<"div"> & VariantProps<typeof alertVariants>) {
+  return (
+    <div
+      data-slot='alert'
+      role='alert'
+      className={cn(alertVariants({ variant }), className)}
+      {...props}
+    />
+  );
+}
 
-const AlertTitle = React.forwardRef<
-  HTMLParagraphElement,
-  React.HTMLAttributes<HTMLParagraphElement>
->(({ className, ...props }, ref) => (
-  <p
-    ref={ref}
-    className={cn(
-      "col-start-2 font-display font-semibold tracking-tight",
-      className,
-    )}
-    {...props}
-  />
-));
-AlertTitle.displayName = "AlertTitle";
+function AlertTitle({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot='alert-title'
+      className={cn(
+        "font-display font-semibold tracking-tight group-has-[>svg]/alert:col-start-2 [&_a]:underline [&_a]:underline-offset-3 [&_a]:hover:text-foreground",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
 
-const AlertDescription = React.forwardRef<
-  HTMLParagraphElement,
-  React.HTMLAttributes<HTMLParagraphElement>
->(({ className, ...props }, ref) => (
-  <p
-    ref={ref}
-    className={cn("col-start-2 leading-relaxed", className)}
-    {...props}
-  />
-));
-AlertDescription.displayName = "AlertDescription";
+function AlertDescription({
+  className,
+  ...props
+}: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot='alert-description'
+      className={cn(
+        "text-sm leading-relaxed text-balance text-muted-foreground group-has-[>svg]/alert:col-start-2 md:text-pretty [&_a]:underline [&_a]:underline-offset-3 [&_a]:hover:text-foreground [&_p:not(:last-child)]:mb-4",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
 
-export { Alert, AlertTitle, AlertDescription };
+function AlertAction({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot='alert-action'
+      className={cn("absolute top-2 right-2", className)}
+      {...props}
+    />
+  );
+}
+
+export { Alert, AlertTitle, AlertDescription, AlertAction };

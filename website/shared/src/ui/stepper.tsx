@@ -1,6 +1,6 @@
 import { Check } from "lucide-react";
 
-import { cn } from "./cn";
+import { cn } from "../utils/cn";
 
 export interface StepperStep {
   label: string;
@@ -25,7 +25,7 @@ export function Stepper({
   if (orientation === "horizontal") {
     return (
       <div className={cn("w-full", className)}>
-        <div className="flex items-center gap-1.5">
+        <div className='flex items-center gap-1.5'>
           {steps.map((step, i) => (
             <span
               key={step.label}
@@ -36,8 +36,9 @@ export function Stepper({
             />
           ))}
         </div>
-        <p className="mt-2 text-sm font-medium">
-          Step {currentIndex + 1} of {steps.length} · {steps[currentIndex]?.label}
+        <p className='mt-2 text-sm font-medium'>
+          Step {currentIndex + 1} of {steps.length} ·{" "}
+          {steps[currentIndex]?.label}
         </p>
       </div>
     );
@@ -46,11 +47,16 @@ export function Stepper({
   return (
     <ol className={cn("flex flex-col", className)}>
       {steps.map((step, i) => {
-        const status = i < currentIndex ? "done" : i === currentIndex ? "current" : "upcoming";
+        const status =
+          i < currentIndex
+            ? "done"
+            : i === currentIndex
+              ? "current"
+              : "upcoming";
         const isLast = i === steps.length - 1;
         return (
-          <li key={step.label} className="flex gap-3">
-            <div className="flex flex-col items-center">
+          <li key={step.label} className='flex gap-3'>
+            <div className='flex flex-col items-center'>
               <span
                 aria-hidden
                 className={cn(
@@ -61,9 +67,9 @@ export function Stepper({
                 )}
               >
                 {status === "done" ? (
-                  <Check className="h-4 w-4" />
+                  <Check className='h-4 w-4' />
                 ) : status === "current" ? (
-                  <span className="text-primary">{i + 1}</span>
+                  <span className='text-primary'>{i + 1}</span>
                 ) : (
                   i + 1
                 )}
@@ -81,12 +87,12 @@ export function Stepper({
             <div className={cn("pb-6", status === "upcoming" && "opacity-50")}>
               <p
                 aria-current={status === "current" ? "step" : undefined}
-                className="font-display text-sm font-semibold"
+                className='font-display text-sm font-semibold'
               >
                 {step.label}
               </p>
               {step.description && (
-                <p className="text-sm opacity-80">{step.description}</p>
+                <p className='text-sm opacity-80'>{step.description}</p>
               )}
             </div>
           </li>
