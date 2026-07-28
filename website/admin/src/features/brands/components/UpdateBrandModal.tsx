@@ -12,6 +12,7 @@ import {
   FieldError,
   Input,
   Label,
+  Spinner,
 } from "@website/shared/ui";
 import { slugify } from "@website/shared/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -134,6 +135,7 @@ export function UpdateBrandModal({ brand }: UpdateBrandModalProps) {
               Cancel
             </Button>
             <Button type='submit' disabled={isSubmitting}>
+              {isSubmitting && <Spinner />}
               {isSubmitting ? "Saving…" : "Save changes"}
             </Button>
           </DialogFooter>

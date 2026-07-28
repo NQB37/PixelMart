@@ -13,6 +13,7 @@ import {
   ImageDropzone,
   Input,
   Label,
+  Spinner,
 } from "@website/shared/ui";
 import { flattenForParentSelect } from "../utils/categoryTree";
 import { slugify } from "@website/shared/utils";
@@ -199,6 +200,7 @@ export function CreateCategoryModal({
               Cancel
             </Button>
             <Button type='submit' disabled={isSubmitting}>
+              {isSubmitting && <Spinner />}
               {isSubmitting ? "Creating…" : "Create category"}
             </Button>
           </DialogFooter>

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
-import { Badge, Input, Button } from "@website/shared/ui";
+import { Badge, Input, Button, Spinner } from "@website/shared/ui";
 import { useVendorDetail } from "@/features/vendors/hooks/useVendorDetail";
 import { useReviewVendor } from "@/features/vendors/hooks/useReviewVendor";
 import type { ApprovalStatus } from "@/features/vendors/types/vendor";
@@ -41,7 +41,7 @@ export default function VendorDetail() {
   const { vendorId } = useParams({ from: "/admin-layout/users/vendors/$vendorId" });
   const navigate = useNavigate();
   const { data: vendor, isLoading } = useVendorDetail(vendorId);
-  const { mutate: review, isPending } = useReviewVendor(vendorId);
+  const { mutate: review, isPending, variables } = useReviewVendor(vendorId);
   const [showRejectForm, setShowRejectForm] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
 
@@ -79,6 +79,7 @@ export default function VendorDetail() {
             disabled={isPending}
             onClick={() => review({ action: "approve" })}
           >
+            {isPending && variables?.action === "approve" && <Spinner />}
             Approve
           </Button>
           {!showRejectForm ? (
@@ -102,6 +103,7 @@ export default function VendorDetail() {
                 disabled={isPending || !rejectReason.trim()}
                 onClick={() => review({ action: "reject", rejectedReason: rejectReason.trim() })}
               >
+                {isPending && variables?.action === "reject" && <Spinner />}
                 Confirm reject
               </Button>
             </div>

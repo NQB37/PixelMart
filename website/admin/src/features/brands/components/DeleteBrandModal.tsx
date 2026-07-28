@@ -9,6 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  Spinner,
 } from "@website/shared/ui";
 import { toast } from "react-toastify";
 import { useDeleteBrand } from "../hooks/useBrands";
@@ -89,6 +90,7 @@ export function DeleteBrandModal({ brand }: DeleteBrandModalProps) {
             disabled={isPending}
             onClick={handleDelete}
           >
+            {isPending && <Spinner />}
             {isPending ? "Deleting…" : "Delete brand"}
           </Button>
         </DialogFooter>

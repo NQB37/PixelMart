@@ -12,6 +12,7 @@ import {
   DialogTrigger,
   Input,
   Label,
+  Spinner,
 } from "@website/shared/ui";
 import { toast } from "react-toastify";
 import { collectIds } from "../utils/categoryTree";
@@ -142,6 +143,7 @@ export function DeleteCategoryModal({ node }: DeleteCategoryModalProps) {
               variant='destructive'
               disabled={!canDelete || isPending}
             >
+              {isPending && <Spinner />}
               {isPending ? "Deleting…" : "Delete category"}
             </Button>
           </DialogFooter>

@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { Button } from "@website/shared/ui";
+import { Button, Spinner } from "@website/shared/ui";
 
 interface ConfirmModalProps {
   open: boolean;
@@ -53,6 +53,7 @@ export function ConfirmModal({
               disabled={isPending}
               onClick={onConfirm}
             >
+              {isPending && <Spinner />}
               {isPending ? pendingLabel : confirmLabel}
             </Button>
           </div>

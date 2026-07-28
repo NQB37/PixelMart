@@ -12,6 +12,7 @@ import {
   FieldError,
   Input,
   Label,
+  Spinner,
 } from "@website/shared/ui";
 import { slugify } from "@website/shared/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -115,6 +116,7 @@ export function CreateBrandModal() {
               Cancel
             </Button>
             <Button type='submit' disabled={isSubmitting}>
+              {isSubmitting && <Spinner />}
               {isSubmitting ? "Creating…" : "Create brand"}
             </Button>
           </DialogFooter>
