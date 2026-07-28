@@ -46,16 +46,18 @@ export function DeleteCategoryModal({ node }: DeleteCategoryModalProps) {
 
   return (
     <Dialog open={isOpened} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>
-        <Button
-          variant='ghost'
-          className='p-2 text-destructive hover:bg-destructive/10'
-          title='Delete category'
-          aria-label='Delete category'
-        >
-          <Trash2 className='h-4 w-4' />
-        </Button>
-      </DialogTrigger>
+      <DialogTrigger
+        render={
+          <Button
+            variant='ghost'
+            className='p-2 text-destructive hover:bg-destructive/10'
+            title='Delete category'
+            aria-label='Delete category'
+          >
+            <Trash2 className='h-4 w-4' />
+          </Button>
+        }
+      />
 
       <DialogContent className='max-w-md'>
         <DialogHeader className='flex-row items-start gap-3 space-y-0 pr-8'>
@@ -95,7 +97,7 @@ export function DeleteCategoryModal({ node }: DeleteCategoryModalProps) {
             </p>
           </div>
           {childCount > 0 && (
-            <Badge variant='warning' className='shrink-0'>
+            <Badge className='shrink-0 bg-warning text-foreground'>
               {childCount} sub
             </Badge>
           )}
@@ -109,7 +111,8 @@ export function DeleteCategoryModal({ node }: DeleteCategoryModalProps) {
           }}
         >
           <div>
-            <Label htmlFor='delete-category-confirm'>
+            {/* inline: the label is a sentence, not the registry's icon+text flex row */}
+            <Label htmlFor='delete-category-confirm' className='inline'>
               Type{" "}
               <span className='rounded bg-muted px-1.5 py-0.5 font-mono text-xs text-foreground'>
                 {node.name}
@@ -137,8 +140,7 @@ export function DeleteCategoryModal({ node }: DeleteCategoryModalProps) {
             <Button
               type='submit'
               variant='destructive'
-              disabled={!canDelete}
-              loading={isPending}
+              disabled={!canDelete || isPending}
             >
               {isPending ? "Deleting…" : "Delete category"}
             </Button>

@@ -1,5 +1,5 @@
 import { ShoppingCart } from "lucide-react";
-import { Badge, Button, Input, cn } from "@website/shared/ui";
+import { Badge, Button, Input, Spinner, cn } from "@website/shared/ui";
 import { Caption, Grid, Row, Section, Spec, Swatch } from "./kit";
 
 type Theme = "light" | "dark";
@@ -591,7 +591,9 @@ export function FoundationSections({ theme }: { theme: Theme }) {
                 <Caption>Focus</Caption>
               </div>
               <div className="space-y-1.5">
-                <Button loading>Saving</Button>
+                <Button disabled>
+                  <Spinner /> Saving
+                </Button>
                 <Caption>Loading</Caption>
               </div>
               <div className="space-y-1.5">
@@ -608,11 +610,11 @@ export function FoundationSections({ theme }: { theme: Theme }) {
           <div>
             <Caption>Status vocabulary — same word, same color, everywhere</Caption>
             <div className="mt-3 flex flex-wrap gap-2">
-              <Badge variant="success">Active</Badge>
-              <Badge variant="warning">Pending</Badge>
+              <Badge className="bg-success text-white">Active</Badge>
+              <Badge className="bg-warning text-foreground">Pending</Badge>
               <Badge variant="destructive">Banned</Badge>
               <Badge variant="secondary">Draft</Badge>
-              <Badge variant="highlight">Sale</Badge>
+              <Badge className="bg-highlight text-highlight-foreground">Sale</Badge>
             </div>
           </div>
         </div>

@@ -68,6 +68,7 @@ import {
   SelectValue,
   Skeleton,
   Slider,
+  Spinner,
   Switch,
   Tabs,
   TabsContent,
@@ -83,11 +84,16 @@ const BUTTON_VARIANTS = [
   "secondary",
   "outline",
   "ghost",
-  "link",
-  "highlight",
-  "success",
-  "warning",
   "destructive",
+  "link",
+] as const;
+
+// Commerce tones are not variants: they are token classNames layered on a variant,
+// so the shared Button stays exactly the shadcn set.
+const BUTTON_TONES = [
+  ["highlight", "bg-highlight text-highlight-foreground hover:bg-highlight/90"],
+  ["success", "bg-success text-white hover:bg-success/90"],
+  ["warning", "bg-warning text-foreground hover:bg-warning/90"],
 ] as const;
 
 const NATIVE_SELECT_CLASS =
@@ -102,11 +108,21 @@ function ButtonSection() {
       rule="One primary action per view. The label says what happens — “Save changes”, not “Submit” — and keeps that wording through the toast that follows."
     >
       <div className="space-y-1">
-        <Row label="Variants" hint="9 tones, one job each">
+        <Row label="Variants" hint="6 tones, one job each">
           <div className="flex flex-wrap items-center gap-2">
             {BUTTON_VARIANTS.map((variant) => (
               <Button key={variant} variant={variant}>
                 {variant}
+              </Button>
+            ))}
+          </div>
+        </Row>
+
+        <Row label="Commerce tones" hint="className on top of a variant">
+          <div className="flex flex-wrap items-center gap-2">
+            {BUTTON_TONES.map(([tone, className]) => (
+              <Button key={tone} className={className}>
+                {tone}
               </Button>
             ))}
           </div>
@@ -165,7 +181,9 @@ function ButtonSection() {
               <Caption>Focus</Caption>
             </div>
             <div className="space-y-1.5">
-              <Button loading>Saving</Button>
+              <Button disabled>
+                <Spinner /> Saving
+              </Button>
               <Caption>Loading</Caption>
             </div>
             <div className="space-y-1.5">
@@ -435,7 +453,8 @@ function ChoiceSection() {
             <div className="flex items-center gap-2">
               <Checkbox
                 id="cb-parent"
-                checked={checked}
+                checked={checked === true}
+                indeterminate={checked === "indeterminate"}
                 onCheckedChange={(next) => setChecked(next)}
               />
               <Label htmlFor="cb-parent">
@@ -535,10 +554,12 @@ function BadgeSection() {
             <Badge>Default</Badge>
             <Badge variant="secondary">Secondary</Badge>
             <Badge variant="outline">Outline</Badge>
-            <Badge variant="success">Active</Badge>
-            <Badge variant="warning">Pending</Badge>
+            <Badge className="bg-success text-white">Active</Badge>
+            <Badge className="bg-warning text-foreground">Pending</Badge>
             <Badge variant="destructive">Banned</Badge>
-            <Badge variant="highlight">-30%</Badge>
+            <Badge className="bg-highlight text-highlight-foreground">
+              -30%
+            </Badge>
           </div>
         </Row>
 
@@ -546,13 +567,13 @@ function BadgeSection() {
           <div className="flex flex-wrap gap-2">
             {(
               [
-                ["success", "In stock"],
-                ["warning", "Low stock"],
-                ["destructive", "Out of stock"],
-                ["secondary", "Draft"],
+                ["bg-success text-white", "In stock"],
+                ["bg-warning text-foreground", "Low stock"],
+                ["bg-destructive text-destructive-foreground", "Out of stock"],
+                ["bg-secondary text-secondary-foreground", "Draft"],
               ] as const
-            ).map(([variant, label]) => (
-              <Badge key={label} variant={variant} className="gap-1.5 rounded-full">
+            ).map(([tone, label]) => (
+              <Badge key={label} className={cn("gap-1.5 rounded-full", tone)}>
                 <span className="size-1.5 rounded-full bg-current" />
                 {label}
               </Badge>
@@ -590,8 +611,8 @@ function BadgeSection() {
               </p>
               <p className="text-xs text-muted-foreground">SKU-4821-A</p>
             </div>
-            <Badge variant="highlight">Sale</Badge>
-            <Badge variant="success" className="gap-1.5 rounded-full">
+            <Badge className="bg-highlight text-highlight-foreground">Sale</Badge>
+            <Badge className="gap-1.5 rounded-full bg-success text-white">
               <span className="size-1.5 rounded-full bg-current" />
               In stock
             </Badge>
@@ -611,9 +632,9 @@ function AvatarSection() {
       rule="Initials are the fallback, not a placeholder image. Presence dots only appear where presence is real data — never decoration."
     >
       <div className="space-y-1">
-        <Row label="Sizes" hint="28 / 36 / 44 / 56px">
+        <Row label="Sizes" hint="28 / 36 / 44px">
           <div className="flex items-end gap-4">
-            {(["sm", "default", "lg", "xl"] as const).map((size) => (
+            {(["sm", "default", "lg"] as const).map((size) => (
               <div key={size} className="flex flex-col items-center gap-1.5">
                 <Avatar size={size}>
                   <AvatarFallback>BN</AvatarFallback>
@@ -649,19 +670,24 @@ function AvatarSection() {
 
         <Row label="Presence" hint="online · away · busy · offline">
           <div className="flex items-center gap-5">
-            {(["online", "away", "busy", "offline"] as const).map(
-              (presence) => (
-                <div key={presence} className="flex flex-col items-center gap-1.5">
-                  <Avatar size="lg">
-                    <AvatarFallback>BN</AvatarFallback>
-                    <AvatarBadge presence={presence} />
-                  </Avatar>
-                  <span className="font-mono text-[10px] text-muted-foreground">
-                    {presence}
-                  </span>
-                </div>
-              ),
-            )}
+            {(
+              [
+                ["online", "bg-success"],
+                ["away", "bg-warning"],
+                ["busy", "bg-destructive"],
+                ["offline", "bg-muted-foreground"],
+              ] as const
+            ).map(([presence, tone]) => (
+              <div key={presence} className="flex flex-col items-center gap-1.5">
+                <Avatar size="lg">
+                  <AvatarFallback>BN</AvatarFallback>
+                  <AvatarBadge className={tone} />
+                </Avatar>
+                <span className="font-mono text-[10px] text-muted-foreground">
+                  {presence}
+                </span>
+              </div>
+            ))}
           </div>
         </Row>
 
@@ -699,7 +725,7 @@ function AlertSection() {
       rule="Use a banner for something the reader must act on or understand before continuing. Say what happened and what to do next — never apologise, never stay vague."
     >
       <div className="space-y-3">
-        <Alert variant="info">
+        <Alert className="border-info/40 bg-info/10 text-foreground [&>svg]:text-info">
           <Info />
           <AlertTitle>Payouts move to weekly on 1 August</AlertTitle>
           <AlertDescription>
@@ -708,7 +734,7 @@ function AlertSection() {
           </AlertDescription>
         </Alert>
 
-        <Alert variant="success">
+        <Alert className="border-success/40 bg-success/10 text-foreground [&>svg]:text-success">
           <CircleCheck />
           <AlertTitle>Vendor approved</AlertTitle>
           <AlertDescription>
@@ -716,7 +742,7 @@ function AlertSection() {
           </AlertDescription>
         </Alert>
 
-        <Alert variant="warning">
+        <Alert className="border-warning/60 bg-warning/20 text-foreground [&>svg]:text-warning">
           <TriangleAlert />
           <AlertTitle>12 listings are waiting for review</AlertTitle>
           <AlertDescription>
@@ -740,7 +766,7 @@ function AlertSection() {
         </Alert>
 
         <div className="grid gap-2 sm:grid-cols-2">
-          <Spec label='variant="info" | "success" | "warning" | "destructive"' />
+          <Spec label='variant="default" | "destructive" (+ tone className)' />
           <Spec label='<Alert><Icon /><AlertTitle /><AlertDescription />' />
         </div>
         <p className="text-xs text-muted-foreground">
@@ -765,7 +791,7 @@ function TabsSection() {
       <div className="space-y-1">
         <Row label="Underline" hint="Page-level sections">
           <Tabs defaultValue="overview">
-            <TabsList variant="underline">
+            <TabsList variant="line">
               <TabsTrigger value="overview">Overview</TabsTrigger>
               <TabsTrigger value="products">
                 Products
@@ -808,7 +834,7 @@ function TabsSection() {
             </TabsContent>
           </Tabs>
           <div className="mt-3 max-w-md">
-            <Spec label='<TabsList variant="underline" | "segment">' />
+            <Spec label='<TabsList variant="line" | "default">' />
           </div>
         </Row>
 
@@ -879,7 +905,8 @@ function NavigationSection() {
                 <PaginationItem>
                   <PaginationPrevious
                     onClick={() => setPage((p) => Math.max(1, p - 1))}
-                    disabled={page === 1}
+                    aria-disabled={page === 1}
+                    className={cn(page === 1 && "pointer-events-none opacity-50")}
                   />
                 </PaginationItem>
                 {[1, 2, 3].map((n) => (
@@ -906,7 +933,10 @@ function NavigationSection() {
                 <PaginationItem>
                   <PaginationNext
                     onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                    disabled={page === totalPages}
+                    aria-disabled={page === totalPages}
+                    className={cn(
+                      page === totalPages && "pointer-events-none opacity-50",
+                    )}
                   />
                 </PaginationItem>
               </PaginationContent>
@@ -943,7 +973,12 @@ function SliderSection() {
                 {stock[0]} units
               </span>
             </div>
-            <Slider value={stock} onValueChange={setStock} max={200} step={5} />
+            <Slider
+              value={stock}
+              onValueChange={(v) => setStock(v as number[])}
+              max={200}
+              step={5}
+            />
           </div>
         </Row>
 
@@ -957,7 +992,7 @@ function SliderSection() {
             </div>
             <Slider
               value={price}
-              onValueChange={setPrice}
+              onValueChange={(v) => setPrice(v as number[])}
               min={0}
               max={1000000}
               step={10000}
@@ -985,7 +1020,7 @@ function DisclosureSection() {
     >
       <div className="space-y-1">
         <Row label="Single" hint="One panel open at a time">
-          <Accordion type="single" collapsible defaultValue="shipping">
+          <Accordion multiple={false} defaultValue={["shipping"]}>
             <AccordionItem value="shipping">
               <AccordionTrigger>How long does delivery take?</AccordionTrigger>
               <AccordionContent>
@@ -1010,7 +1045,7 @@ function DisclosureSection() {
         </Row>
 
         <Row label="Multiple" hint="Filter groups in a sidebar">
-          <Accordion type="multiple" defaultValue={["brand"]}>
+          <Accordion defaultValue={["brand"]}>
             <AccordionItem value="brand">
               <AccordionTrigger>Brand</AccordionTrigger>
               <AccordionContent>
@@ -1046,7 +1081,7 @@ function ToastSection() {
       <div className="space-y-4">
         <div className="flex flex-wrap gap-2">
           <Button
-            variant="success"
+            className="bg-success text-white hover:bg-success/90"
             onClick={() => toast.success("Brand Aurora Audio created")}
           >
             <CircleCheck />
@@ -1060,7 +1095,7 @@ function ToastSection() {
             Info
           </Button>
           <Button
-            variant="warning"
+            className="bg-warning text-foreground hover:bg-warning/90"
             onClick={() => toast.warning("2 listings skipped: no price")}
           >
             <TriangleAlert />
@@ -1093,12 +1128,14 @@ function DemoDialog() {
 
   return (
     <Dialog open={isOpened} onOpenChange={setIsOpened}>
-      <DialogTrigger asChild>
-        <Button>
-          <Plus />
-          Add brand
-        </Button>
-      </DialogTrigger>
+      <DialogTrigger
+        render={
+          <Button>
+            <Plus />
+            Add brand
+          </Button>
+        }
+      />
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Add brand</DialogTitle>
@@ -1111,9 +1148,7 @@ function DemoDialog() {
           <Input id="brand-name" placeholder="Aurora Audio" />
         </div>
         <DialogFooter>
-          <DialogClose asChild>
-            <Button variant="ghost">Cancel</Button>
-          </DialogClose>
+          <DialogClose render={<Button variant="ghost">Cancel</Button>} />
           <Button
             onClick={() => {
               setIsOpened(false);
@@ -1133,12 +1168,14 @@ function DestructiveDialog() {
 
   return (
     <Dialog open={isOpened} onOpenChange={setIsOpened}>
-      <DialogTrigger asChild>
-        <Button variant="destructive">
-          <Trash2 />
-          Delete category
-        </Button>
-      </DialogTrigger>
+      <DialogTrigger
+        render={
+          <Button variant="destructive">
+            <Trash2 />
+            Delete category
+          </Button>
+        }
+      />
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>Delete “Headphones”?</DialogTitle>
@@ -1147,9 +1184,7 @@ function DestructiveDialog() {
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <DialogClose asChild>
-            <Button variant="ghost">Keep category</Button>
-          </DialogClose>
+          <DialogClose render={<Button variant="ghost">Keep category</Button>} />
           <Button
             variant="destructive"
             onClick={() => {
@@ -1259,7 +1294,7 @@ function SkeletonSection() {
                       bao.nguyen@pixelmart.vn
                     </p>
                   </div>
-                  <Badge variant="success">Active</Badge>
+                  <Badge className="bg-success text-white">Active</Badge>
                   <Button variant="ghost" size="icon-sm" aria-label="Open">
                     <ChevronRight />
                   </Button>

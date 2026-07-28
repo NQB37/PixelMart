@@ -48,7 +48,11 @@ export function ConfirmModal({
             <Button variant="ghost" disabled={isPending} onClick={onClose}>
               Cancel
             </Button>
-            <Button variant="highlight" loading={isPending} onClick={onConfirm}>
+            <Button
+              className="bg-highlight text-highlight-foreground hover:bg-highlight/90"
+              disabled={isPending}
+              onClick={onConfirm}
+            >
               {isPending ? pendingLabel : confirmLabel}
             </Button>
           </div>

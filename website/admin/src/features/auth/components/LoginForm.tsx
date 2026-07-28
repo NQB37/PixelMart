@@ -60,7 +60,7 @@ export default function LoginForm() {
           error={errors.password?.message}
           {...register("password")}
         />
-        <Button variant='default' className='w-full' loading={isPending}>
+        <Button variant='default' className='w-full' disabled={isPending}>
           {isPending ? "Signing in…" : "Sign in"}
         </Button>
       </form>

@@ -8,13 +8,10 @@ import { useNavigate } from "@tanstack/react-router";
 import { Badge, Button } from "@website/shared/ui";
 import type { AdminVendor } from "../types/vendor";
 
-const STATUS_BADGE_VARIANT: Record<
-  AdminVendor["status"],
-  "success" | "warning" | "secondary"
-> = {
-  ACTIVE: "success",
-  SUSPENDED: "warning",
-  INACTIVE: "secondary",
+const STATUS_BADGE_CLASS: Record<AdminVendor["status"], string> = {
+  ACTIVE: "bg-success text-white",
+  SUSPENDED: "bg-warning text-foreground",
+  INACTIVE: "bg-secondary text-secondary-foreground",
 };
 
 const columnHelper = createColumnHelper<AdminVendor>();
@@ -78,7 +75,7 @@ export function VendorsTable({ vendors, isLoading }: VendorsTableProps) {
     columnHelper.accessor("status", {
       header: "Status",
       cell: ({ getValue }) => (
-        <Badge variant={STATUS_BADGE_VARIANT[getValue()]}>{getValue()}</Badge>
+        <Badge className={STATUS_BADGE_CLASS[getValue()]}>{getValue()}</Badge>
       ),
     }),
     columnHelper.accessor("createdAt", {

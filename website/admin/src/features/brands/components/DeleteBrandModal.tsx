@@ -34,16 +34,18 @@ export function DeleteBrandModal({ brand }: DeleteBrandModalProps) {
 
   return (
     <Dialog open={isOpened} onOpenChange={setIsOpened}>
-      <DialogTrigger asChild>
-        <Button
-          variant='ghost'
-          className='p-2 text-destructive hover:bg-destructive/10'
-          title='Delete brand'
-          aria-label='Delete brand'
-        >
-          <Trash2 className='h-4 w-4' />
-        </Button>
-      </DialogTrigger>
+      <DialogTrigger
+        render={
+          <Button
+            variant='ghost'
+            className='p-2 text-destructive hover:bg-destructive/10'
+            title='Delete brand'
+            aria-label='Delete brand'
+          >
+            <Trash2 className='h-4 w-4' />
+          </Button>
+        }
+      />
 
       <DialogContent className='max-w-md'>
         <DialogHeader className='flex-row items-start gap-3 space-y-0 pr-8'>
@@ -84,7 +86,7 @@ export function DeleteBrandModal({ brand }: DeleteBrandModalProps) {
           <Button
             type='button'
             variant='destructive'
-            loading={isPending}
+            disabled={isPending}
             onClick={handleDelete}
           >
             {isPending ? "Deleting…" : "Delete brand"}

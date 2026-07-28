@@ -92,16 +92,18 @@ export function UpdateCategoryModal({
 
   return (
     <Dialog open={isOpened} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>
-        <Button
-          variant='ghost'
-          className='p-2'
-          title='Edit category'
-          aria-label='Edit category'
-        >
-          <Pencil className='h-4 w-4' />
-        </Button>
-      </DialogTrigger>
+      <DialogTrigger
+        render={
+          <Button
+            variant='ghost'
+            className='p-2'
+            title='Edit category'
+            aria-label='Edit category'
+          >
+            <Pencil className='h-4 w-4' />
+          </Button>
+        }
+      />
 
       <DialogContent>
         <DialogHeader className='flex-row items-start gap-3 space-y-0 pr-8'>
@@ -193,7 +195,7 @@ export function UpdateCategoryModal({
             >
               Cancel
             </Button>
-            <Button type='submit' loading={isSubmitting}>
+            <Button type='submit' disabled={isSubmitting}>
               {isSubmitting ? "Saving…" : "Save changes"}
             </Button>
           </DialogFooter>
