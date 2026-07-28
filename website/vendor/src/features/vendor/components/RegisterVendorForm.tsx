@@ -174,7 +174,7 @@ export default function RegisterVendorForm() {
               <Button
                 variant='default'
                 className='w-full'
-                loading={isPending || isUploading}
+                disabled={isPending || isUploading}
                 onClick={() => setStep2Attempted(true)}
               >
                 {isUploading

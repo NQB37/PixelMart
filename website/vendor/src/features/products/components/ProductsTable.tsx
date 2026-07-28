@@ -8,14 +8,11 @@ import { ImageIcon, Pencil, Power, Trash2 } from "lucide-react";
 import { Badge, Button, cn } from "@website/shared/ui";
 import type { ProductStatus, VendorProduct } from "../types/product";
 
-const STATUS_BADGE: Record<
-  ProductStatus,
-  { label: string; variant: "default" | "secondary" | "warning" | "destructive" | "success" }
-> = {
-  ACTIVE: { label: "Active", variant: "success" },
-  DRAFT: { label: "Draft", variant: "secondary" },
-  OUT_OF_STOCK: { label: "Out of stock", variant: "warning" },
-  BANNED: { label: "Banned", variant: "destructive" },
+const STATUS_BADGE: Record<ProductStatus, { label: string; className: string }> = {
+  ACTIVE: { label: "Active", className: "bg-success text-white" },
+  DRAFT: { label: "Draft", className: "bg-secondary text-secondary-foreground" },
+  OUT_OF_STOCK: { label: "Out of stock", className: "bg-warning text-foreground" },
+  BANNED: { label: "Banned", className: "bg-destructive text-destructive-foreground" },
 };
 
 const columnHelper = createColumnHelper<VendorProduct>();
@@ -81,8 +78,8 @@ export function ProductsTable({
     columnHelper.accessor("status", {
       header: "Status",
       cell: ({ getValue }) => {
-        const { label, variant } = STATUS_BADGE[getValue()];
-        return <Badge variant={variant}>{label}</Badge>;
+        const { label, className } = STATUS_BADGE[getValue()];
+        return <Badge className={className}>{label}</Badge>;
       },
     }),
     columnHelper.display({
@@ -103,8 +100,13 @@ export function ProductsTable({
               <Pencil className='h-4 w-4' />
             </Button>
             <Button
-              variant={isActive ? "ghost" : "success"}
-              className={cn("p-2", isActive && "text-warning hover:bg-warning/10")}
+              variant='ghost'
+              className={cn(
+                "p-2",
+                isActive
+                  ? "text-warning hover:bg-warning/10"
+                  : "text-success hover:bg-success/10",
+              )}
               onClick={() => onToggleStatus(product)}
               title={isActive ? "Deactivate product" : "Activate product"}
               aria-label={isActive ? "Deactivate product" : "Activate product"}

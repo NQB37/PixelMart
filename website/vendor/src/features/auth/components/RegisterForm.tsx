@@ -69,7 +69,7 @@ export default function RegisterForm() {
           error={errors.confirmPassword?.message}
           {...register("confirmPassword")}
         />
-        <Button variant="default" className="w-full" loading={isPending}>
+        <Button variant="default" className="w-full" disabled={isPending}>
           {isPending ? "Creating account…" : "Create account"}
         </Button>
       </form>
