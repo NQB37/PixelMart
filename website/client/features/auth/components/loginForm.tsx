@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { ShoppingBag } from "lucide-react";
-import { Card, Button, Form, FormField, FormItem, FormLabel, FormControl, FormMessage, Input } from "@website/shared/ui";
+import { Card, Button, Form, FormField, FormItem, FormLabel, FormControl, FormMessage, Input, Spinner } from "@website/shared/ui";
 import { useLogin } from "../hooks/useLogin";
 
 const LoginForm = () => {
@@ -100,6 +100,7 @@ const LoginForm = () => {
                 className='w-full disabled:cursor-not-allowed disabled:opacity-60'
                 disabled={isPending}
               >
+                {isPending && <Spinner />}
                 {isPending ? "Logging in…" : "Log in"}
               </Button>
               <div className='flex items-center gap-3 text-xs font-medium text-muted-foreground'>

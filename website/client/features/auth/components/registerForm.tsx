@@ -1,6 +1,6 @@
 "use client";
 
-import { Card, Button, Form, FormField, FormItem, FormLabel, FormControl, FormMessage, Input } from "@website/shared/ui";
+import { Card, Button, Form, FormField, FormItem, FormLabel, FormControl, FormMessage, Input, Spinner } from "@website/shared/ui";
 import { ShoppingBag } from "lucide-react";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
@@ -157,6 +157,7 @@ const RegisterForm = () => {
                 className='w-full disabled:cursor-not-allowed disabled:opacity-60'
                 disabled={isPending}
               >
+                {isPending && <Spinner />}
                 {isPending ? "Creating account…" : "Create account"}
               </Button>
             </form>
