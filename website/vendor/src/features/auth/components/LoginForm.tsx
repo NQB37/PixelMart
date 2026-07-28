@@ -2,7 +2,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Link } from "@tanstack/react-router";
 import { Headset, Lock, Mail, ShieldCheck, Wallet } from "lucide-react";
-import { Alert, AlertDescription, Button, TextField } from "@website/shared/ui";
+import { Alert, AlertDescription, Button, TextField, Spinner } from "@website/shared/ui";
 import AuthShell from "./AuthShell";
 import { useLogin } from "../hooks/useLogin";
 import { loginSchema, type LoginInput } from "../schemas/auth.schema";
@@ -62,6 +62,7 @@ export default function LoginForm() {
           {...register("password")}
         />
         <Button variant="default" className="w-full" disabled={isPending}>
+          {isPending && <Spinner />}
           {isPending ? "Signing in…" : "Sign in"}
         </Button>
       </form>

@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "@tanstack/react-router";
 import { CheckCircle2 } from "lucide-react";
-import { Alert, AlertDescription, Button } from "@website/shared/ui";
+import { Alert, AlertDescription, Button, Spinner } from "@website/shared/ui";
 import AuthShell from "@/features/auth/components/AuthShell";
 import { useRegisterVendor } from "../hooks/useRegisterVendor";
 import { vendorApi } from "../services/vendor.service";
@@ -177,6 +177,7 @@ export default function RegisterVendorForm() {
                 disabled={isPending || isUploading}
                 onClick={() => setStep2Attempted(true)}
               >
+                {(isPending || isUploading) && <Spinner />}
                 {isUploading
                   ? "Uploading…"
                   : isPending
