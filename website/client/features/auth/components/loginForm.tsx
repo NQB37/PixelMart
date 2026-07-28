@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { ShoppingBag } from "lucide-react";
-import { Card, Button, Form, FormField, Field } from "@website/shared/ui";
+import { Card, Button, Form, FormField, FormItem, FormLabel, FormControl, FormMessage, Input } from "@website/shared/ui";
 import { useLogin } from "../hooks/useLogin";
 
 const LoginForm = () => {
@@ -51,26 +51,36 @@ const LoginForm = () => {
                 control={control}
                 name='email'
                 render={({ field }) => (
-                  <Field
-                    label='Email'
-                    type='email'
-                    placeholder='you@email.com'
-                    autoComplete='email'
-                    {...field}
-                  />
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input
+                      type='email'
+                      placeholder='you@email.com'
+                      autoComplete='email'
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
                 )}
               />
               <FormField
                 control={control}
                 name='password'
                 render={({ field }) => (
-                  <Field
-                    label='Password'
-                    type='password'
-                    placeholder='••••••••'
-                    autoComplete='current-password'
-                    {...field}
-                  />
+                  <FormItem>
+                    <FormLabel>Password</FormLabel>
+                    <FormControl>
+                      <Input
+                      type='password'
+                      placeholder='••••••••'
+                      autoComplete='current-password'
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
                 )}
               />
               <div className='flex items-center justify-between text-sm'>
@@ -88,7 +98,7 @@ const LoginForm = () => {
               <Button
                 variant='default'
                 className='w-full disabled:cursor-not-allowed disabled:opacity-60'
-                loading={isPending}
+                disabled={isPending}
               >
                 {isPending ? "Logging in…" : "Log in"}
               </Button>
