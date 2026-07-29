@@ -1,6 +1,6 @@
 "use client";
 
-import { Card, Button, Field, Form, FormField } from "@website/shared/ui";
+import { Card, Button, Form, FormField, FormItem, FormLabel, FormControl, FormMessage, Input, Spinner } from "@website/shared/ui";
 import { ShoppingBag } from "lucide-react";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
@@ -79,26 +79,36 @@ const RegisterForm = () => {
                 control={control}
                 name='email'
                 render={({ field }) => (
-                  <Field
-                    label='Email'
-                    type='email'
-                    placeholder='you@email.com'
-                    autoComplete='email'
-                    {...field}
-                  />
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input
+                      type='email'
+                      placeholder='you@email.com'
+                      autoComplete='email'
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
                 )}
               />
               <FormField
                 control={control}
                 name='password'
                 render={({ field }) => (
-                  <Field
-                    label='Password'
-                    type='password'
-                    placeholder='••••••••'
-                    autoComplete='new-password'
-                    {...field}
-                  />
+                  <FormItem>
+                    <FormLabel>Password</FormLabel>
+                    <FormControl>
+                      <Input
+                      type='password'
+                      placeholder='••••••••'
+                      autoComplete='new-password'
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
                 )}
               />
               <div>
@@ -123,13 +133,18 @@ const RegisterForm = () => {
                 control={control}
                 name='confirmPassword'
                 render={({ field }) => (
-                  <Field
-                    label='Confirm password'
-                    type='password'
-                    placeholder='••••••••'
-                    autoComplete='new-password'
-                    {...field}
-                  />
+                  <FormItem>
+                    <FormLabel>Confirm password</FormLabel>
+                    <FormControl>
+                      <Input
+                      type='password'
+                      placeholder='••••••••'
+                      autoComplete='new-password'
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
                 )}
               />
               {formError && (
@@ -140,8 +155,9 @@ const RegisterForm = () => {
               <Button
                 variant='default'
                 className='w-full disabled:cursor-not-allowed disabled:opacity-60'
-                loading={isPending}
+                disabled={isPending}
               >
+                {isPending && <Spinner />}
                 {isPending ? "Creating account…" : "Create account"}
               </Button>
             </form>

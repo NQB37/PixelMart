@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { Button } from "@website/shared/ui";
+import { Button, Spinner } from "@website/shared/ui";
 
 interface ConfirmModalProps {
   open: boolean;
@@ -48,7 +48,12 @@ export function ConfirmModal({
             <Button variant="ghost" disabled={isPending} onClick={onClose}>
               Cancel
             </Button>
-            <Button variant="highlight" loading={isPending} onClick={onConfirm}>
+            <Button
+              className="bg-highlight text-highlight-foreground hover:bg-highlight/90"
+              disabled={isPending}
+              onClick={onConfirm}
+            >
+              {isPending && <Spinner />}
               {isPending ? pendingLabel : confirmLabel}
             </Button>
           </div>

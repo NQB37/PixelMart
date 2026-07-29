@@ -19,7 +19,9 @@ const NewsletterSection = () => {
             placeholder='you@email.com'
             className='h-12 flex-1 bg-white/95'
           />
-          <Button variant='highlight'>Subscribe</Button>
+          <Button className='bg-highlight text-highlight-foreground hover:bg-highlight/90'>
+            Subscribe
+          </Button>
         </form>
       </div>
     </section>

@@ -2,7 +2,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Link } from "@tanstack/react-router";
 import { Headset, Lock, Mail, ShieldCheck, Wallet } from "lucide-react";
-import { Alert, AlertDescription, Button, TextField } from "@website/shared/ui";
+import { Alert, AlertDescription, Button, TextField, Spinner } from "@website/shared/ui";
 import AuthShell from "./AuthShell";
 import { useRegister } from "../hooks/useRegister";
 import { registerSchema, type RegisterInput } from "../schemas/auth.schema";
@@ -69,7 +69,8 @@ export default function RegisterForm() {
           error={errors.confirmPassword?.message}
           {...register("confirmPassword")}
         />
-        <Button variant="default" className="w-full" loading={isPending}>
+        <Button variant="default" className="w-full" disabled={isPending}>
+          {isPending && <Spinner />}
           {isPending ? "Creating account…" : "Create account"}
         </Button>
       </form>

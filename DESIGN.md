@@ -55,6 +55,9 @@ Bảng so sánh trực tiếp **Light (`:root`)** ↔ **Dark (`.dark`)**. Giá t
 | `--highlight-foreground` | `oklch(0.99 0 0)` | `oklch(0.22 0.04 40)` | Chữ trên coral (in đậm) |
 | `--success` | `oklch(0.62 0.15 155)` | `oklch(0.72 0.15 155)` | "Còn hàng", đặt hàng thành công |
 | `--warning` | `oklch(0.78 0.15 80)` | `oklch(0.8 0.15 82)` | "Sắp hết hàng", chờ xử lý |
+| `--info` | `oklch(0.55 0.15 255)` | `oklch(0.74 0.13 255)` | **Blue** — thông báo trung tính: info banner, info toast |
+
+> **Vì sao `info` là blue, không phải mint?** Mint là màu thương hiệu — một banner mint đọc như "khuyến mãi", không như "thông tin". `info` là token **chức năng** (giống `success`/`warning`), chỉ dùng cho trạng thái thông báo trung tính, không dùng trang trí, nên nó không phá nguyên tắc "một điểm nhấn duy nhất: coral" ở mục 0.
 
 > **Ghi chú tương phản:** `primary` light (L≈0.54) đạt ≈4.5:1 với chữ trắng (AA cho text thường). `highlight` (coral) ≈4:1 — **luôn dùng chữ trắng in đậm** cho badge. Đừng dùng mint pastel (`secondary`/`accent`) làm nền cho chữ trắng.
 
@@ -88,6 +91,7 @@ Bảng so sánh trực tiếp **Light (`:root`)** ↔ **Dark (`.dark`)**. Giá t
   --highlight-foreground: oklch(0.99 0 0);
   --success: oklch(0.62 0.15 155);
   --warning: oklch(0.78 0.15 80);
+  --info: oklch(0.55 0.15 255); /* blue */
 }
 
 .dark {
@@ -115,6 +119,7 @@ Bảng so sánh trực tiếp **Light (`:root`)** ↔ **Dark (`.dark`)**. Giá t
   --highlight-foreground: oklch(0.22 0.04 40);
   --success: oklch(0.72 0.15 155);
   --warning: oklch(0.8 0.15 82);
+  --info: oklch(0.74 0.13 255);
 }
 ```
 
@@ -280,6 +285,7 @@ Vì token là `oklch()` hoàn chỉnh, map **thẳng** `var(--x)` — **không**
   --color-highlight-foreground: var(--highlight-foreground);
   --color-success: var(--success);
   --color-warning: var(--warning);
+  --color-info: var(--info);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -317,6 +323,7 @@ module.exports = {
         highlight: { DEFAULT: "var(--highlight)", foreground: "var(--highlight-foreground)" },
         success: "var(--success)",
         warning: "var(--warning)",
+        info: "var(--info)",
         border: "var(--border)",
         input: "var(--input)",
         ring: "var(--ring)",

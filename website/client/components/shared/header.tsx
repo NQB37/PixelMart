@@ -76,20 +76,20 @@ const Header = () => {
           </Link>
           {isAuthenticated ? (
             <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  type='button'
-                  className='grid h-10 w-10 place-items-center rounded-full bg-secondary text-secondary-foreground transition-colors hover:bg-accent'
-                  aria-label='Open profile menu'
-                  title={user?.email}
-                >
-                  <User className='h-4 w-4' strokeWidth={1.5} />
-                </button>
-              </DropdownMenuTrigger>
+              <DropdownMenuTrigger
+                render={
+                  <button
+                    type='button'
+                    className='grid h-10 w-10 place-items-center rounded-full bg-secondary text-secondary-foreground transition-colors hover:bg-accent'
+                    aria-label='Open profile menu'
+                    title={user?.email}
+                  >
+                    <User className='h-4 w-4' strokeWidth={1.5} />
+                  </button>
+                }
+              />
               <DropdownMenuContent align='end' className='min-w-36'>
-                <DropdownMenuItem asChild>
-                  <Link href='/profile'>Profile</Link>
-                </DropdownMenuItem>
+                <DropdownMenuItem render={<Link href='/profile'>Profile</Link>} />
                 <DropdownMenuItem onSelect={() => logout()} disabled={isPending}>
                   Logout
                 </DropdownMenuItem>

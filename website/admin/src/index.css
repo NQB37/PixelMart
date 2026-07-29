@@ -1,4 +1,29 @@
 @import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap");
 @import "tailwindcss";
+@import "tw-animate-css";
 @source "../../shared/src";
 @import "@website/shared/styles/theme.css";
+
+/* react-toastify, re-skinned with theme tokens. The vars point at --card/--success/…
+   so toasts follow the light/dark class on <html> without a second theme prop.
+   `:root:root` on purpose: ReactToastify.css is imported from App.tsx, so it can
+   land after this file — the extra specificity wins regardless of sheet order. */
+:root:root {
+  --toastify-color-light: var(--card);
+  --toastify-text-color-light: var(--foreground);
+  --toastify-color-info: var(--info);
+  --toastify-color-success: var(--success);
+  --toastify-color-warning: var(--warning);
+  --toastify-color-error: var(--destructive);
+  --toastify-toast-bd-radius: var(--radius);
+  --toastify-toast-shadow: 0 8px 24px oklch(0 0 0 / 0.14);
+  --toastify-font-family: var(--font-sans);
+}
+
+.Toastify__toast {
+  border: 1px solid var(--border);
+}
+
+.Toastify__close-button {
+  color: var(--muted-foreground);
+}

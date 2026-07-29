@@ -12,6 +12,7 @@ import {
   FieldError,
   Input,
   Label,
+  Spinner,
 } from "@website/shared/ui";
 import { slugify } from "@website/shared/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -55,11 +56,13 @@ export function CreateBrandModal() {
 
   return (
     <Dialog open={isOpened} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>
-        <Button>
-          <Plus className='h-4 w-4' /> Add brand
-        </Button>
-      </DialogTrigger>
+      <DialogTrigger
+        render={
+          <Button>
+            <Plus className='h-4 w-4' /> Add brand
+          </Button>
+        }
+      />
 
       <DialogContent>
         <DialogHeader className='flex-row items-start gap-3 space-y-0 pr-8'>
@@ -112,7 +115,8 @@ export function CreateBrandModal() {
             >
               Cancel
             </Button>
-            <Button type='submit' loading={isSubmitting}>
+            <Button type='submit' disabled={isSubmitting}>
+              {isSubmitting && <Spinner />}
               {isSubmitting ? "Creating…" : "Create brand"}
             </Button>
           </DialogFooter>

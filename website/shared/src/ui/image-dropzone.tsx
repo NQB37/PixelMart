@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef } from "react";
 import { ImagePlus, X } from "lucide-react";
 
-import { cn } from "./cn";
+import { cn } from "../utils/cn";
 import { Label } from "./label";
 
 interface ImageDropzoneProps {

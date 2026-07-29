@@ -1,15 +1,15 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
-import { Badge, Input, Button } from "@website/shared/ui";
+import { Badge, Input, Button, Spinner } from "@website/shared/ui";
 import { useVendorDetail } from "@/features/vendors/hooks/useVendorDetail";
 import { useReviewVendor } from "@/features/vendors/hooks/useReviewVendor";
 import type { ApprovalStatus } from "@/features/vendors/types/vendor";
 
-const APPROVAL_BADGE_VARIANT: Record<ApprovalStatus, "success" | "destructive" | "warning"> = {
-  APPROVED: "success",
-  REJECTED: "destructive",
-  PENDING: "warning",
+const APPROVAL_BADGE_CLASS: Record<ApprovalStatus, string> = {
+  APPROVED: "bg-success text-white",
+  REJECTED: "bg-destructive text-destructive-foreground",
+  PENDING: "bg-warning text-foreground",
 };
 
 function DetailField({ label, value }: { label: string; value: string }) {
@@ -69,17 +69,17 @@ export default function VendorDetail() {
           <h1 className="font-display text-xl font-semibold text-foreground">{vendor.vendorName}</h1>
           <p className="mt-1 text-sm text-muted-foreground">{vendor.ownerEmail}</p>
         </div>
-        <Badge variant={APPROVAL_BADGE_VARIANT[vendor.approvalStatus]}>{vendor.approvalStatus}</Badge>
+        <Badge className={APPROVAL_BADGE_CLASS[vendor.approvalStatus]}>{vendor.approvalStatus}</Badge>
       </div>
 
       {vendor.approvalStatus === "PENDING" && (
         <div className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-card p-4">
           <Button
-            variant="success"
-            loading={isPending && variables?.action === "approve"}
+            className="bg-success text-white hover:bg-success/90"
             disabled={isPending}
             onClick={() => review({ action: "approve" })}
           >
+            {isPending && variables?.action === "approve" && <Spinner />}
             Approve
           </Button>
           {!showRejectForm ? (
@@ -99,11 +99,11 @@ export default function VendorDetail() {
                 onChange={(e) => setRejectReason(e.target.value)}
               />
               <Button
-                variant="highlight"
-                loading={isPending && variables?.action === "reject"}
+                className="bg-highlight text-highlight-foreground hover:bg-highlight/90"
                 disabled={isPending || !rejectReason.trim()}
                 onClick={() => review({ action: "reject", rejectedReason: rejectReason.trim() })}
               >
+                {isPending && variables?.action === "reject" && <Spinner />}
                 Confirm reject
               </Button>
             </div>

@@ -155,33 +155,37 @@ export function Sidebar() {
 
         <div className="border-t border-border p-2">
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                type="button"
-                className={cn(
-                  "flex w-full items-center gap-2 rounded-md p-2 text-left hover:bg-accent",
-                  collapsed && "justify-center",
-                )}
-              >
-                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-secondary text-secondary-foreground">
-                  <ShieldCheck className="h-4 w-4" strokeWidth={1.75} />
-                </span>
-                {!collapsed && (
-                  <>
-                    <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">
-                      {adminLabel}
-                    </span>
-                    <ChevronsUpDown className="h-4 w-4 shrink-0 text-muted-foreground" />
-                  </>
-                )}
-              </button>
-            </DropdownMenuTrigger>
+            <DropdownMenuTrigger
+              render={
+                <button
+                  type="button"
+                  className={cn(
+                    "flex w-full items-center gap-2 rounded-md p-2 text-left hover:bg-accent",
+                    collapsed && "justify-center",
+                  )}
+                >
+                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-secondary text-secondary-foreground">
+                    <ShieldCheck className="h-4 w-4" strokeWidth={1.75} />
+                  </span>
+                  {!collapsed && (
+                    <>
+                      <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">
+                        {adminLabel}
+                      </span>
+                      <ChevronsUpDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    </>
+                  )}
+                </button>
+              }
+            />
             <DropdownMenuContent align="end" side="top" className="w-48">
-              <DropdownMenuItem asChild>
-                <Link to={PROFILE_PATH} className="flex items-center gap-2">
-                  <User className="h-4 w-4" /> Profile
-                </Link>
-              </DropdownMenuItem>
+              <DropdownMenuItem
+                render={
+                  <Link to={PROFILE_PATH} className="flex items-center gap-2">
+                    <User className="h-4 w-4" /> Profile
+                  </Link>
+                }
+              />
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={() => logout()}

@@ -3,11 +3,11 @@ import { Ban, RotateCcw, Trash2 } from "lucide-react";
 import { Badge, Button, cn } from "@website/shared/ui";
 import type { AdminUser } from "../types/user";
 
-const ROLE_BADGE_VARIANT: Record<AdminUser["roles"][number], "default" | "secondary" | "highlight"> = {
-  ADMIN: "default",
-  VENDOR: "highlight",
-  CUSTOMER: "secondary",
-  DELIVERY_PERSON: "secondary",
+const ROLE_BADGE_CLASS: Record<AdminUser["roles"][number], string> = {
+  ADMIN: "bg-primary text-primary-foreground",
+  VENDOR: "bg-highlight text-highlight-foreground",
+  CUSTOMER: "bg-secondary text-secondary-foreground",
+  DELIVERY_PERSON: "bg-secondary text-secondary-foreground",
 };
 
 const columnHelper = createColumnHelper<AdminUser>();
@@ -63,7 +63,7 @@ export function UsersTable({
       cell: ({ getValue }) => (
         <div className="flex flex-wrap gap-1">
           {getValue().map((role) => (
-            <Badge key={role} variant={ROLE_BADGE_VARIANT[role]}>
+            <Badge key={role} className={ROLE_BADGE_CLASS[role]}>
               {role}
             </Badge>
           ))}
@@ -76,7 +76,7 @@ export function UsersTable({
         const user = row.original;
         if (user.deletedAt) return <Badge variant="destructive">Deleted</Badge>;
         return user.isActive ? (
-          <Badge variant="success">Active</Badge>
+          <Badge className="bg-success text-white">Active</Badge>
         ) : (
           <Badge variant="destructive">Banned</Badge>
         );
@@ -101,8 +101,7 @@ export function UsersTable({
           return (
             <div className="flex justify-end gap-2">
               <Button
-                variant="success"
-                className="p-2"
+                className="p-2 bg-success text-white hover:bg-success/90"
                 disabled={isRestoring}
                 onClick={() => onRestore(user)}
                 title="Restore user"
@@ -127,10 +126,12 @@ export function UsersTable({
         return (
           <div className="flex justify-end gap-2">
             <Button
-              variant={user.isActive ? "ghost" : "success"}
+              variant="ghost"
               className={cn(
                 "p-2",
-                user.isActive && "text-destructive hover:bg-destructive/10",
+                user.isActive
+                  ? "text-destructive hover:bg-destructive/10"
+                  : "text-success hover:bg-success/10",
               )}
               disabled={isToggling}
               onClick={() => onToggleStatus(user)}

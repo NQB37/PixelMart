@@ -26,7 +26,7 @@ export function ProductCard({ p }: { p: Product }) {
           strokeWidth={1}
         />
         {discount > 0 ? (
-          <Badge variant='highlight' className='absolute left-2 top-2'>
+          <Badge className='absolute top-2 left-2 bg-highlight text-highlight-foreground'>
             -{discount}%
           </Badge>
         ) : (

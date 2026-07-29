@@ -12,6 +12,7 @@ import {
   FieldError,
   Input,
   Label,
+  Spinner,
 } from "@website/shared/ui";
 import { slugify } from "@website/shared/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -68,16 +69,18 @@ export function UpdateBrandModal({ brand }: UpdateBrandModalProps) {
 
   return (
     <Dialog open={isOpened} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>
-        <Button
-          variant='ghost'
-          className='p-2'
-          title='Edit brand'
-          aria-label='Edit brand'
-        >
-          <Pencil className='h-4 w-4' />
-        </Button>
-      </DialogTrigger>
+      <DialogTrigger
+        render={
+          <Button
+            variant='ghost'
+            className='p-2'
+            title='Edit brand'
+            aria-label='Edit brand'
+          >
+            <Pencil className='h-4 w-4' />
+          </Button>
+        }
+      />
 
       <DialogContent>
         <DialogHeader className='flex-row items-start gap-3 space-y-0 pr-8'>
@@ -131,7 +134,8 @@ export function UpdateBrandModal({ brand }: UpdateBrandModalProps) {
             >
               Cancel
             </Button>
-            <Button type='submit' loading={isSubmitting}>
+            <Button type='submit' disabled={isSubmitting}>
+              {isSubmitting && <Spinner />}
               {isSubmitting ? "Saving…" : "Save changes"}
             </Button>
           </DialogFooter>
