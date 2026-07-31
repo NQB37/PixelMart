@@ -2,7 +2,13 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Link } from "@tanstack/react-router";
 import { Headset, Lock, Mail, ShieldCheck, Wallet } from "lucide-react";
-import { Alert, AlertDescription, Button, TextField, Spinner } from "@website/shared/ui";
+import {
+  Alert,
+  AlertDescription,
+  Button,
+  TextField,
+  Spinner,
+} from "@website/shared/ui";
 import AuthShell from "./AuthShell";
 import { useLogin } from "../hooks/useLogin";
 import { loginSchema, type LoginInput } from "../schemas/auth.schema";
@@ -27,49 +33,63 @@ export default function LoginForm() {
 
   return (
     <AuthShell
-      heading="Welcome back, vendor."
-      description="Sign in to manage orders, inventory, and payouts."
+      heading='Welcome back, vendor.'
+      description='Sign in to manage orders, inventory, and payouts.'
       trustPoints={TRUST_POINTS}
     >
-      <div className="text-xs font-semibold uppercase tracking-wide text-primary">
+      <div className='text-xs font-semibold uppercase tracking-wide text-primary'>
         Vendor portal
       </div>
-      <h2 className="mt-2 font-display text-2xl font-bold text-foreground">
+      <h2 className='mt-2 font-display text-2xl font-bold text-foreground'>
         Sign in to your vendor account
       </h2>
 
       {error && (
-        <Alert variant="destructive" className="mt-6">
+        <Alert variant='destructive' className='mt-6'>
           <AlertDescription>{error.message}</AlertDescription>
         </Alert>
       )}
 
-      <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-4">
+      <form onSubmit={handleSubmit(onSubmit)} className='mt-6 space-y-4'>
         <TextField
-          label="Email"
-          type="email"
+          label='Email'
+          type='email'
           icon={Mail}
-          autoComplete="email"
+          autoComplete='email'
           error={errors.email?.message}
           {...register("email")}
         />
         <TextField
-          label="Password"
-          type="password"
+          label='Password'
+          type='password'
           icon={Lock}
-          autoComplete="current-password"
+          autoComplete='current-password'
           error={errors.password?.message}
           {...register("password")}
         />
-        <Button variant="default" className="w-full" disabled={isPending}>
-          {isPending && <Spinner />}
-          {isPending ? "Signing in…" : "Sign in"}
+        <Button
+          type='submit'
+          variant='default'
+          className='w-full'
+          disabled={isPending}
+        >
+          {isPending ? (
+            <>
+              <Spinner />
+              <span className='ml-2'>Signing in...</span>
+            </>
+          ) : (
+            "Sign in"
+          )}
         </Button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-muted-foreground">
+      <p className='mt-6 text-center text-sm text-muted-foreground'>
         Don&apos;t have an account?{" "}
-        <Link to="/register" className="font-medium text-primary hover:underline">
+        <Link
+          to='/register'
+          className='font-medium text-primary hover:underline'
+        >
           Create one
         </Link>
       </p>
