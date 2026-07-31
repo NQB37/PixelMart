@@ -1,5 +1,6 @@
 import {
   Button,
+  cn,
   Dialog,
   DialogContent,
   DialogDescription,
@@ -7,6 +8,10 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
   FieldError,
   ImageDropzone,
   Input,
@@ -25,7 +30,7 @@ import {
 } from "@website/shared/ui";
 import { slugify } from "@website/shared/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus } from "lucide-react";
+import { ChevronDown, Plus } from "lucide-react";
 import { useState } from "react";
 import { Controller, useForm, type UseFormReturn } from "react-hook-form";
 import { toast } from "react-toastify";
@@ -135,32 +140,60 @@ const GeneralProductTab = ({
         <Controller
           control={control}
           name='categoryId'
-          render={({ field, fieldState }) => (
-            <div className='space-y-1.5'>
-              <Label htmlFor='create-product-category'>Category</Label>
-              <Select
-                items={categoryItems}
-                value={field.value?.[0] ?? null}
-                // ponytail: server takes a list; one category is enough for now
-                onValueChange={(id) => field.onChange([id as string])}
-              >
-                <SelectTrigger
-                  id='create-product-category'
-                  aria-invalid={!!fieldState.error}
-                >
-                  <SelectValue placeholder='Select a category' />
-                </SelectTrigger>
-                <SelectContent>
-                  {categoryItems.map((item) => (
-                    <SelectItem key={item.value} value={item.value}>
-                      {item.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FieldError>{fieldState.error?.message}</FieldError>
-            </div>
-          )}
+          render={({ field, fieldState }) => {
+            const selected = field.value ?? [];
+            const toggle = (id: string) =>
+              field.onChange(
+                selected.includes(id)
+                  ? selected.filter((c) => c !== id)
+                  : [...selected, id],
+              );
+
+            return (
+              <div className='space-y-1.5'>
+                <Label htmlFor='create-product-category'>Categories</Label>
+                <DropdownMenu>
+                  <DropdownMenuTrigger
+                    render={
+                      <button
+                        type='button'
+                        id='create-product-category'
+                        aria-invalid={!!fieldState.error}
+                        className='flex h-11 w-full items-center justify-between gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background aria-invalid:border-destructive'
+                      >
+                        <span
+                          className={cn(
+                            "truncate",
+                            !selected.length && "text-muted-foreground",
+                          )}
+                        >
+                          {selected.length
+                            ? categories
+                                .filter((c) => selected.includes(c.id))
+                                .map((c) => c.name)
+                                .join(", ")
+                            : "Select categories"}
+                        </span>
+                        <ChevronDown className='size-4 shrink-0 text-muted-foreground' />
+                      </button>
+                    }
+                  />
+                  <DropdownMenuContent className='max-h-64 w-(--anchor-width) overflow-y-auto'>
+                    {categoryItems.map((item) => (
+                      <DropdownMenuCheckboxItem
+                        key={item.value}
+                        checked={selected.includes(item.value)}
+                        onCheckedChange={() => toggle(item.value)}
+                      >
+                        {item.label}
+                      </DropdownMenuCheckboxItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                <FieldError>{fieldState.error?.message}</FieldError>
+              </div>
+            );
+          }}
         />
       </div>
 

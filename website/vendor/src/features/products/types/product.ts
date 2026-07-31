@@ -24,7 +24,7 @@ export interface VendorProduct {
 
 export interface Product {
   brandId: string | null;
-  categoryId: string | null;
+  categoryId: string[];
   // General Info
   id: string;
   name: string;
