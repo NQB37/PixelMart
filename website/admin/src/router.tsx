@@ -26,7 +26,7 @@ interface AuthContext {
 
 const rootRoute = createRootRouteWithContext<{ auth: AuthContext }>()({
   component: () => <Outlet />,
-  notFoundComponent: () => <Navigate to="/" />,
+  notFoundComponent: () => <Navigate to='/' />,
 });
 
 const loginRoute = createRoute({
@@ -96,7 +96,6 @@ const brandsRoute = createRoute({
   component: Brands,
 });
 
-// Unlinked on purpose — reachable at /design-system, not listed in the sidebar.
 const designSystemRoute = createRoute({
   getParentRoute: () => adminLayoutRoute,
   path: "/design-system",
