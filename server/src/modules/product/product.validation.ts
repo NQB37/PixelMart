@@ -2,8 +2,7 @@ import { z } from 'zod';
 import { slugSchema } from '@/utils/slug';
 
 export const createProductSchema = z.object({
-  // General info
-  vendorId: z.uuid('Vendor ID is required'),
+  // General info — vendorId comes from the authenticated vendor, not the body
   brandId: z.uuid().optional(),
   categoryId: z.array(z.uuid()).optional(),
   name: z
