@@ -1,15 +1,12 @@
 import { useState } from "react";
-import { Plus } from "lucide-react";
-import { Button } from "@website/shared/ui";
 import { ProductsTable } from "@/features/products/components/ProductsTable";
 import { ProductsFilters } from "@/features/products/components/ProductsFilters";
 import type {
   ProductSort,
   VendorProduct,
 } from "@/features/products/types/product";
+import { CreateProductModal } from "@/features/products/components/CreateProductModal";
 
-// ponytail: static rows + hardcoded filter options — UI only for now, per the
-// request. Swap for a useProducts() React Query hook once the list endpoint lands.
 const PRODUCTS: VendorProduct[] = [
   {
     id: "1",
@@ -22,7 +19,7 @@ const PRODUCTS: VendorProduct[] = [
   },
   {
     id: "2",
-    name: "27\" 4K IPS Monitor",
+    name: '27" 4K IPS Monitor',
     sku: "MN-27-4K",
     thumbnail: null,
     status: "OUT_OF_STOCK",
@@ -69,10 +66,7 @@ export default function Products() {
             Manage the products listed in your vendor.
           </p>
         </div>
-        {/* ponytail: no handler yet — becomes a CreateProductModal trigger */}
-        <Button>
-          <Plus className='h-4 w-4' /> New Product
-        </Button>
+        <CreateProductModal />
       </div>
 
       <ProductsFilters
