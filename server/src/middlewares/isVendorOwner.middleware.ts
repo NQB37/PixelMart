@@ -34,7 +34,7 @@ export const isVendorOwner = async (
     }
 
     // Attach vendor to req for controller usage
-    (req as any).vendor = vendor;
+    req.vendor = vendor;
     next();
   } catch (error) {
     next(error);
