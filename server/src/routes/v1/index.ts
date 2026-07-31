@@ -6,6 +6,7 @@ import { uploadRoutes } from '@/modules/upload/upload.routes';
 import { userRoutes } from '@/modules/user/user.routes';
 import { categoryRoutes } from '@/modules/category/category.routes';
 import { brandRoutes } from '@/modules/brand/brand.routes';
+import { productRoutes } from '@/modules/product/product.routes';
 
 const router: Router = Router();
 
@@ -19,5 +20,6 @@ router.use('/uploads', uploadRoutes);
 router.use('/users', userRoutes);
 router.use('/categories', categoryRoutes);
 router.use('/brands', brandRoutes);
+router.use('/products', productRoutes);
 
 export { router as routes };
