@@ -9,15 +9,19 @@ import {
   DialogTrigger,
   FieldError,
   ImageDropzone,
+  Input,
   Label,
-  SelectField,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
   Spinner,
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
   Textarea,
-  TextField,
 } from "@website/shared/ui";
 import { slugify } from "@website/shared/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -51,47 +55,80 @@ const GeneralProductTab = ({
 }) => {
   const { data: brands = [] } = useGetAllBrands();
   const { data: categories = [] } = useGetAllCategories();
+  // `items` is what makes the trigger render the name for the selected id.
+  const brandItems = brands.map((b) => ({ value: b.id, label: b.name }));
+  const categoryItems = categories.map((c) => ({
+    value: c.id,
+    label: c.name,
+  }));
 
   return (
     <TabsContent value='general' keepMounted className='space-y-4 pt-2'>
-      <TextField
-        label='Name *'
-        placeholder='e.g. Mechanical Keyboard K7 Pro'
-        autoFocus
-        error={errors.name?.message}
-        {...register("name", {
-          onChange: (e) => setValue("slug", slugify(e.target.value)),
-        })}
-      />
+      <div className='space-y-1.5'>
+        <Label htmlFor='create-product-name'>Name *</Label>
+        <Input
+          id='create-product-name'
+          placeholder='e.g. Mechanical Keyboard K7 Pro'
+          autoFocus
+          aria-invalid={!!errors.name}
+          {...register("name", {
+            onChange: (e) => setValue("slug", slugify(e.target.value)),
+          })}
+        />
+        <FieldError>{errors.name?.message}</FieldError>
+      </div>
 
-      <TextField
-        label='Slug *'
-        className='font-mono'
-        placeholder='e.g. mechanical-keyboard-k7-pro'
-        error={errors.slug?.message}
-        {...register("slug")}
-      />
+      <div className='space-y-1.5'>
+        <Label htmlFor='create-product-slug'>Slug *</Label>
+        <Input
+          id='create-product-slug'
+          className='font-mono'
+          placeholder='e.g. mechanical-keyboard-k7-pro'
+          aria-invalid={!!errors.slug}
+          {...register("slug")}
+        />
+        <FieldError>{errors.slug?.message}</FieldError>
+      </div>
 
-      <TextField
-        label='SKU'
-        placeholder='e.g. KB-K7-PRO'
-        error={errors.sku?.message}
-        {...register("sku")}
-      />
+      <div className='space-y-1.5'>
+        <Label htmlFor='create-product-sku'>SKU</Label>
+        <Input
+          id='create-product-sku'
+          placeholder='e.g. KB-K7-PRO'
+          aria-invalid={!!errors.sku}
+          {...register("sku")}
+        />
+        <FieldError>{errors.sku?.message}</FieldError>
+      </div>
 
       <div className='grid gap-4 sm:grid-cols-2'>
         <Controller
           control={control}
           name='brandId'
           render={({ field, fieldState }) => (
-            <SelectField
-              label='Brand'
-              placeholder='Select a brand'
-              options={brands}
-              value={field.value}
-              onChange={field.onChange}
-              error={fieldState.error?.message}
-            />
+            <div className='space-y-1.5'>
+              <Label htmlFor='create-product-brand'>Brand</Label>
+              <Select
+                items={brandItems}
+                value={field.value ?? null}
+                onValueChange={(id) => field.onChange(id as string)}
+              >
+                <SelectTrigger
+                  id='create-product-brand'
+                  aria-invalid={!!fieldState.error}
+                >
+                  <SelectValue placeholder='Select a brand' />
+                </SelectTrigger>
+                <SelectContent>
+                  {brandItems.map((item) => (
+                    <SelectItem key={item.value} value={item.value}>
+                      {item.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FieldError>{fieldState.error?.message}</FieldError>
+            </div>
           )}
         />
 
@@ -99,15 +136,30 @@ const GeneralProductTab = ({
           control={control}
           name='categoryId'
           render={({ field, fieldState }) => (
-            <SelectField
-              label='Category'
-              placeholder='Select a category'
-              options={categories}
-              value={field.value?.[0]}
-              // ponytail: server takes a list; one category is enough for now
-              onChange={(id) => field.onChange([id])}
-              error={fieldState.error?.message}
-            />
+            <div className='space-y-1.5'>
+              <Label htmlFor='create-product-category'>Category</Label>
+              <Select
+                items={categoryItems}
+                value={field.value?.[0] ?? null}
+                // ponytail: server takes a list; one category is enough for now
+                onValueChange={(id) => field.onChange([id as string])}
+              >
+                <SelectTrigger
+                  id='create-product-category'
+                  aria-invalid={!!fieldState.error}
+                >
+                  <SelectValue placeholder='Select a category' />
+                </SelectTrigger>
+                <SelectContent>
+                  {categoryItems.map((item) => (
+                    <SelectItem key={item.value} value={item.value}>
+                      {item.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FieldError>{fieldState.error?.message}</FieldError>
+            </div>
           )}
         />
       </div>
@@ -143,12 +195,16 @@ const MetadataProductTab = ({
 }) => {
   return (
     <TabsContent value='metadata' keepMounted className='space-y-4 pt-2'>
-      <TextField
-        label='Meta title'
-        placeholder='Shown as the page title in search results'
-        error={errors.metaTitle?.message}
-        {...register("metaTitle")}
-      />
+      <div className='space-y-1.5'>
+        <Label htmlFor='create-product-meta-title'>Meta title</Label>
+        <Input
+          id='create-product-meta-title'
+          placeholder='Shown as the page title in search results'
+          aria-invalid={!!errors.metaTitle}
+          {...register("metaTitle")}
+        />
+        <FieldError>{errors.metaTitle?.message}</FieldError>
+      </div>
 
       <div className='space-y-1.5'>
         <Label htmlFor='create-product-meta-description'>

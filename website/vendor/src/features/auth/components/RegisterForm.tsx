@@ -2,7 +2,15 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Link } from "@tanstack/react-router";
 import { Headset, Lock, Mail, ShieldCheck, Wallet } from "lucide-react";
-import { Alert, AlertDescription, Button, TextField, Spinner } from "@website/shared/ui";
+import {
+  Alert,
+  AlertDescription,
+  Button,
+  FieldError,
+  Input,
+  Label,
+  Spinner,
+} from "@website/shared/ui";
 import AuthShell from "./AuthShell";
 import { useRegister } from "../hooks/useRegister";
 import { registerSchema, type RegisterInput } from "../schemas/auth.schema";
@@ -45,30 +53,64 @@ export default function RegisterForm() {
       )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-4">
-        <TextField
-          label="Email"
-          type="email"
-          icon={Mail}
-          autoComplete="email"
-          error={errors.email?.message}
-          {...register("email")}
-        />
-        <TextField
-          label="Password"
-          type="password"
-          icon={Lock}
-          autoComplete="new-password"
-          error={errors.password?.message}
-          {...register("password")}
-        />
-        <TextField
-          label="Confirm password"
-          type="password"
-          icon={Lock}
-          autoComplete="new-password"
-          error={errors.confirmPassword?.message}
-          {...register("confirmPassword")}
-        />
+        <div className="space-y-1.5">
+          <Label htmlFor="vendor-register-email">Email</Label>
+          <div className="relative">
+            <Mail
+              className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+              strokeWidth={1.5}
+            />
+            <Input
+              id="vendor-register-email"
+              type="email"
+              className="pl-9"
+              autoComplete="email"
+              aria-invalid={!!errors.email}
+              {...register("email")}
+            />
+          </div>
+          <FieldError>{errors.email?.message}</FieldError>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label htmlFor="vendor-register-password">Password</Label>
+          <div className="relative">
+            <Lock
+              className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+              strokeWidth={1.5}
+            />
+            <Input
+              id="vendor-register-password"
+              type="password"
+              className="pl-9"
+              autoComplete="new-password"
+              aria-invalid={!!errors.password}
+              {...register("password")}
+            />
+          </div>
+          <FieldError>{errors.password?.message}</FieldError>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label htmlFor="vendor-register-confirm-password">
+            Confirm password
+          </Label>
+          <div className="relative">
+            <Lock
+              className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+              strokeWidth={1.5}
+            />
+            <Input
+              id="vendor-register-confirm-password"
+              type="password"
+              className="pl-9"
+              autoComplete="new-password"
+              aria-invalid={!!errors.confirmPassword}
+              {...register("confirmPassword")}
+            />
+          </div>
+          <FieldError>{errors.confirmPassword?.message}</FieldError>
+        </div>
         <Button variant="default" className="w-full" disabled={isPending}>
           {isPending && <Spinner />}
           {isPending ? "Creating account…" : "Create account"}

@@ -5,7 +5,9 @@ import {
   Alert,
   AlertDescription,
   Button,
-  TextField,
+  FieldError,
+  Input,
+  Label,
   Spinner,
 } from "@website/shared/ui";
 import AuthShell from "./AuthShell";
@@ -50,22 +52,43 @@ export default function LoginForm() {
       )}
 
       <form onSubmit={handleSubmit(onSubmit)} className='mt-6 space-y-4'>
-        <TextField
-          label='Email'
-          type='email'
-          icon={Mail}
-          autoComplete='email'
-          error={errors.email?.message}
-          {...register("email")}
-        />
-        <TextField
-          label='Password'
-          type='password'
-          icon={Lock}
-          autoComplete='current-password'
-          error={errors.password?.message}
-          {...register("password")}
-        />
+        <div className='space-y-1.5'>
+          <Label htmlFor='admin-login-email'>Email</Label>
+          <div className='relative'>
+            <Mail
+              className='pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground'
+              strokeWidth={1.5}
+            />
+            <Input
+              id='admin-login-email'
+              type='email'
+              className='pl-9'
+              autoComplete='email'
+              aria-invalid={!!errors.email}
+              {...register("email")}
+            />
+          </div>
+          <FieldError>{errors.email?.message}</FieldError>
+        </div>
+
+        <div className='space-y-1.5'>
+          <Label htmlFor='admin-login-password'>Password</Label>
+          <div className='relative'>
+            <Lock
+              className='pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground'
+              strokeWidth={1.5}
+            />
+            <Input
+              id='admin-login-password'
+              type='password'
+              className='pl-9'
+              autoComplete='current-password'
+              aria-invalid={!!errors.password}
+              {...register("password")}
+            />
+          </div>
+          <FieldError>{errors.password?.message}</FieldError>
+        </div>
         <Button
           type='submit'
           variant='default'

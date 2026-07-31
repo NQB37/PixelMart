@@ -1,6 +1,6 @@
 import { CalendarClock, CreditCard, Landmark, User } from "lucide-react";
 import type { FieldErrors, UseFormRegister } from "react-hook-form";
-import { ImageDropzone, TextField } from "@website/shared/ui";
+import { FieldError, ImageDropzone, Input, Label } from "@website/shared/ui";
 import type { RegisterVendorInput } from "../schemas/vendor.schema";
 
 interface IdentityBankStepProps {
@@ -28,12 +28,22 @@ export default function IdentityBankStep({
         <p className="mb-3 text-sm font-medium text-foreground">
           National ID (CCCD/CMND)
         </p>
-        <TextField
-          label="ID number"
-          icon={CreditCard}
-          error={errors.nationalId?.message}
-          {...register("nationalId")}
-        />
+        <div className="space-y-1.5">
+          <Label htmlFor="vendor-national-id">ID number</Label>
+          <div className="relative">
+            <CreditCard
+              className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+              strokeWidth={1.5}
+            />
+            <Input
+              id="vendor-national-id"
+              className="pl-9"
+              aria-invalid={!!errors.nationalId}
+              {...register("nationalId")}
+            />
+          </div>
+          <FieldError>{errors.nationalId?.message}</FieldError>
+        </div>
         <div className="mt-3 grid grid-cols-2 gap-3">
           <ImageDropzone label="Front side" file={idFrontFile} onChange={onIdFrontChange} />
           <ImageDropzone label="Back side" file={idBackFile} onChange={onIdBackChange} />
@@ -46,26 +56,58 @@ export default function IdentityBankStep({
       <div>
         <p className="mb-3 text-sm font-medium text-foreground">Bank account</p>
         <div className="space-y-4">
-          <TextField
-            label="Account number"
-            icon={Landmark}
-            error={errors.bankAccountNumber?.message}
-            {...register("bankAccountNumber")}
-          />
-          <TextField
-            label="Cardholder name"
-            icon={User}
-            placeholder="AS PRINTED ON CARD"
-            error={errors.cardHolderName?.message}
-            {...register("cardHolderName")}
-          />
-          <TextField
-            label="Expiry date"
-            icon={CalendarClock}
-            placeholder="MM/YY"
-            error={errors.cardExpiry?.message}
-            {...register("cardExpiry")}
-          />
+          <div className="space-y-1.5">
+            <Label htmlFor="vendor-bank-account">Account number</Label>
+            <div className="relative">
+              <Landmark
+                className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+                strokeWidth={1.5}
+              />
+              <Input
+                id="vendor-bank-account"
+                className="pl-9"
+                aria-invalid={!!errors.bankAccountNumber}
+                {...register("bankAccountNumber")}
+              />
+            </div>
+            <FieldError>{errors.bankAccountNumber?.message}</FieldError>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="vendor-card-holder">Cardholder name</Label>
+            <div className="relative">
+              <User
+                className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+                strokeWidth={1.5}
+              />
+              <Input
+                id="vendor-card-holder"
+                className="pl-9"
+                placeholder="AS PRINTED ON CARD"
+                aria-invalid={!!errors.cardHolderName}
+                {...register("cardHolderName")}
+              />
+            </div>
+            <FieldError>{errors.cardHolderName?.message}</FieldError>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="vendor-card-expiry">Expiry date</Label>
+            <div className="relative">
+              <CalendarClock
+                className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+                strokeWidth={1.5}
+              />
+              <Input
+                id="vendor-card-expiry"
+                className="pl-9"
+                placeholder="MM/YY"
+                aria-invalid={!!errors.cardExpiry}
+                {...register("cardExpiry")}
+              />
+            </div>
+            <FieldError>{errors.cardExpiry?.message}</FieldError>
+          </div>
         </div>
       </div>
     </div>
