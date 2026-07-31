@@ -22,6 +22,7 @@ export { RadioGroup, RadioGroupItem } from "./radio-group";
 export { Switch } from "./switch";
 export { Slider } from "./slider";
 export * from "./select";
+export { SelectField } from "./select-field";
 export * from "./tabs";
 export * from "./accordion";
 export * from "./avatar";
