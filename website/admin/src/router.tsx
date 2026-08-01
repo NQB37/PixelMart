@@ -12,6 +12,8 @@ import Dashboard from "@/pages/Dashboard";
 import Users from "@/pages/Users";
 import Vendors from "@/pages/Vendors";
 import VendorDetail from "@/pages/VendorDetail";
+import ReviewQueue from "@/pages/ReviewQueue";
+import ProductReview from "@/pages/ProductReview";
 import Categories from "@/pages/Categories";
 import Brands from "@/pages/Brands";
 import Placeholder from "@/pages/Placeholder";
@@ -84,6 +86,18 @@ const vendorDetailRoute = createRoute({
   component: VendorDetail,
 });
 
+const reviewQueueRoute = createRoute({
+  getParentRoute: () => adminLayoutRoute,
+  path: "/catalog/review-queue",
+  component: ReviewQueue,
+});
+
+const productReviewRoute = createRoute({
+  getParentRoute: () => adminLayoutRoute,
+  path: "/catalog/review-queue/$productId",
+  component: ProductReview,
+});
+
 const categoriesRoute = createRoute({
   getParentRoute: () => adminLayoutRoute,
   path: "/catalog/categories",
@@ -118,7 +132,8 @@ const routeTree = rootRoute.addChildren([
     placeholderRoute("/users/roles", "Roles & Permissions"),
     vendorsRoute,
     vendorDetailRoute,
-    placeholderRoute("/catalog/review-queue", "Review Queue"),
+    reviewQueueRoute,
+    productReviewRoute,
     categoriesRoute,
     brandsRoute,
     placeholderRoute("/catalog/flagged", "Flagged Listings"),

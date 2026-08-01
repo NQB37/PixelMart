@@ -1,6 +1,8 @@
 import { prisma } from '@/libs/prisma';
-import { CreateProductInput } from './product.validation';
+import { CreateProductInput, ListProductsQuery } from './product.validation';
 import { ApiError } from '@/utils/ApiError';
+import { ApprovalStatus, ProductStatus } from '@/generated/prisma/enums';
+import type { Prisma } from '@/generated/prisma/client';
 
 class ProductService {
   // Public
@@ -90,8 +92,99 @@ class ProductService {
     });
   }
   // Admin
+  async getAdminProducts({
+    page,
+    limit,
+    search,
+    approvalStatus,
+  }: ListProductsQuery) {
+    const where = {
+      approvalStatus,
+      deletedAt: null,
+      ...(search && {
+        OR: [
+          { name: { contains: search, mode: 'insensitive' as const } },
+          { sku: { contains: search, mode: 'insensitive' as const } },
+        ],
+      }),
+    };
 
+    const [products, total] = await Promise.all([
+      prisma.product.findMany({
+        where,
+        skip: (page - 1) * limit,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        include: { vendor: { select: { vendorName: true } } },
+      }),
+      prisma.product.count({ where }),
+    ]);
+
+    return {
+      products,
+      meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    };
+  }
+
+  async getProductById(productId: string) {
+    const product = await prisma.product.findUnique({
+      where: { id: productId },
+      include: {
+        vendor: { select: { id: true, vendorName: true } },
+        brand: { select: { name: true } },
+        images: { orderBy: { sortOrder: 'asc' } },
+        productCategories: {
+          include: { category: { select: { name: true } } },
+        },
+      },
+    });
+    if (!product) {
+      throw ApiError.notFound('Product not found');
+    }
+
+    return product;
+  }
+
+  async approveProduct(productId: string) {
+    return prisma.$transaction(async (tx) => {
+      await this.findPendingProduct(tx, productId);
+
+      return tx.product.update({
+        where: { id: productId },
+        data: {
+          approvalStatus: ApprovalStatus.APPROVED,
+          rejectedReason: null,
+          status: ProductStatus.ACTIVE,
+        },
+      });
+    });
+  }
+
+  async rejectProduct(productId: string, rejectedReason: string) {
+    return prisma.$transaction(async (tx) => {
+      await this.findPendingProduct(tx, productId);
+
+      return tx.product.update({
+        where: { id: productId },
+        data: { approvalStatus: ApprovalStatus.REJECTED, rejectedReason },
+      });
+    });
+  }
   // Private
+  private async findPendingProduct(
+    tx: Prisma.TransactionClient,
+    productId: string,
+  ) {
+    const product = await tx.product.findUnique({ where: { id: productId } });
+    if (!product) {
+      throw ApiError.notFound('Product not found');
+    }
+    if (product.approvalStatus !== ApprovalStatus.PENDING) {
+      throw ApiError.badRequest('Product has already been reviewed');
+    }
+
+    return product;
+  }
 }
 
 export const productService = new ProductService();
