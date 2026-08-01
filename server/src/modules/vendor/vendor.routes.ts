@@ -14,7 +14,12 @@ const router = Router();
 
 // === VENDOR ROUTES ===
 router.get('/me', isAuth, vendorController.getMyVendor);
-router.post('/', isAuth, validate(createVendorSchema), vendorController.createVendor);
+router.post(
+  '/',
+  isAuth,
+  validate(createVendorSchema),
+  vendorController.createVendor,
+);
 
 // === ADMIN ROUTES ===
 router.get(
@@ -24,7 +29,12 @@ router.get(
   validateQuery(listVendorsQuerySchema),
   vendorController.getAllVendors,
 );
-router.get('/:id', isAuth, requireRole(ROLE.ADMIN), vendorController.getVendorById);
+router.get(
+  '/:id',
+  isAuth,
+  requireRole(ROLE.ADMIN),
+  vendorController.getVendorById,
+);
 router.patch(
   '/:id/approve',
   isAuth,

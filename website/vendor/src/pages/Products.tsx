@@ -1,50 +1,9 @@
 import { useState } from "react";
 import { ProductsTable } from "@/features/products/components/ProductsTable";
 import { ProductsFilters } from "@/features/products/components/ProductsFilters";
-import type {
-  ProductSort,
-  VendorProduct,
-} from "@/features/products/types/product";
+import type { ProductSort } from "@/features/products/types/product";
 import { CreateProductModal } from "@/features/products/components/CreateProductModal";
-
-const PRODUCTS: VendorProduct[] = [
-  {
-    id: "1",
-    name: "Mechanical Keyboard K7 Pro",
-    sku: "KB-K7-PRO",
-    thumbnail: null,
-    status: "ACTIVE",
-    category: "Keyboards",
-    brand: "Keychron",
-  },
-  {
-    id: "2",
-    name: '27" 4K IPS Monitor',
-    sku: "MN-27-4K",
-    thumbnail: null,
-    status: "OUT_OF_STOCK",
-    category: "Monitors",
-    brand: "Dell",
-  },
-  {
-    id: "3",
-    name: "Wireless Ergonomic Mouse",
-    sku: null,
-    thumbnail: null,
-    status: "DRAFT",
-    category: "Mice",
-    brand: "Logitech",
-  },
-  {
-    id: "4",
-    name: "USB-C Docking Station 11-in-1",
-    sku: "DK-11IN1",
-    thumbnail: null,
-    status: "BANNED",
-    category: "Accessories",
-    brand: null,
-  },
-];
+import { useGetMyProducts } from "@/features/products/hooks/useProduct";
 
 const CATEGORIES = ["Keyboards", "Monitors", "Mice", "Accessories"];
 const BRANDS = ["Keychron", "Dell", "Logitech"];
@@ -54,6 +13,7 @@ export default function Products() {
   const [category, setCategory] = useState("");
   const [brand, setBrand] = useState("");
   const [sort, setSort] = useState<ProductSort>("newest");
+  const { data: products, isPending } = useGetMyProducts();
 
   return (
     <div className='space-y-4'>
@@ -84,8 +44,8 @@ export default function Products() {
 
       <div className='overflow-x-auto rounded-xl border border-border bg-card shadow-sm'>
         <ProductsTable
-          products={PRODUCTS}
-          isLoading={false}
+          products={products || []}
+          isLoading={isPending}
           onEdit={() => {}}
           onDelete={() => {}}
           onToggleStatus={() => {}}

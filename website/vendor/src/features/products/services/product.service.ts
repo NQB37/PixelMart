@@ -16,6 +16,10 @@ export const productApi = {
     return response.data;
   },
   // Shop
+  getMyProducts: async () => {
+    const response = await api.get<Product[]>(`products/me`);
+    return response.data;
+  },
   createProduct: async (data: CreateProductInput) => {
     const response = await api.post<Product>(`products`, data);
     return response.data;

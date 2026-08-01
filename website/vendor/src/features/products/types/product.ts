@@ -9,19 +9,6 @@ export const SORT_OPTIONS = [
 
 export type ProductSort = (typeof SORT_OPTIONS)[number]["value"];
 
-// Row shape the products table renders — brand/category resolved to names.
-// ponytail: still fed by static mock rows; drop it once the list endpoint
-// returns Product[] with the relations included.
-export interface VendorProduct {
-  id: string;
-  name: string;
-  sku: string | null;
-  thumbnail: string | null;
-  status: ProductStatus;
-  category: string | null;
-  brand: string | null;
-}
-
 export interface Product {
   brandId: string | null;
   categoryId: string[];

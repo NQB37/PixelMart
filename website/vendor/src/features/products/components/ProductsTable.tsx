@@ -6,23 +6,35 @@ import {
 } from "@tanstack/react-table";
 import { ImageIcon, Pencil, Power, Trash2 } from "lucide-react";
 import { Badge, Button, cn } from "@website/shared/ui";
-import type { ProductStatus, VendorProduct } from "../types/product";
+import type { Product, ProductStatus } from "../types/product";
 
-const STATUS_BADGE: Record<ProductStatus, { label: string; className: string }> = {
+const STATUS_BADGE: Record<
+  ProductStatus,
+  { label: string; className: string }
+> = {
   ACTIVE: { label: "Active", className: "bg-success text-white" },
-  DRAFT: { label: "Draft", className: "bg-secondary text-secondary-foreground" },
-  OUT_OF_STOCK: { label: "Out of stock", className: "bg-warning text-foreground" },
-  BANNED: { label: "Banned", className: "bg-destructive text-destructive-foreground" },
+  DRAFT: {
+    label: "Draft",
+    className: "bg-secondary text-secondary-foreground",
+  },
+  OUT_OF_STOCK: {
+    label: "Out of stock",
+    className: "bg-warning text-foreground",
+  },
+  BANNED: {
+    label: "Banned",
+    className: "bg-destructive text-destructive-foreground",
+  },
 };
 
-const columnHelper = createColumnHelper<VendorProduct>();
+const columnHelper = createColumnHelper<Product>();
 
 interface ProductsTableProps {
-  products: VendorProduct[];
+  products: Product[];
   isLoading: boolean;
-  onEdit: (product: VendorProduct) => void;
-  onDelete: (product: VendorProduct) => void;
-  onToggleStatus: (product: VendorProduct) => void;
+  onEdit: (product: Product) => void;
+  onDelete: (product: Product) => void;
+  onToggleStatus: (product: Product) => void;
 }
 
 export function ProductsTable({
@@ -63,13 +75,13 @@ export function ProductsTable({
         );
       },
     }),
-    columnHelper.accessor("category", {
+    columnHelper.accessor("categoryId", {
       header: "Category",
       cell: ({ getValue }) => (
         <span className='text-sm text-foreground/80'>{getValue() || "—"}</span>
       ),
     }),
-    columnHelper.accessor("brand", {
+    columnHelper.accessor("brandId", {
       header: "Brand",
       cell: ({ getValue }) => (
         <span className='text-sm text-foreground/80'>{getValue() || "—"}</span>
@@ -144,7 +156,10 @@ export function ProductsTable({
                 key={header.id}
                 className='px-4 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground'
               >
-                {flexRender(header.column.columnDef.header, header.getContext())}
+                {flexRender(
+                  header.column.columnDef.header,
+                  header.getContext(),
+                )}
               </th>
             ))}
           </tr>

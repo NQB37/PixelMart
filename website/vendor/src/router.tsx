@@ -21,11 +21,11 @@ interface AuthContext {
   isAuthenticated: boolean;
 }
 
-const isVendor = (user: UserInfo) => hasRole(user, ["VENDOR", "ADMIN"]);
+const isVendor = (user: UserInfo) => hasRole(user, ["VENDOR"]);
 
 const rootRoute = createRootRouteWithContext<{ auth: AuthContext }>()({
   component: () => <Outlet />,
-  notFoundComponent: () => <Navigate to="/" />,
+  notFoundComponent: () => <Navigate to='/' />,
 });
 
 const loginRoute = createRoute({
