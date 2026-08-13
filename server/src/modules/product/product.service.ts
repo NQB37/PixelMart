@@ -1,58 +1,76 @@
 import { prisma } from '@/libs/prisma';
-import { CreateProductInput, ListProductsQuery } from './product.validation';
+import {
+  CreateProductInput,
+  CreateProductVariantInput,
+  ListProductsQuery,
+} from './product.validation';
 import { ApiError } from '@/utils/ApiError';
 import { ApprovalStatus, ProductStatus } from '@/generated/prisma/enums';
 import type { Prisma } from '@/generated/prisma/client';
 
+// Only variants of published products are visible publicly
+const PUBLIC_PRODUCT = {
+  product: {
+    approvalStatus: ApprovalStatus.APPROVED,
+    status: { in: [ProductStatus.ACTIVE, ProductStatus.OUT_OF_STOCK] },
+    deletedAt: null,
+  },
+} satisfies Prisma.ProductVariantWhereInput;
+
 class ProductService {
   // Public
-  async getAllProduct() {
-    return prisma.product.findMany();
-  }
-  async getProductBySlug(slug: string) {
-    // Check if product exists
-    const product = await prisma.product.findUnique({
-      where: { slug },
+  async getAllProductsVariant() {
+    return prisma.productVariant.findMany({
+      where: PUBLIC_PRODUCT,
+      include: { product: { select: { name: true, brand: true } } },
+      orderBy: { createdAt: 'desc' },
     });
-    if (!product) {
+  }
+
+  async getProductVariantBySlug(slug: string) {
+    // findFirst (not findUnique) so a hidden product 404s instead of leaking
+    const variant = await prisma.productVariant.findFirst({
+      where: { slug, ...PUBLIC_PRODUCT },
+      include: {
+        images: { orderBy: { sortOrder: 'asc' } },
+        product: {
+          include: {
+            vendor: { select: { id: true, vendorName: true } },
+            brand: { select: { name: true } },
+            productCategories: {
+              include: { category: { select: { name: true } } },
+            },
+            variants: true,
+          },
+        },
+      },
+    });
+    if (!variant) {
       throw ApiError.notFound('Product not found');
     }
-    return product;
+
+    return variant;
   }
+
   // Shop
   async getVendorProducts(vendorId: string) {
-    // Check if vendor exists
-    const vendor = await prisma.vendor.findUnique({
-      where: { id: vendorId },
-    });
-    if (!vendor) {
-      throw ApiError.notFound('Vendor not found');
-    }
-
     return prisma.product.findMany({
-      where: { vendorId },
+      where: { vendorId, deletedAt: null },
+      orderBy: { createdAt: 'desc' },
+      include: { variants: true },
+    });
+  }
+
+  async getProductVariants(vendorId: string, productId: string) {
+    await this.findVendorProduct(vendorId, productId);
+
+    return prisma.productVariant.findMany({
+      where: { productId },
+      orderBy: { createdAt: 'asc' },
     });
   }
 
   async createProduct(vendorId: string, input: CreateProductInput) {
-    // Check if slug already exists
-    const slugExists = await prisma.product.findUnique({
-      where: { slug: input.slug },
-    });
-    if (slugExists) {
-      throw ApiError.conflict('Slug already exists');
-    }
-
-    // Check if SKU exists
-    if (input.sku) {
-      const skuExists = await prisma.product.findUnique({
-        where: { vendorId_sku: { vendorId, sku: input.sku } },
-      });
-      if (skuExists) {
-        throw ApiError.conflict('SKU already exists');
-      }
-    }
-
     // Check if categories exist
     const { categoryId, ...data } = input;
     if (categoryId?.length) {
@@ -91,6 +109,39 @@ class ProductService {
       },
     });
   }
+
+  async createProductVariant(
+    vendorId: string,
+    productId: string,
+    input: CreateProductVariantInput,
+  ) {
+    await this.findVendorProduct(vendorId, productId);
+
+    // slug is globally unique; sku and optionsKey are unique per product
+    const clash = await prisma.productVariant.findFirst({
+      where: {
+        OR: [
+          { slug: input.slug },
+          { productId, optionsKey: input.optionsKey },
+          ...(input.sku ? [{ productId, sku: input.sku }] : []),
+        ],
+      },
+    });
+    if (clash) {
+      if (clash.slug === input.slug) {
+        throw ApiError.conflict('Slug already exists');
+      }
+      if (clash.optionsKey === input.optionsKey) {
+        throw ApiError.conflict('A variant with these options already exists');
+      }
+      throw ApiError.conflict('SKU already exists');
+    }
+
+    return prisma.productVariant.create({
+      data: { ...input, productId },
+    });
+  }
+
   // Admin
   async getAdminProducts({
     page,
@@ -104,7 +155,11 @@ class ProductService {
       ...(search && {
         OR: [
           { name: { contains: search, mode: 'insensitive' as const } },
-          { sku: { contains: search, mode: 'insensitive' as const } },
+          {
+            variants: {
+              some: { sku: { contains: search, mode: 'insensitive' as const } },
+            },
+          },
         ],
       }),
     };
@@ -132,10 +187,10 @@ class ProductService {
       include: {
         vendor: { select: { id: true, vendorName: true } },
         brand: { select: { name: true } },
-        images: { orderBy: { sortOrder: 'asc' } },
         productCategories: {
           include: { category: { select: { name: true } } },
         },
+        variants: { include: { images: { orderBy: { sortOrder: 'asc' } } } },
       },
     });
     if (!product) {
@@ -171,6 +226,17 @@ class ProductService {
     });
   }
   // Private
+  private async findVendorProduct(vendorId: string, productId: string) {
+    const product = await prisma.product.findFirst({
+      where: { id: productId, vendorId, deletedAt: null },
+    });
+    if (!product) {
+      throw ApiError.notFound('Product not found');
+    }
+
+    return product;
+  }
+
   private async findPendingProduct(
     tx: Prisma.TransactionClient,
     productId: string,

@@ -6,6 +6,7 @@ import { validate, validateQuery } from '@/middlewares/validate.middleware';
 import { requireRole } from '@/middlewares/role.middleware';
 import {
   createProductSchema,
+  createProductVariantSchema,
   listProductsQuerySchema,
   rejectProductSchema,
 } from './product.validation';
@@ -22,8 +23,21 @@ router.post(
   validate(createProductSchema),
   productController.createProduct,
 );
+router.get(
+  '/:productId/variants',
+  isAuth,
+  isVendorOwner,
+  productController.getProductVariants,
+);
+router.post(
+  '/:productId/variants',
+  isAuth,
+  isVendorOwner,
+  validate(createProductVariantSchema),
+  productController.createProductVariant,
+);
 
-// === ADMIN ROUTES === (declared before `/:slug` so they aren't swallowed by it)
+// === ADMIN ROUTES
 router.get(
   '/admin',
   isAuth,
@@ -52,7 +66,7 @@ router.patch(
 );
 
 // === PUBLIC ROUTES ===
-router.get('/', productController.getAllProducts);
-router.get('/:slug', productController.getProductBySlug);
+router.get('/', productController.getAllProductsVariant);
+router.get('/:slug', productController.getProductVariantBySlug);
 
 export const productRoutes = router;
