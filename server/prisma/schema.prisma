@@ -299,34 +299,26 @@ model Product {
   brandId  String?
 
   // General info
-  name        String
-  slug        String        @unique
-  sku         String?
-  description String?       @db.Text
-  status      ProductStatus @default(DRAFT)
-
-  // SEO
-  metaTitle       String?
-  metaDescription String?
+  name   String
+  status ProductStatus @default(DRAFT)
 
   // Moderation
   approvalStatus ApprovalStatus @default(PENDING)
   rejectedReason String?
 
-  // Media
-  thumbnail String?
-
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
+  // Options
+  optionNames String[] @default([])
+
   // Relations
   vendor            Vendor            @relation(fields: [vendorId], references: [id], onDelete: Cascade)
   brand             Brand?            @relation(fields: [brandId], references: [id], onDelete: SetNull)
-  images            ProductImage[]
   productCategories ProductCategory[]
+  variants          ProductVariant[]
 
-  @@unique([vendorId, sku])
   @@index([vendorId])
   @@index([brandId])
   @@map("products")
@@ -347,17 +339,52 @@ model ProductCategory {
   @@map("product_categories")
 }
 
-model ProductImage {
-  id        String   @id @default(uuid())
+model ProductVariant {
+  id        String @id @default(uuid())
   productId String
-  url       String
-  isMain    Boolean  @default(false)
-  sortOrder Int      @default(0)
+
+  // General info
+  slug        String  @unique
+  description String? @db.Text
+
+  // Sell info
+  sku   String?
+  price Int
+  stock Int     @default(0)
+
+  // SEO
+  metaTitle       String?
+  metaDescription String?
+
+  // Media
+  thumbnail String?
+
+  options    Json   @default("{}")
+  optionsKey String
+
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  product Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
+  images  ProductImage[]
 
+  @@unique([productId, sku])
+  @@unique([productId, optionsKey])
   @@index([productId])
+  @@map("product_variants")
+}
+
+model ProductImage {
+  id               String   @id @default(uuid())
+  productVariantId String?
+  url              String
+  isMain           Boolean  @default(false)
+  sortOrder        Int      @default(0)
+  createdAt        DateTime @default(now())
+
+  variant ProductVariant? @relation(fields: [productVariantId], references: [id])
+
+  @@index([productVariantId])
   @@map("product_images")
 }
 
