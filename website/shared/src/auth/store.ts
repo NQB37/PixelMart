@@ -9,7 +9,8 @@ export type AuthState = {
   hasHydrated: boolean;
   setAuth: (user: UserInfo, accessToken: string) => void;
   clearAuth: () => void;
-  setAccessToken: (accessToken: string) => void;
+  /** `user` comes from a refresh round trip; omit it to only swap the token. */
+  setAccessToken: (accessToken: string, user?: UserInfo) => void;
   setHasHydrated: (value: boolean) => void;
 };
 
@@ -34,7 +35,10 @@ export function createAuthStore(
           set({ user, accessToken, isAuthenticated: true }),
         clearAuth: () =>
           set({ user: null, accessToken: null, isAuthenticated: false }),
-        setAccessToken: (accessToken) => set({ accessToken }),
+        setAccessToken: (accessToken, user) =>
+          set(
+            user ? { accessToken, user, isAuthenticated: true } : { accessToken },
+          ),
         setHasHydrated: (value) => set({ hasHydrated: value }),
       }),
       {

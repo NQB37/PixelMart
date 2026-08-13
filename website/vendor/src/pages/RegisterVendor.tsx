@@ -26,8 +26,7 @@ export default function RegisterVendor() {
     // detection, wiping the session.
     if (vendor?.approvalStatus === "APPROVED" && !hasRefreshed.current) {
       hasRefreshed.current = true;
-      authApi.refreshToken().then(async ({ accessToken }) => {
-        const user = await authApi.getMe();
+      authApi.refreshToken().then(({ accessToken, user }) => {
         setAuth(user, accessToken);
         navigate({ to: "/", replace: true });
       });

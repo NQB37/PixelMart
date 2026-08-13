@@ -1,4 +1,5 @@
 import axios, { type AxiosInstance } from "axios";
+import type { UserInfo } from "./types";
 
 declare module "axios" {
   export interface AxiosRequestConfig {
@@ -16,8 +17,8 @@ export function createAuthApiClient(config: {
   baseURL: string;
   timeout?: number;
   getAccessToken: () => string | null;
-  setAccessToken: (token: string) => void;
-  refreshToken: () => Promise<{ accessToken: string }>;
+  setAccessToken: (token: string, user?: UserInfo) => void;
+  refreshToken: () => Promise<{ accessToken: string; user?: UserInfo }>;
   onRefreshFailure: () => void;
   notifyError: (message: string) => void;
 }): AxiosInstance {
@@ -78,7 +79,9 @@ export function createAuthApiClient(config: {
           const data = await config.refreshToken();
           const newAccessToken = data.accessToken;
 
-          config.setAccessToken(newAccessToken);
+          // Carry the refreshed user through: its roles match the new token,
+          // while the cached ones may predate a role change.
+          config.setAccessToken(newAccessToken, data.user);
           originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
 
           processQueue(null, newAccessToken);

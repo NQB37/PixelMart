@@ -164,7 +164,11 @@ class AuthService {
       roles,
     );
 
-    return { accessToken, refreshToken };
+    return {
+      accessToken,
+      refreshToken,
+      user: { id: user.id, email: user.email, roles },
+    };
   }
 
   private async generateTokenPair(

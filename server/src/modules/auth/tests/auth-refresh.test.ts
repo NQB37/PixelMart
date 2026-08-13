@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import app from '@/app';
 import { prisma } from '@/libs/prisma';
 import { JwtPayload } from '@/utils/jwt';
+import { env } from '@/config/env';
 
 describe('Auth Refresh Token Integration Tests', () => {
   const cleanupUser = async (email: string) => {
@@ -73,6 +74,47 @@ describe('Auth Refresh Token Integration Tests', () => {
         c.includes('refreshToken='),
       );
       expect(newRefreshCookie).toBeDefined();
+    } finally {
+      await cleanupUser(email);
+    }
+  });
+
+  it('should keep each portal on its own refresh cookie', async () => {
+    const email = `test-org-${Date.now()}@example.com`;
+    await cleanupUser(email);
+
+    try {
+      // A client login must not hand its session to the admin portal.
+      const clientRes = await request(app)
+        .post('/api/v1/auth/register')
+        .set('Origin', env.clientWebUrl!)
+        .send({ email, password: testPassword });
+
+      const clientCookie = clientRes.headers['set-cookie'].find((c: string) =>
+        c.startsWith('refreshToken='),
+      );
+      expect(clientCookie).toBeDefined();
+
+      const adminRes = await request(app)
+        .post('/api/v1/auth/refresh')
+        .set('Origin', env.adminWebUrl!)
+        .set('Cookie', [clientCookie]);
+
+      expect(adminRes.status).toBe(401);
+
+      // ...and the client's own refresh still works.
+      const sameOriginRes = await request(app)
+        .post('/api/v1/auth/refresh')
+        .set('Origin', env.clientWebUrl!)
+        .set('Cookie', [clientCookie]);
+
+      expect(sameOriginRes.status).toBe(200);
+      expect(sameOriginRes.body.data.user.email).toBe(email);
+      expect(
+        sameOriginRes.headers['set-cookie'].some((c: string) =>
+          c.startsWith('refreshToken='),
+        ),
+      ).toBe(true);
     } finally {
       await cleanupUser(email);
     }

@@ -8,7 +8,8 @@ export const api = createAuthApiClient({
     process.env.NEXT_PUBLIC_BASE_API_URL || "http://localhost:8000/api/v1",
   timeout: 10000,
   getAccessToken: () => useAuthStore.getState().accessToken,
-  setAccessToken: (token) => useAuthStore.getState().setAccessToken(token),
+  setAccessToken: (token, user) =>
+    useAuthStore.getState().setAccessToken(token, user),
   refreshToken: () => authApi.refreshToken(),
   onRefreshFailure: () => {
     toast.error("Refresh token failed. Please login again!");
