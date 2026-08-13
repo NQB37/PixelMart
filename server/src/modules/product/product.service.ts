@@ -54,11 +54,20 @@ class ProductService {
 
   // Shop
   async getVendorProducts(vendorId: string) {
-    return prisma.product.findMany({
+    const products = await prisma.product.findMany({
       where: { vendorId, deletedAt: null },
       orderBy: { createdAt: 'desc' },
-      include: { variants: true },
+      include: {
+        variants: true,
+        productCategories: { select: { categoryId: true } },
+      },
     });
+
+    // flatten the join rows so the client gets the same categoryId[] it sends
+    return products.map(({ productCategories, ...product }) => ({
+      ...product,
+      categoryId: productCategories.map((pc) => pc.categoryId),
+    }));
   }
 
   async getProductVariants(vendorId: string, productId: string) {

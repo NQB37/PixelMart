@@ -12,6 +12,7 @@ import RegisterVendor from "@/pages/RegisterVendor";
 import Forbidden from "@/pages/Forbidden";
 import Dashboard from "@/pages/Dashboard";
 import Products from "@/pages/Products";
+import ProductDetail from "@/pages/ProductDetail";
 import Placeholder from "@/pages/Placeholder";
 import VendorLayout from "@/components/layout/VendorLayout";
 import { hasRole, type UserInfo } from "@website/shared/auth";
@@ -102,6 +103,12 @@ const productsRoute = createRoute({
   component: Products,
 });
 
+const productDetailRoute = createRoute({
+  getParentRoute: () => vendorLayoutRoute,
+  path: "/products/$productId",
+  component: ProductDetail,
+});
+
 const placeholderRoute = (path: string, title: string) =>
   createRoute({
     getParentRoute: () => vendorLayoutRoute,
@@ -118,6 +125,7 @@ const routeTree = rootRoute.addChildren([
     placeholderRoute("/orders", "Orders"),
     placeholderRoute("/orders/returns", "Return / Refund / Cancel"),
     productsRoute,
+    productDetailRoute,
     placeholderRoute("/products/new", "New Product"),
     placeholderRoute("/products/import", "Import Product (CSV)"),
     placeholderRoute("/vouchers", "Vouchers"),

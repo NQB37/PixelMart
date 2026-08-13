@@ -4,29 +4,19 @@ import {
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { ImageIcon, Pencil, Power, Trash2 } from "lucide-react";
-import { Badge, Button, cn } from "@website/shared/ui";
-import type { Product, ProductStatus } from "../types/product";
-import { useGetAllBrands } from "../hooks/useCatalog";
-
-const STATUS_BADGE: Record<
-  ProductStatus,
-  { label: string; className: string }
-> = {
-  ACTIVE: { label: "Active", className: "bg-success text-white" },
-  DRAFT: {
-    label: "Draft",
-    className: "bg-secondary text-secondary-foreground",
-  },
-  OUT_OF_STOCK: {
-    label: "Out of stock",
-    className: "bg-warning text-foreground",
-  },
-  BANNED: {
-    label: "Banned",
-    className: "bg-destructive text-destructive-foreground",
-  },
-};
+import { useNavigate } from "@tanstack/react-router";
+import { MoreHorizontal, Pencil, Power, Trash2 } from "lucide-react";
+import {
+  Badge,
+  Button,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@website/shared/ui";
+import { STATUS_BADGE, type Product } from "../types/product";
+import { useGetAllBrands, useGetAllCategories } from "../hooks/useCatalog";
 
 const columnHelper = createColumnHelper<Product>();
 
@@ -45,44 +35,33 @@ export function ProductsTable({
   onDelete,
   onToggleStatus,
 }: ProductsTableProps) {
+  const navigate = useNavigate();
   const { data: brands = [] } = useGetAllBrands();
+  const { data: categories = [] } = useGetAllCategories();
   const brandItems = brands.map((b) => ({ value: b.id, label: b.name }));
+  const categoryItems = categories.map((c) => ({
+    value: c.id,
+    label: c.name,
+  }));
 
   const columns = [
-    columnHelper.display({
-      id: "product",
+    columnHelper.accessor("name", {
       header: "Product",
-      cell: ({ row }) => {
-        const product = row.original;
-        return (
-          <div className='flex items-center gap-3'>
-            <span className='grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-md border border-border bg-secondary text-secondary-foreground'>
-              {product.thumbnail ? (
-                <img
-                  src={product.thumbnail}
-                  alt=''
-                  className='h-full w-full object-cover'
-                />
-              ) : (
-                <ImageIcon className='h-4 w-4' strokeWidth={1.75} />
-              )}
-            </span>
-            <div className='min-w-0'>
-              <p className='truncate text-sm font-medium text-foreground'>
-                {product.name}
-              </p>
-              <p className='truncate text-xs text-muted-foreground'>
-                SKU: {product.sku || "—"}
-              </p>
-            </div>
-          </div>
-        );
-      },
+      cell: ({ getValue }) => (
+        <span className='truncate text-sm font-medium text-foreground'>
+          {getValue()}
+        </span>
+      ),
     }),
     columnHelper.accessor("categoryId", {
       header: "Category",
       cell: ({ getValue }) => (
-        <span className='text-sm text-foreground/80'>{getValue() || "—"}</span>
+        <span className='text-sm text-foreground/80'>
+          {getValue()
+            .map((id) => categoryItems.find((c) => c.value === id)?.label)
+            .filter(Boolean)
+            .join(", ") || "—"}
+        </span>
       ),
     }),
     columnHelper.accessor("brandId", {
@@ -107,39 +86,38 @@ export function ProductsTable({
         const product = row.original;
         const isActive = product.status === "ACTIVE";
         return (
-          <div className='flex justify-end gap-2'>
-            <Button
-              variant='ghost'
-              className='p-2'
-              onClick={() => onEdit(product)}
-              title='Edit product'
-              aria-label='Edit product'
-            >
-              <Pencil className='h-4 w-4' />
-            </Button>
-            <Button
-              variant='ghost'
-              className={cn(
-                "p-2",
-                isActive
-                  ? "text-warning hover:bg-warning/10"
-                  : "text-success hover:bg-success/10",
-              )}
-              onClick={() => onToggleStatus(product)}
-              title={isActive ? "Deactivate product" : "Activate product"}
-              aria-label={isActive ? "Deactivate product" : "Activate product"}
-            >
-              <Power className='h-4 w-4' />
-            </Button>
-            <Button
-              variant='ghost'
-              className='p-2 text-destructive hover:bg-destructive/10'
-              onClick={() => onDelete(product)}
-              title='Delete product'
-              aria-label='Delete product'
-            >
-              <Trash2 className='h-4 w-4' />
-            </Button>
+          <div className='flex justify-end'>
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={
+                  <Button
+                    variant='ghost'
+                    className='p-2'
+                    aria-label='Product actions'
+                  >
+                    <MoreHorizontal className='h-4 w-4' />
+                  </Button>
+                }
+              />
+              <DropdownMenuContent align='end'>
+                <DropdownMenuItem onClick={() => onEdit(product)}>
+                  <Pencil className='h-4 w-4' />
+                  Edit
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onToggleStatus(product)}>
+                  <Power className='h-4 w-4' />
+                  {isActive ? "Deactivate" : "Activate"}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  variant='destructive'
+                  onClick={() => onDelete(product)}
+                >
+                  <Trash2 className='h-4 w-4' />
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         );
       },
@@ -185,10 +163,25 @@ export function ProductsTable({
         {table.getRowModel().rows.map((row) => (
           <tr
             key={row.id}
-            className='border-b border-border last:border-0 hover:bg-accent/40'
+            className='cursor-pointer border-b border-border last:border-0 hover:bg-accent/40'
+            onClick={() =>
+              navigate({
+                to: "/products/$productId",
+                params: { productId: row.original.id },
+              })
+            }
           >
             {row.getVisibleCells().map((cell) => (
-              <td key={cell.id} className='px-4 py-3'>
+              <td
+                key={cell.id}
+                className='px-4 py-3'
+                // the actions menu lives inside the row — don't navigate from it
+                onClick={
+                  cell.column.id === "actions"
+                    ? (e) => e.stopPropagation()
+                    : undefined
+                }
+              >
                 {flexRender(cell.column.columnDef.cell, cell.getContext())}
               </td>
             ))}
