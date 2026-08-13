@@ -7,6 +7,7 @@ import {
 import { ImageIcon, Pencil, Power, Trash2 } from "lucide-react";
 import { Badge, Button, cn } from "@website/shared/ui";
 import type { Product, ProductStatus } from "../types/product";
+import { useGetAllBrands } from "../hooks/useCatalog";
 
 const STATUS_BADGE: Record<
   ProductStatus,
@@ -44,6 +45,9 @@ export function ProductsTable({
   onDelete,
   onToggleStatus,
 }: ProductsTableProps) {
+  const { data: brands = [] } = useGetAllBrands();
+  const brandItems = brands.map((b) => ({ value: b.id, label: b.name }));
+
   const columns = [
     columnHelper.display({
       id: "product",
@@ -84,7 +88,9 @@ export function ProductsTable({
     columnHelper.accessor("brandId", {
       header: "Brand",
       cell: ({ getValue }) => (
-        <span className='text-sm text-foreground/80'>{getValue() || "—"}</span>
+        <span className='text-sm text-foreground/80'>
+          {brandItems.find((b) => b.value === getValue())?.label || "—"}
+        </span>
       ),
     }),
     columnHelper.accessor("status", {
