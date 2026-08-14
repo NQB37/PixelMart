@@ -6,6 +6,7 @@ import { validate, validateQuery } from '@/middlewares/validate.middleware';
 import { requireRole } from '@/middlewares/role.middleware';
 import {
   createProductSchema,
+  createProductVariantSchema,
   listProductsQuerySchema,
   rejectProductSchema,
 } from './product.validation';
@@ -13,17 +14,12 @@ import { ROLE } from '@/generated/prisma/client';
 
 const router = Router();
 
-// === VENDOR ROUTES ===
-router.get('/me', isAuth, isVendorOwner, productController.getMyProducts);
-router.post(
-  '/',
-  isAuth,
-  isVendorOwner,
-  validate(createProductSchema),
-  productController.createProduct,
-);
+// === PUBLIC ROUTES ===
+router.get('/variants', productController.getAllProductsVariant);
+router.get('/variants/:slug', productController.getProductVariantBySlug);
 
-// === ADMIN ROUTES === (declared before `/:slug` so they aren't swallowed by it)
+// === AUTHENTICATED ROUTES ===
+router.get('/me', isAuth, isVendorOwner, productController.getVendorProducts);
 router.get(
   '/admin',
   isAuth,
@@ -31,12 +27,28 @@ router.get(
   validateQuery(listProductsQuerySchema),
   productController.getAdminProducts,
 );
-router.get(
-  '/admin/:id',
+
+router.post(
+  '/',
   isAuth,
-  requireRole(ROLE.ADMIN),
-  productController.getProductById,
+  isVendorOwner,
+  validate(createProductSchema),
+  productController.createProduct,
 );
+router.get(
+  '/:productId/variants',
+  isAuth,
+  isVendorOwner,
+  productController.getProductVariants,
+);
+router.post(
+  '/:productId/variants',
+  isAuth,
+  isVendorOwner,
+  validate(createProductVariantSchema),
+  productController.createProductVariant,
+);
+
 router.patch(
   '/:id/approve',
   isAuth,
@@ -51,8 +63,12 @@ router.patch(
   productController.rejectProduct,
 );
 
-// === PUBLIC ROUTES ===
-router.get('/', productController.getAllProducts);
-router.get('/:slug', productController.getProductBySlug);
+// === DETAIL ROUTES (Placed after static routes) ===
+router.get(
+  '/:productId',
+  isAuth,
+  requireRole(ROLE.ADMIN, ROLE.VENDOR),
+  productController.getProductById,
+);
 
 export const productRoutes = router;
