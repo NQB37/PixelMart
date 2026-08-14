@@ -18,10 +18,17 @@ const getProductVariantBySlug = asyncHandler(async (req, res) => {
 });
 
 // === VENDOR ROUTES ===
-const getMyProducts = asyncHandler(async (req, res) => {
+const getVendorProducts = asyncHandler(async (req, res) => {
   const products = await productService.getVendorProducts(req.vendor!.id);
 
   ApiResponse.success(res, products);
+});
+
+const getProductById = asyncHandler(async (req, res) => {
+  const { productId } = req.params as { productId: string };
+  const product = await productService.getProductById(productId);
+
+  ApiResponse.success(res, product);
 });
 
 const getProductVariants = asyncHandler(async (req, res) => {
@@ -60,12 +67,6 @@ const getAdminProducts = asyncHandler(async (req, res) => {
   ApiResponse.success(res, products);
 });
 
-const getProductById = asyncHandler(async (req, res) => {
-  const product = await productService.getProductById(req.params.id as string);
-
-  ApiResponse.success(res, product);
-});
-
 const approveProduct = asyncHandler(async (req, res) => {
   const product = await productService.approveProduct(req.params.id as string);
 
@@ -85,7 +86,7 @@ const rejectProduct = asyncHandler(async (req, res) => {
 export {
   getAllProductsVariant,
   getProductVariantBySlug,
-  getMyProducts,
+  getVendorProducts,
   getProductVariants,
   createProduct,
   createProductVariant,

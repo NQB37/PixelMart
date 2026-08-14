@@ -202,6 +202,7 @@ class ProductService {
         variants: { include: { images: { orderBy: { sortOrder: 'asc' } } } },
       },
     });
+
     if (!product) {
       throw ApiError.notFound('Product not found');
     }

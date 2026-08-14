@@ -14,8 +14,20 @@ import { ROLE } from '@/generated/prisma/client';
 
 const router = Router();
 
-// === VENDOR ROUTES ===
-router.get('/me', isAuth, isVendorOwner, productController.getMyProducts);
+// === PUBLIC ROUTES ===
+router.get('/variants', productController.getAllProductsVariant);
+router.get('/variants/:slug', productController.getProductVariantBySlug);
+
+// === AUTHENTICATED ROUTES ===
+router.get('/me', isAuth, isVendorOwner, productController.getVendorProducts);
+router.get(
+  '/admin',
+  isAuth,
+  requireRole(ROLE.ADMIN),
+  validateQuery(listProductsQuerySchema),
+  productController.getAdminProducts,
+);
+
 router.post(
   '/',
   isAuth,
@@ -37,20 +49,6 @@ router.post(
   productController.createProductVariant,
 );
 
-// === ADMIN ROUTES
-router.get(
-  '/admin',
-  isAuth,
-  requireRole(ROLE.ADMIN),
-  validateQuery(listProductsQuerySchema),
-  productController.getAdminProducts,
-);
-router.get(
-  '/admin/:id',
-  isAuth,
-  requireRole(ROLE.ADMIN),
-  productController.getProductById,
-);
 router.patch(
   '/:id/approve',
   isAuth,
@@ -65,8 +63,12 @@ router.patch(
   productController.rejectProduct,
 );
 
-// === PUBLIC ROUTES ===
-router.get('/', productController.getAllProductsVariant);
-router.get('/:slug', productController.getProductVariantBySlug);
+// === DETAIL ROUTES (Placed after static routes) ===
+router.get(
+  '/:productId',
+  isAuth,
+  requireRole(ROLE.ADMIN, ROLE.VENDOR),
+  productController.getProductById,
+);
 
 export const productRoutes = router;

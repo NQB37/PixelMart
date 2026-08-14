@@ -9,14 +9,23 @@ describe("Product Integration Tests", () => {
 
   // Register a user, then approve them as a vendor directly (KYC flow is not what's under test)
   const createVendor = async (email: string) => {
-    const res = await request(app)
+    await request(app)
       .post("/api/v1/auth/register")
       .send({ email, password: "Password123!" });
-    const accessToken = res.body.data.accessToken as string;
     const user = await prisma.user.findUniqueOrThrow({ where: { email } });
+    const vendorRole = await prisma.role.upsert({
+      where: { name: "VENDOR" },
+      update: {},
+      create: { name: "VENDOR" },
+    });
+    await prisma.roles.create({ data: { userId: user.id, roleId: vendorRole.id } });
     const vendor = await prisma.vendor.create({
       data: { ownerId: user.id, vendorName: `Shop ${email}`, approvalStatus: "APPROVED" },
     });
+    const loginRes = await request(app)
+      .post("/api/v1/auth/login")
+      .send({ email, password: "Password123!" });
+    const accessToken = loginRes.body.data.accessToken as string;
     return { accessToken, vendor };
   };
 
@@ -73,20 +82,30 @@ describe("Product Integration Tests", () => {
       .set(auth(other.accessToken));
     expect(foreignRead.status).toBe(404);
 
-    // still PENDING → invisible to the public
-    expect(await request(app).get(`/api/v1/products/${slug}`).then((r) => r.status)).toBe(404);
-    const pendingList = await request(app).get("/api/v1/products");
+    // public list should not show pending variants
+    const pendingList = await request(app).get("/api/v1/products/variants");
     expect(pendingList.body.data.some((v: { slug: string }) => v.slug === slug)).toBe(false);
+
+    // still PENDING → invisible to the public
+    expect(await request(app).get(`/api/v1/products/variants/${slug}`).then((r) => r.status)).toBe(404);
+
+    // vendor can read product detail by productId
+    const ownerDetail = await request(app)
+      .get(`/api/v1/products/${productId}`)
+      .set(auth(owner.accessToken));
+    expect(ownerDetail.status).toBe(200);
+    expect(ownerDetail.body.data.name).toBe("Mint Keyboard");
 
     await prisma.product.update({
       where: { id: productId },
       data: { approvalStatus: "APPROVED", status: "ACTIVE" },
     });
 
-    const detail = await request(app).get(`/api/v1/products/${slug}`);
+    const detail = await request(app).get(`/api/v1/products/variants/${slug}`);
     expect(detail.status).toBe(200);
     expect(detail.body.data.product.name).toBe("Mint Keyboard");
-    const list = await request(app).get("/api/v1/products");
+
+    const list = await request(app).get("/api/v1/products/variants");
     expect(list.body.data.some((v: { slug: string }) => v.slug === slug)).toBe(true);
   });
 });
