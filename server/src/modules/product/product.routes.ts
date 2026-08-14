@@ -9,6 +9,7 @@ import {
   createProductVariantSchema,
   listProductsQuerySchema,
   rejectProductSchema,
+  updateProductSchema,
 } from './product.validation';
 import { ROLE } from '@/generated/prisma/client';
 
@@ -19,6 +20,7 @@ router.get('/variants', productController.getAllProductsVariant);
 router.get('/variants/:slug', productController.getProductVariantBySlug);
 
 // === AUTHENTICATED ROUTES ===
+// Product
 router.get('/me', isAuth, isVendorOwner, productController.getVendorProducts);
 router.get(
   '/admin',
@@ -35,18 +37,27 @@ router.post(
   validate(createProductSchema),
   productController.createProduct,
 );
-router.get(
-  '/:productId/variants',
+
+router.patch(
+  '/:productId',
   isAuth,
   isVendorOwner,
-  productController.getProductVariants,
+  validate(updateProductSchema),
+  productController.updateProduct,
 );
-router.post(
-  '/:productId/variants',
+
+router.delete(
+  '/:productId',
   isAuth,
   isVendorOwner,
-  validate(createProductVariantSchema),
-  productController.createProductVariant,
+  productController.deleteProduct,
+);
+
+router.delete(
+  '/:productId/permanent',
+  isAuth,
+  isVendorOwner,
+  productController.deleteProductPermanent,
 );
 
 router.patch(
@@ -55,12 +66,29 @@ router.patch(
   requireRole(ROLE.ADMIN),
   productController.approveProduct,
 );
+
 router.patch(
   '/:id/reject',
   isAuth,
   requireRole(ROLE.ADMIN),
   validate(rejectProductSchema),
   productController.rejectProduct,
+);
+
+// Variant
+router.get(
+  '/:productId/variants',
+  isAuth,
+  isVendorOwner,
+  productController.getProductVariants,
+);
+
+router.post(
+  '/:productId/variants',
+  isAuth,
+  isVendorOwner,
+  validate(createProductVariantSchema),
+  productController.createProductVariant,
 );
 
 // === DETAIL ROUTES (Placed after static routes) ===

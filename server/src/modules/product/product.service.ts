@@ -3,6 +3,7 @@ import {
   CreateProductInput,
   CreateProductVariantInput,
   ListProductsQuery,
+  UpdateProductInput,
 } from './product.validation';
 import { ApiError } from '@/utils/ApiError';
 import { ApprovalStatus, ProductStatus } from '@/generated/prisma/enums';
@@ -12,7 +13,7 @@ import type { Prisma } from '@/generated/prisma/client';
 const PUBLIC_PRODUCT = {
   product: {
     approvalStatus: ApprovalStatus.APPROVED,
-    status: { in: [ProductStatus.ACTIVE, ProductStatus.OUT_OF_STOCK] },
+    status: ProductStatus.ACTIVE,
     deletedAt: null,
   },
 } satisfies Prisma.ProductVariantWhereInput;
@@ -28,7 +29,6 @@ class ProductService {
   }
 
   async getProductVariantBySlug(slug: string) {
-    // findFirst (not findUnique) so a hidden product 404s instead of leaking
     const variant = await prisma.productVariant.findFirst({
       where: { slug, ...PUBLIC_PRODUCT },
       include: {
@@ -119,6 +119,61 @@ class ProductService {
     });
   }
 
+  async updateProduct(
+    vendorId: string,
+    productId: string,
+    input: UpdateProductInput,
+  ) {
+    await this.findVendorProduct(vendorId, productId);
+
+    const { categoryId, brandId, ...data } = input;
+
+    if (categoryId?.length) {
+      const count = await prisma.category.count({
+        where: { id: { in: categoryId } },
+      });
+      if (count !== categoryId.length) {
+        throw ApiError.notFound('Some categories do not exist');
+      }
+    }
+
+    return prisma.product.update({
+      where: { id: productId },
+      data: {
+        ...data,
+        brandId: brandId || null,
+        // replacing the whole set in one nested write keeps it atomic
+        ...(categoryId?.length && {
+          productCategories: {
+            deleteMany: {},
+            create: categoryId.map((id, index) => ({
+              categoryId: id,
+              isMain: index === 0,
+            })),
+          },
+        }),
+        approvalStatus: ApprovalStatus.PENDING,
+      },
+    });
+  }
+
+  async deleteProduct(vendorId: string, productId: string) {
+    await this.findVendorProduct(vendorId, productId);
+
+    return prisma.product.update({
+      where: { id: productId },
+      data: { deletedAt: new Date(), status: ProductStatus.ARCHIVED },
+    });
+  }
+
+  async deleteProductPermanent(vendorId: string, productId: string) {
+    await this.findVendorProduct(vendorId, productId);
+
+    return prisma.product.delete({
+      where: { id: productId },
+    });
+  }
+
   async createProductVariant(
     vendorId: string,
     productId: string,
@@ -126,7 +181,6 @@ class ProductService {
   ) {
     await this.findVendorProduct(vendorId, productId);
 
-    // slug is globally unique; sku and optionsKey are unique per product
     const clash = await prisma.productVariant.findFirst({
       where: {
         OR: [
@@ -235,6 +289,7 @@ class ProductService {
       });
     });
   }
+
   // Private
   private async findVendorProduct(vendorId: string, productId: string) {
     const product = await prisma.product.findFirst({
