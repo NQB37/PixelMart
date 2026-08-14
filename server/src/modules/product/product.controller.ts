@@ -31,6 +31,34 @@ const getProductById = asyncHandler(async (req, res) => {
   ApiResponse.success(res, product);
 });
 
+const updateProduct = asyncHandler(async (req, res) => {
+  const { productId } = req.params as { productId: string };
+  const product = await productService.updateProduct(
+    req.vendor!.id,
+    productId,
+    req.body,
+  );
+
+  ApiResponse.success(res, product, 'Product updated successfully');
+});
+
+const deleteProduct = asyncHandler(async (req, res) => {
+  const { productId } = req.params as { productId: string };
+  const product = await productService.deleteProduct(req.vendor!.id, productId);
+
+  ApiResponse.success(res, product, 'Product deleted successfully');
+});
+
+const deleteProductPermanent = asyncHandler(async (req, res) => {
+  const { productId } = req.params as { productId: string };
+  const product = await productService.deleteProductPermanent(
+    req.vendor!.id,
+    productId,
+  );
+
+  ApiResponse.success(res, product, 'Product deleted successfully');
+});
+
 const getProductVariants = asyncHandler(async (req, res) => {
   const { productId } = req.params as { productId: string };
   const productVariants = await productService.getProductVariants(
@@ -87,6 +115,9 @@ export {
   getAllProductsVariant,
   getProductVariantBySlug,
   getVendorProducts,
+  updateProduct,
+  deleteProduct,
+  deleteProductPermanent,
   getProductVariants,
   createProduct,
   createProductVariant,

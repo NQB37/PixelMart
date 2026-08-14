@@ -14,6 +14,17 @@ export const createProductSchema = z.object({
   optionNames: z.array(z.string().trim().min(1)).optional(),
 });
 
+export const updateProductSchema = z.object({
+  brandId: z.uuid().optional(),
+  categoryId: z.array(z.uuid()).optional(),
+  name: z
+    .string('Name is required')
+    .min(3, 'Product name must be at least 3 characters')
+    .max(100, 'Product name must be at most 100 characters')
+    .trim(),
+  optionNames: z.array(z.string().trim().min(1)).optional(),
+});
+
 export const createProductVariantSchema = z.object({
   // Meta
   metaTitle: z.string().optional(),
@@ -52,6 +63,7 @@ export const rejectProductSchema = z.object({
 });
 
 export type CreateProductInput = z.infer<typeof createProductSchema>;
+export type UpdateProductInput = z.infer<typeof updateProductSchema>;
 export type CreateProductVariantInput = z.infer<
   typeof createProductVariantSchema
 >;
