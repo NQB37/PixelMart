@@ -1,5 +1,5 @@
 export type ApprovalStatus = "PENDING" | "APPROVED" | "REJECTED";
-export type ProductStatus = "DRAFT" | "ACTIVE" | "OUT_OF_STOCK" | "BANNED";
+export type ProductStatus = "DRAFT" | "ACTIVE" | "ARCHIVED" | "BANNED";
 
 export interface AdminProduct {
   id: string;

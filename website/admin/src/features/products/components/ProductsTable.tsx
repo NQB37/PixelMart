@@ -53,7 +53,9 @@ export function ProductsTable({ products, isLoading }: ProductsTableProps) {
     columnHelper.accessor("sku", {
       header: "SKU",
       cell: ({ getValue }) => (
-        <span className='text-sm text-muted-foreground'>{getValue() || "—"}</span>
+        <span className='text-sm text-muted-foreground'>
+          {getValue() || "—"}
+        </span>
       ),
     }),
     columnHelper.accessor("createdAt", {
