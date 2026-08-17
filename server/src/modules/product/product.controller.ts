@@ -1,7 +1,8 @@
 import { asyncHandler } from '@/utils/asyncHandler';
 import { ApiResponse } from '@/utils/ApiResponse';
 import { productService } from './product.service';
-import { ListProductsQuery, RejectProductInput } from './product.validation';
+import { ListProductsQuery } from './product.validation';
+import { ROLE } from '@/generated/prisma/client';
 
 // === PUBLIC ROUTES ===
 const getAllProductsVariant = asyncHandler(async (_req, res) => {
@@ -26,7 +27,11 @@ const getVendorProducts = asyncHandler(async (req, res) => {
 
 const getProductById = asyncHandler(async (req, res) => {
   const { productId } = req.params as { productId: string };
-  const product = await productService.getProductById(productId);
+  const isAdmin = req.user!.roles.includes(ROLE.ADMIN);
+  const product = await productService.getProductById(
+    productId,
+    isAdmin ? undefined : req.user!.userId,
+  );
 
   ApiResponse.success(res, product);
 });
@@ -95,22 +100,6 @@ const getAdminProducts = asyncHandler(async (req, res) => {
   ApiResponse.success(res, products);
 });
 
-const approveProduct = asyncHandler(async (req, res) => {
-  const product = await productService.approveProduct(req.params.id as string);
-
-  ApiResponse.success(res, product, 'Product approved successfully');
-});
-
-const rejectProduct = asyncHandler(async (req, res) => {
-  const { rejectedReason } = req.body as RejectProductInput;
-  const product = await productService.rejectProduct(
-    req.params.id as string,
-    rejectedReason,
-  );
-
-  ApiResponse.success(res, product, 'Product rejected successfully');
-});
-
 export {
   getAllProductsVariant,
   getProductVariantBySlug,
@@ -123,6 +112,4 @@ export {
   createProductVariant,
   getAdminProducts,
   getProductById,
-  approveProduct,
-  rejectProduct,
 };

@@ -1,12 +1,12 @@
-export type ProductStatus = "DRAFT" | "ACTIVE" | "ARCHIVED" | "BANNED";
+export type ProductStatus = "ACTIVE" | "INACTIVE" | "ARCHIVED" | "BANNED";
 
 export const STATUS_BADGE: Record<
   ProductStatus,
   { label: string; className: string }
 > = {
   ACTIVE: { label: "Active", className: "bg-success text-white" },
-  DRAFT: {
-    label: "Draft",
+  INACTIVE: {
+    label: "Inactive",
     className: "bg-secondary text-secondary-foreground",
   },
   ARCHIVED: {
@@ -27,8 +27,6 @@ export const SORT_OPTIONS = [
 ] as const;
 
 export type ProductSort = (typeof SORT_OPTIONS)[number]["value"];
-
-export type ApprovalStatus = "PENDING" | "APPROVED" | "REJECTED";
 
 export interface ProductVariant {
   id: string;
@@ -51,20 +49,18 @@ export interface ProductVariant {
   updatedAt: string;
 }
 
+// GET /products/:id — nested exactly as the API returns it
 export interface ProductDetail {
   id: string;
   name: string;
-  brandId: string | null;
-  brandName: string | null;
-  categories: string[];
   // General
   status: ProductStatus;
-  approvalStatus: ApprovalStatus;
-  rejectedReason: string | null;
   // Options
   optionNames: string[];
   createdAt: string;
   updatedAt: string;
+  brand: { name: string } | null;
+  productCategories: { category: { name: string } }[];
   // Variants
   variants: ProductVariant[];
 }
@@ -76,8 +72,6 @@ export interface Product {
   id: string;
   name: string;
   status: ProductStatus;
-  approvalStatus: ApprovalStatus;
-  rejectedReason: string | null;
   // Options
   optionNames: string[];
   createdAt: string;

@@ -9,7 +9,6 @@ import {
   LayoutDashboard,
   LogOut,
   Megaphone,
-  PackageSearch,
   PanelLeftClose,
   PanelLeftOpen,
   ScrollText,
@@ -62,7 +61,6 @@ const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
   {
     label: "Catalog Moderation",
     items: [
-      { to: "/catalog/review-queue", label: "Review Queue", icon: PackageSearch },
       { to: "/catalog/categories", label: "Categories", icon: Layers },
       { to: "/catalog/brands", label: "Brands", icon: Tag },
       { to: "/catalog/flagged", label: "Flagged Listings", icon: Flag },

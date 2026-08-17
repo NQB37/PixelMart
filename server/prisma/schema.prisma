@@ -300,11 +300,7 @@ model Product {
 
   // General info
   name   String
-  status ProductStatus @default(DRAFT)
-
-  // Moderation
-  approvalStatus ApprovalStatus @default(PENDING)
-  rejectedReason String?
+  status ProductStatus @default(ACTIVE)
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -389,8 +385,8 @@ model ProductImage {
 }
 
 enum ProductStatus {
-  DRAFT
   ACTIVE
+  INACTIVE
   ARCHIVED
   BANNED
 }

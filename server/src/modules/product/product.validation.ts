@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import { ApprovalStatus } from '@/generated/prisma/client';
 import { slugSchema } from '@/utils/slug';
 
 export const createProductSchema = z.object({
@@ -22,6 +21,9 @@ export const updateProductSchema = z.object({
     .min(3, 'Product name must be at least 3 characters')
     .max(100, 'Product name must be at most 100 characters')
     .trim(),
+  // ARCHIVED is reached through DELETE and BANNED is admin-only, so a vendor
+  // may only publish or unpublish
+  status: z.enum(['ACTIVE', 'INACTIVE']).optional(),
   optionNames: z.array(z.string().trim().min(1)).optional(),
 });
 
@@ -51,15 +53,6 @@ export const listProductsQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(10),
   search: z.string().trim().optional(),
-  approvalStatus: z.enum(ApprovalStatus),
-});
-
-export const rejectProductSchema = z.object({
-  rejectedReason: z
-    .string()
-    .trim()
-    .min(1, 'Rejection reason is required')
-    .max(500),
 });
 
 export type CreateProductInput = z.infer<typeof createProductSchema>;
@@ -68,4 +61,3 @@ export type CreateProductVariantInput = z.infer<
   typeof createProductVariantSchema
 >;
 export type ListProductsQuery = z.infer<typeof listProductsQuerySchema>;
-export type RejectProductInput = z.infer<typeof rejectProductSchema>;

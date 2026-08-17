@@ -19,16 +19,18 @@ import {
 import type { CreateProductInput } from "../schemas/product.schema";
 import { useGetAllBrands, useGetAllCategories } from "../hooks/useCatalog";
 
-// Create and update take the same four fields, so both forms render this.
-export function ProductFormFields({
-  form: {
+// Create and update share these four fields — update just adds `status` on top,
+// hence the generic (react-hook-form's types aren't covariant, so one cast).
+export function ProductFormFields<T extends CreateProductInput>({
+  form,
+}: {
+  form: UseFormReturn<T>;
+}) {
+  const {
     register,
     control,
     formState: { errors },
-  },
-}: {
-  form: UseFormReturn<CreateProductInput>;
-}) {
+  } = form as unknown as UseFormReturn<CreateProductInput>;
   const { data: brands = [] } = useGetAllBrands();
   const { data: categories = [] } = useGetAllCategories();
   // `items` is what makes the trigger render the name for the selected id.

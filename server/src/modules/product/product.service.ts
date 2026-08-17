@@ -6,13 +6,12 @@ import {
   UpdateProductInput,
 } from './product.validation';
 import { ApiError } from '@/utils/ApiError';
-import { ApprovalStatus, ProductStatus } from '@/generated/prisma/enums';
+import { ProductStatus } from '@/generated/prisma/enums';
 import type { Prisma } from '@/generated/prisma/client';
 
 // Only variants of published products are visible publicly
 const PUBLIC_PRODUCT = {
   product: {
-    approvalStatus: ApprovalStatus.APPROVED,
     status: ProductStatus.ACTIVE,
     deletedAt: null,
   },
@@ -107,7 +106,6 @@ class ProductService {
       data: {
         ...data,
         vendorId,
-        approvalStatus: 'PENDING',
         ...(categoryId?.length && {
           productCategories: {
             create: categoryId.map((id, index) => ({
@@ -153,7 +151,6 @@ class ProductService {
             })),
           },
         }),
-        approvalStatus: ApprovalStatus.PENDING,
       },
     });
   }
@@ -207,14 +204,8 @@ class ProductService {
   }
 
   // Admin
-  async getAdminProducts({
-    page,
-    limit,
-    search,
-    approvalStatus,
-  }: ListProductsQuery) {
+  async getAdminProducts({ page, limit, search }: ListProductsQuery) {
     const where = {
-      approvalStatus,
       deletedAt: null,
       ...(search && {
         OR: [
@@ -245,9 +236,10 @@ class ProductService {
     };
   }
 
-  async getProductById(productId: string) {
-    const product = await prisma.product.findUnique({
-      where: { id: productId },
+  // ownerId scopes the lookup to that user's own shop — admins pass nothing
+  async getProductById(productId: string, ownerId?: string) {
+    const product = await prisma.product.findFirst({
+      where: { id: productId, ...(ownerId && { vendor: { ownerId } }) },
       include: {
         vendor: { select: { id: true, vendorName: true } },
         brand: { select: { name: true } },
@@ -263,32 +255,6 @@ class ProductService {
     }
 
     return product;
-  }
-
-  async approveProduct(productId: string) {
-    return prisma.$transaction(async (tx) => {
-      await this.findPendingProduct(tx, productId);
-
-      return tx.product.update({
-        where: { id: productId },
-        data: {
-          approvalStatus: ApprovalStatus.APPROVED,
-          rejectedReason: null,
-          status: ProductStatus.ACTIVE,
-        },
-      });
-    });
-  }
-
-  async rejectProduct(productId: string, rejectedReason: string) {
-    return prisma.$transaction(async (tx) => {
-      await this.findPendingProduct(tx, productId);
-
-      return tx.product.update({
-        where: { id: productId },
-        data: { approvalStatus: ApprovalStatus.REJECTED, rejectedReason },
-      });
-    });
   }
 
   // Private
@@ -307,21 +273,6 @@ class ProductService {
     });
     if (!product) {
       throw ApiError.notFound('Product not found');
-    }
-
-    return product;
-  }
-
-  private async findPendingProduct(
-    tx: Prisma.TransactionClient,
-    productId: string,
-  ) {
-    const product = await tx.product.findUnique({ where: { id: productId } });
-    if (!product) {
-      throw ApiError.notFound('Product not found');
-    }
-    if (product.approvalStatus !== ApprovalStatus.PENDING) {
-      throw ApiError.badRequest('Product has already been reviewed');
     }
 
     return product;

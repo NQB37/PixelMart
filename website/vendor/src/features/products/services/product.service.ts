@@ -1,5 +1,5 @@
 import { api } from "@/lib/api";
-import type { Product, ProductVariant } from "../types/product";
+import type { Product, ProductDetail, ProductVariant } from "../types/product";
 import type {
   CreateProductInput,
   UpdateProductInput,
@@ -18,6 +18,10 @@ export const productApi = {
   // Shop
   getMyProducts: async () => {
     const response = await api.get<Product[]>(`products/me`);
+    return response.data;
+  },
+  getProductById: async (id: string) => {
+    const response = await api.get<ProductDetail>(`products/${id}`);
     return response.data;
   },
   createProduct: async (data: CreateProductInput) => {

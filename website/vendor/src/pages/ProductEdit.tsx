@@ -1,14 +1,17 @@
 import { Link, useNavigate, useParams } from "@tanstack/react-router";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { toast } from "react-toastify";
-import { ArrowLeft, Info } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
   Badge,
   Button,
+  Label,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
   Skeleton,
   Spinner,
 } from "@website/shared/ui";
@@ -23,11 +26,10 @@ import {
 } from "@/features/products/schemas/product.schema";
 import { STATUS_BADGE, type Product } from "@/features/products/types/product";
 
-const APPROVAL_BADGE = {
-  PENDING: "bg-warning text-foreground",
-  APPROVED: "bg-success text-white",
-  REJECTED: "bg-destructive text-destructive-foreground",
-} as const;
+const STATUS_ITEMS = [
+  { value: "ACTIVE", label: "Active — listed on the storefront" },
+  { value: "INACTIVE", label: "Inactive — hidden from shoppers" },
+] as const;
 
 function EditProductForm({ product }: { product: Product }) {
   const navigate = useNavigate();
@@ -39,6 +41,8 @@ function EditProductForm({ product }: { product: Product }) {
       brandId: product.brandId ?? undefined,
       categoryId: product.categoryId,
       optionNames: product.optionNames,
+      // archived/banned products aren't editable, so the switch only has two sides
+      status: product.status === "ACTIVE" ? "ACTIVE" : "INACTIVE",
     },
   });
   const {
@@ -58,24 +62,37 @@ function EditProductForm({ product }: { product: Product }) {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className='space-y-5'>
-      {product.approvalStatus === "REJECTED" && product.rejectedReason && (
-        <Alert variant='destructive'>
-          <AlertTitle>This product was rejected</AlertTitle>
-          <AlertDescription>{product.rejectedReason}</AlertDescription>
-        </Alert>
-      )}
-
-      <Alert>
-        <Info />
-        <AlertTitle>Saving sends the product back for approval</AlertTitle>
-        <AlertDescription>
-          Any edit resets its review status to pending, so it stays off the
-          storefront until an admin approves it again.
-        </AlertDescription>
-      </Alert>
-
       <div className='space-y-4 rounded-xl border border-border bg-card p-5 shadow-sm'>
         <ProductFormFields form={form} />
+
+        <Controller
+          control={form.control}
+          name='status'
+          render={({ field }) => (
+            <div className='space-y-1.5'>
+              <Label htmlFor='product-status'>Status</Label>
+              <Select
+                items={STATUS_ITEMS}
+                value={field.value}
+                onValueChange={(value) =>
+                  field.onChange(value as UpdateProductInput["status"])
+                }
+              >
+                <SelectTrigger id='product-status'>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {STATUS_ITEMS.map((item) => (
+                    <SelectItem key={item.value} value={item.value}>
+                      {item.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+        />
+
         <p className='text-xs text-muted-foreground'>
           Clearing every category isn&apos;t saved yet — the product keeps the
           categories it has now.
@@ -137,9 +154,6 @@ export default function ProductEdit() {
               <div className='mt-2 flex flex-wrap items-center gap-2'>
                 <Badge className={STATUS_BADGE[product.status].className}>
                   {STATUS_BADGE[product.status].label}
-                </Badge>
-                <Badge className={APPROVAL_BADGE[product.approvalStatus]}>
-                  {product.approvalStatus}
                 </Badge>
               </div>
             </div>

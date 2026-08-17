@@ -8,7 +8,6 @@ import {
   createProductSchema,
   createProductVariantSchema,
   listProductsQuerySchema,
-  rejectProductSchema,
   updateProductSchema,
 } from './product.validation';
 import { ROLE } from '@/generated/prisma/client';
@@ -58,21 +57,6 @@ router.delete(
   isAuth,
   isVendorOwner,
   productController.deleteProductPermanent,
-);
-
-router.patch(
-  '/:id/approve',
-  isAuth,
-  requireRole(ROLE.ADMIN),
-  productController.approveProduct,
-);
-
-router.patch(
-  '/:id/reject',
-  isAuth,
-  requireRole(ROLE.ADMIN),
-  validate(rejectProductSchema),
-  productController.rejectProduct,
 );
 
 // Variant

@@ -13,9 +13,11 @@ export const createProductSchema = z.object({
   optionNames: z.array(z.string().trim().min(1, "Option name is required")),
 });
 
-// ponytail: the update endpoint takes the exact same fields — one schema, two names.
-// `status` is deliberately absent: the server's updateProductSchema drops it.
-export const updateProductSchema = createProductSchema;
+// Update takes the create fields plus the publish switch — ARCHIVED comes from
+// deleting, BANNED from an admin, so a vendor only picks between these two.
+export const updateProductSchema = createProductSchema.extend({
+  status: z.enum(["ACTIVE", "INACTIVE"]),
+});
 
 export type CreateProductInput = z.infer<typeof createProductSchema>;
-export type UpdateProductInput = CreateProductInput;
+export type UpdateProductInput = z.infer<typeof updateProductSchema>;

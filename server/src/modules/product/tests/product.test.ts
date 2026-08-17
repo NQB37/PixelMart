@@ -33,7 +33,7 @@ describe("Product Integration Tests", () => {
     await prisma.user.deleteMany({ where: { email: { in: emails } } });
   });
 
-  it("creates a product + variant, persists options, and hides it publicly until approved", async () => {
+  it("creates a product + variant, persists options, and hides it publicly while inactive", async () => {
     const [owner, other] = await Promise.all(emails.map(createVendor));
     const auth = (token: string) => ({ Authorization: `Bearer ${token}` });
 
@@ -43,7 +43,7 @@ describe("Product Integration Tests", () => {
       .send({ name: "Mint Keyboard", optionNames: ["Color"] });
     expect(created.status).toBe(201);
     const productId = created.body.data.id as string;
-    expect(created.body.data.approvalStatus).toBe("PENDING");
+    expect(created.body.data.status).toBe("ACTIVE");
     expect(created.body.data.optionNames).toEqual(["Color"]);
 
     const slug = `mint-keyboard-red-${stamp}`;
@@ -82,11 +82,13 @@ describe("Product Integration Tests", () => {
       .set(auth(other.accessToken));
     expect(foreignRead.status).toBe(404);
 
-    // public list should not show pending variants
-    const pendingList = await request(app).get("/api/v1/products/variants");
-    expect(pendingList.body.data.some((v: { slug: string }) => v.slug === slug)).toBe(false);
-
-    // still PENDING → invisible to the public
+    // an unpublished product and its variants are invisible to the public
+    await request(app)
+      .patch(`/api/v1/products/${productId}`)
+      .set(auth(owner.accessToken))
+      .send({ name: "Mint Keyboard", status: "INACTIVE" });
+    const inactiveList = await request(app).get("/api/v1/products/variants");
+    expect(inactiveList.body.data.some((v: { slug: string }) => v.slug === slug)).toBe(false);
     expect(await request(app).get(`/api/v1/products/variants/${slug}`).then((r) => r.status)).toBe(404);
 
     // vendor can read product detail by productId
@@ -95,11 +97,16 @@ describe("Product Integration Tests", () => {
       .set(auth(owner.accessToken));
     expect(ownerDetail.status).toBe(200);
     expect(ownerDetail.body.data.name).toBe("Mint Keyboard");
+    const foreignDetail = await request(app)
+      .get(`/api/v1/products/${productId}`)
+      .set(auth(other.accessToken));
+    expect(foreignDetail.status).toBe(404);
 
-    await prisma.product.update({
-      where: { id: productId },
-      data: { approvalStatus: "APPROVED", status: "ACTIVE" },
-    });
+    // published again → back on the storefront
+    await request(app)
+      .patch(`/api/v1/products/${productId}`)
+      .set(auth(owner.accessToken))
+      .send({ name: "Mint Keyboard", status: "ACTIVE" });
 
     const detail = await request(app).get(`/api/v1/products/variants/${slug}`);
     expect(detail.status).toBe(200);
