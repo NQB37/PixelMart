@@ -1,4 +1,4 @@
-import jwt from "jsonwebtoken";
+import jwt, { SignOptions } from "jsonwebtoken";
 import { env } from "@/config/env";
 import { ApiError } from "./ApiError";
 import { ROLE } from "@/generated/prisma/client";
@@ -12,13 +12,13 @@ export interface JwtPayload {
 
 const generateAccessToken = (payload: JwtPayload) => {
   return jwt.sign(payload, env.jwtAccessSecret!, {
-    expiresIn: env.accessTokenExpiresIn as any,
+    expiresIn: env.accessTokenExpiresIn as SignOptions["expiresIn"],
   });
 };
 
 const generateRefreshToken = (payload: JwtPayload) => {
   return jwt.sign(payload, env.jwtRefreshSecret!, {
-    expiresIn: env.refreshTokenExpiresIn as any,
+    expiresIn: env.refreshTokenExpiresIn as SignOptions["expiresIn"],
   });
 };
 

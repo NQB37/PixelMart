@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { ZodError } from 'zod';
 import { ApiError } from '@/utils/ApiError';
 import { env } from '@/config/env';
 
@@ -17,11 +18,11 @@ export const errorHandler = (
   }
 
   // Zod validation errors
-  if (err.name === 'ZodError') {
+  if (err instanceof ZodError) {
     return res.status(400).json({
       success: false,
       message: 'Validation failed',
-      errors: (err as any).errors,
+      errors: err.issues,
     });
   }
 
