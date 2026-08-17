@@ -36,6 +36,10 @@ export const productApi = {
     const response = await api.delete<Product>(`products/${id}`);
     return response.data;
   },
+  restoreProduct: async (id: string) => {
+    const response = await api.patch<Product>(`products/${id}/restore`);
+    return response.data;
+  },
   deleteProductPermanent: async (id: string) => {
     const response = await api.delete<Product>(`products/${id}/permanent`);
     return response.data;

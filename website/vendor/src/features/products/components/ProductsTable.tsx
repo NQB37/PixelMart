@@ -6,7 +6,13 @@ import {
 } from "@tanstack/react-table";
 import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { Archive, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import {
+  Archive,
+  ArchiveRestore,
+  MoreHorizontal,
+  Pencil,
+  Trash2,
+} from "lucide-react";
 import {
   Badge,
   Button,
@@ -19,6 +25,7 @@ import {
 import { STATUS_BADGE, type Product } from "../types/product";
 import { useGetAllBrands, useGetAllCategories } from "../hooks/useCatalog";
 import { DeleteProductModal } from "./DeleteProductModal";
+import { RestoreProductModal } from "./RestoreProductModal";
 
 const columnHelper = createColumnHelper<Product>();
 
@@ -34,6 +41,7 @@ export function ProductsTable({ products, isLoading }: ProductsTableProps) {
     product: Product;
     permanent: boolean;
   } | null>(null);
+  const [restoring, setRestoring] = useState<Product | null>(null);
   const { data: brands = [] } = useGetAllBrands();
   const { data: categories = [] } = useGetAllCategories();
   const brandItems = brands.map((b) => ({ value: b.id, label: b.name }));
@@ -97,8 +105,13 @@ export function ProductsTable({ products, isLoading }: ProductsTableProps) {
                 }
               />
               <DropdownMenuContent align='end'>
-                {/* an archived product can only be wiped for good */}
-                {!product.deletedAt && (
+                {/* an archived product can only be restored or wiped for good */}
+                {product.deletedAt ? (
+                  <DropdownMenuItem onClick={() => setRestoring(product)}>
+                    <ArchiveRestore className='h-4 w-4' />
+                    Restore
+                  </DropdownMenuItem>
+                ) : (
                   <>
                     <DropdownMenuItem
                       onClick={() =>
@@ -121,6 +134,7 @@ export function ProductsTable({ products, isLoading }: ProductsTableProps) {
                     </DropdownMenuItem>
                   </>
                 )}
+                <DropdownMenuSeparator />
                 <DropdownMenuItem
                   variant='destructive'
                   onClick={() => setDeleting({ product, permanent: true })}
@@ -208,6 +222,14 @@ export function ProductsTable({ products, isLoading }: ProductsTableProps) {
           permanent={deleting.permanent}
           open
           onOpenChange={(next) => !next && setDeleting(null)}
+        />
+      )}
+
+      {restoring && (
+        <RestoreProductModal
+          product={restoring}
+          open
+          onOpenChange={(next) => !next && setRestoring(null)}
         />
       )}
     </>

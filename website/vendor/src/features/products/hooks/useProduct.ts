@@ -53,6 +53,17 @@ export function useDeleteProduct() {
   });
 }
 
+export function useRestoreProduct() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (productId: string) => productApi.restoreProduct(productId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+    },
+  });
+}
+
 export function useDeleteProductPermanent() {
   const queryClient = useQueryClient();
 

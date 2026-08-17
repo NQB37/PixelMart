@@ -79,7 +79,7 @@ export function DeleteProductModal({
             <DialogDescription>
               {permanent
                 ? "This wipes the product and every variant under it. This can't be undone."
-                : "It stops being listed and stays here marked Archived. Restoring it isn't available yet."}
+                : "It stops being listed and stays here marked Archived. You can restore it later."}
             </DialogDescription>
           </div>
         </DialogHeader>
