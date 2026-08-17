@@ -54,6 +54,8 @@ export const createProductVariantSchema = z.object({
   optionsKey: z.string().trim().min(1),
 });
 
+export const updateProductVariantSchema = createProductVariantSchema.partial();
+
 export const listProductsQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(10),
@@ -67,5 +69,8 @@ export type UpdateProductStatusInput = z.infer<
 >;
 export type CreateProductVariantInput = z.infer<
   typeof createProductVariantSchema
+>;
+export type UpdateProductVariantInput = z.infer<
+  typeof updateProductVariantSchema
 >;
 export type ListProductsQuery = z.infer<typeof listProductsQuerySchema>;

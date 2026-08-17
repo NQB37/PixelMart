@@ -5,7 +5,12 @@ import { prisma } from "@/libs/prisma";
 
 describe("Product Integration Tests", () => {
   const stamp = Date.now();
-  const emails = [`test-p1-${stamp}@example.com`, `test-p2-${stamp}@example.com`];
+  const emails = [
+    `test-p1-${stamp}@example.com`,
+    `test-p2-${stamp}@example.com`,
+    `test-p3-${stamp}@example.com`,
+    `test-p4-${stamp}@example.com`,
+  ];
 
   // Register a user, then approve them as a vendor directly (KYC flow is not what's under test)
   const createVendor = async (email: string) => {
@@ -34,7 +39,7 @@ describe("Product Integration Tests", () => {
   });
 
   it("creates a product + variant, persists options, and hides it publicly while inactive", async () => {
-    const [owner, other] = await Promise.all(emails.map(createVendor));
+    const [owner, other] = await Promise.all(emails.slice(0, 2).map(createVendor));
     const auth = (token: string) => ({ Authorization: `Bearer ${token}` });
 
     const created = await request(app)
@@ -164,4 +169,100 @@ describe("Product Integration Tests", () => {
         .then((r) => r.status),
     ).toBe(404);
   });
+
+  it("updates and deletes variants, keeps sku/optionsKey unique, and refuses to leave a product empty", async () => {
+    const { accessToken } = await createVendor(emails[2]);
+    const auth = { Authorization: `Bearer ${accessToken}` };
+    const other = await createVendor(emails[3]);
+
+    const productId = (
+      await request(app)
+        .post("/api/v1/products")
+        .set(auth)
+        .send({ name: "Mint Mouse", optionNames: ["Color"] })
+    ).body.data.id as string;
+
+    const addVariant = (color: string, sku: string) =>
+      request(app)
+        .post(`/api/v1/products/${productId}/variants`)
+        .set(auth)
+        .send({
+          slug: `mint-mouse-${color.toLowerCase()}-${stamp}`,
+          sku,
+          price: 990,
+          stock: 3,
+          options: { Color: color },
+          optionsKey: `Color:${color}`,
+        });
+
+    const red = (await addVariant("Red", `SKU-RED-${stamp}`)).body.data.id as string;
+    const blue = (await addVariant("Blue", `SKU-BLUE-${stamp}`)).body.data.id as string;
+
+    // a plain field update goes through, and untouched fields stay put
+    const patched = await request(app)
+      .patch(`/api/v1/products/${productId}/variants/${red}`)
+      .set(auth)
+      .send({ price: 1290, stock: 9 });
+    expect(patched.status).toBe(200);
+    expect(patched.body.data.price).toBe(1290);
+    expect(patched.body.data.optionsKey).toBe("Color:Red");
+
+    // re-sending its own optionsKey/sku is not a self-clash
+    expect(
+      await request(app)
+        .patch(`/api/v1/products/${productId}/variants/${red}`)
+        .set(auth)
+        .send({ optionsKey: "Color:Red", sku: `SKU-RED-${stamp}` })
+        .then((r) => r.status),
+    ).toBe(200);
+
+    // but taking the sibling's optionsKey, sku or slug is a conflict
+    for (const body of [
+      { optionsKey: "Color:Blue" },
+      { sku: `SKU-BLUE-${stamp}` },
+      { slug: `mint-mouse-blue-${stamp}` },
+    ]) {
+      const res = await request(app)
+        .patch(`/api/v1/products/${productId}/variants/${red}`)
+        .set(auth)
+        .send(body);
+      expect(res.status).toBe(409);
+    }
+
+    // another vendor cannot touch it, and a variant of a different product is a 404
+    expect(
+      await request(app)
+        .patch(`/api/v1/products/${productId}/variants/${red}`)
+        .set({ Authorization: `Bearer ${other.accessToken}` })
+        .send({ price: 1 })
+        .then((r) => r.status),
+    ).toBe(404);
+    expect(
+      await request(app)
+        .delete(`/api/v1/products/${productId}/variants/${productId}`)
+        .set(auth)
+        .then((r) => r.status),
+    ).toBe(404);
+
+    // deleting a variant takes its images with it — no orphan rows left behind
+    const image = await prisma.productImage.create({
+      data: { productVariantId: blue, url: "https://example.com/blue.jpg" },
+    });
+    const deleted = await request(app)
+      .delete(`/api/v1/products/${productId}/variants/${blue}`)
+      .set(auth);
+    expect(deleted.status).toBe(200);
+    expect(await prisma.productImage.findUnique({ where: { id: image.id } })).toBeNull();
+
+    // the last variant stays — a product with nothing to sell is rejected
+    const last = await request(app)
+      .delete(`/api/v1/products/${productId}/variants/${red}`)
+      .set(auth);
+    expect(last.status).toBe(400);
+    expect(await prisma.productVariant.count({ where: { productId } })).toBe(1);
+
+    // the freed optionsKey/sku can be reused now that Blue is gone
+    expect((await addVariant("Blue", `SKU-BLUE-${stamp}`)).status).toBe(201);
+    // many sequential round trips against a real DB — the 5s default is too tight
+  }, 20000);
 });

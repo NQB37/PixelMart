@@ -378,7 +378,8 @@ model ProductImage {
   sortOrder        Int      @default(0)
   createdAt        DateTime @default(now())
 
-  variant ProductVariant? @relation(fields: [productVariantId], references: [id])
+  // images belong to their variant — deleting one must not leave them orphaned
+  variant ProductVariant? @relation(fields: [productVariantId], references: [id], onDelete: Cascade)
 
   @@index([productVariantId])
   @@map("product_images")

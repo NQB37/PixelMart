@@ -10,6 +10,7 @@ import {
   listProductsQuerySchema,
   updateProductSchema,
   updateProductStatusSchema,
+  updateProductVariantSchema,
 } from './product.validation';
 import { ROLE } from '@/generated/prisma/client';
 
@@ -89,6 +90,21 @@ router.post(
   isVendorOwner,
   validate(createProductVariantSchema),
   productController.createProductVariant,
+);
+
+router.patch(
+  '/:productId/variants/:variantId',
+  isAuth,
+  isVendorOwner,
+  validate(updateProductVariantSchema),
+  productController.updateProductVariant,
+);
+
+router.delete(
+  '/:productId/variants/:variantId',
+  isAuth,
+  isVendorOwner,
+  productController.deleteProductVariant,
 );
 
 // === DETAIL ROUTES (Placed after static routes) ===

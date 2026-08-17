@@ -5,6 +5,7 @@ import {
   ListProductsQuery,
   UpdateProductInput,
   UpdateProductStatusInput,
+  UpdateProductVariantInput,
 } from './product.validation';
 import { ApiError } from '@/utils/ApiError';
 import { ProductStatus } from '@/generated/prisma/enums';
@@ -205,29 +206,45 @@ class ProductService {
     input: CreateProductVariantInput,
   ) {
     await this.findVendorProduct(vendorId, productId);
-
-    const clash = await prisma.productVariant.findFirst({
-      where: {
-        OR: [
-          { slug: input.slug },
-          { productId, optionsKey: input.optionsKey },
-          ...(input.sku ? [{ productId, sku: input.sku }] : []),
-        ],
-      },
-    });
-    if (clash) {
-      if (clash.slug === input.slug) {
-        throw ApiError.conflict('Slug already exists');
-      }
-      if (clash.optionsKey === input.optionsKey) {
-        throw ApiError.conflict('A variant with these options already exists');
-      }
-      throw ApiError.conflict('SKU already exists');
-    }
+    await this.assertNoVariantClash(productId, input);
 
     return prisma.productVariant.create({
       data: { ...input, productId },
     });
+  }
+
+  async updateProductVariant(
+    vendorId: string,
+    productId: string,
+    variantId: string,
+    input: UpdateProductVariantInput,
+  ) {
+    await this.findVendorProduct(vendorId, productId);
+    await this.findProductVariant(productId, variantId);
+    await this.assertNoVariantClash(productId, input, variantId);
+
+    return prisma.productVariant.update({
+      where: { id: variantId },
+      data: input,
+    });
+  }
+
+  async deleteProductVariant(
+    vendorId: string,
+    productId: string,
+    variantId: string,
+  ) {
+    await this.findVendorProduct(vendorId, productId);
+    await this.findProductVariant(productId, variantId);
+
+    // a product with no sellable variant is not a product
+    const total = await prisma.productVariant.count({ where: { productId } });
+    if (total === 1) {
+      throw ApiError.badRequest('A product must keep at least one variant');
+    }
+
+    // images cascade with the variant (see ProductImage.variant in the schema)
+    return prisma.productVariant.delete({ where: { id: variantId } });
   }
 
   // Admin
@@ -311,6 +328,45 @@ class ProductService {
     }
 
     return product;
+  }
+
+  private async findProductVariant(productId: string, variantId: string) {
+    const variant = await prisma.productVariant.findFirst({
+      where: { id: variantId, productId },
+    });
+    if (!variant) {
+      throw ApiError.notFound('Variant not found');
+    }
+
+    return variant;
+  }
+
+  // slug is globally unique; sku and optionsKey are unique within the product.
+  // excludeVariantId lets an update ignore the row it is editing.
+  private async assertNoVariantClash(
+    productId: string,
+    { slug, optionsKey, sku }: UpdateProductVariantInput,
+    excludeVariantId?: string,
+  ) {
+    const OR: Prisma.ProductVariantWhereInput[] = [
+      ...(slug ? [{ slug }] : []),
+      ...(optionsKey ? [{ productId, optionsKey }] : []),
+      ...(sku ? [{ productId, sku }] : []),
+    ];
+    if (!OR.length) return;
+
+    const clash = await prisma.productVariant.findFirst({
+      where: { OR, ...(excludeVariantId && { id: { not: excludeVariantId } }) },
+    });
+    if (!clash) return;
+
+    if (clash.slug === slug) {
+      throw ApiError.conflict('Slug already exists');
+    }
+    if (clash.optionsKey === optionsKey) {
+      throw ApiError.conflict('A variant with these options already exists');
+    }
+    throw ApiError.conflict('SKU already exists');
   }
 }
 

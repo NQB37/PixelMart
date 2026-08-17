@@ -112,6 +112,35 @@ const createProductVariant = asyncHandler(async (req, res) => {
   ApiResponse.created(res, product, 'Product variant created successfully');
 });
 
+const updateProductVariant = asyncHandler(async (req, res) => {
+  const { productId, variantId } = req.params as {
+    productId: string;
+    variantId: string;
+  };
+  const variant = await productService.updateProductVariant(
+    req.vendor!.id,
+    productId,
+    variantId,
+    req.body,
+  );
+
+  ApiResponse.success(res, variant, 'Product variant updated successfully');
+});
+
+const deleteProductVariant = asyncHandler(async (req, res) => {
+  const { productId, variantId } = req.params as {
+    productId: string;
+    variantId: string;
+  };
+  const variant = await productService.deleteProductVariant(
+    req.vendor!.id,
+    productId,
+    variantId,
+  );
+
+  ApiResponse.success(res, variant, 'Product variant deleted successfully');
+});
+
 // === ADMIN ROUTES ===
 const getAdminProducts = asyncHandler(async (req, res) => {
   const products = await productService.getAdminProducts(
@@ -133,6 +162,8 @@ export {
   getProductVariants,
   createProduct,
   createProductVariant,
+  updateProductVariant,
+  deleteProductVariant,
   getAdminProducts,
   getProductById,
 };
