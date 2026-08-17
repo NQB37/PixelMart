@@ -54,6 +54,16 @@ const deleteProduct = asyncHandler(async (req, res) => {
   ApiResponse.success(res, product, 'Product deleted successfully');
 });
 
+const restoreProduct = asyncHandler(async (req, res) => {
+  const { productId } = req.params as { productId: string };
+  const product = await productService.restoreProduct(
+    req.vendor!.id,
+    productId,
+  );
+
+  ApiResponse.success(res, product, 'Product restored successfully');
+});
+
 const deleteProductPermanent = asyncHandler(async (req, res) => {
   const { productId } = req.params as { productId: string };
   const product = await productService.deleteProductPermanent(
@@ -106,6 +116,7 @@ export {
   getVendorProducts,
   updateProduct,
   deleteProduct,
+  restoreProduct,
   deleteProductPermanent,
   getProductVariants,
   createProduct,

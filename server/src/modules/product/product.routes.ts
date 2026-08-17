@@ -52,6 +52,13 @@ router.delete(
   productController.deleteProduct,
 );
 
+router.patch(
+  '/:productId/restore',
+  isAuth,
+  isVendorOwner,
+  productController.restoreProduct,
+);
+
 router.delete(
   '/:productId/permanent',
   isAuth,

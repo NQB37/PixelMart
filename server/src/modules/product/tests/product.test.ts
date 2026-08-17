@@ -114,5 +114,27 @@ describe("Product Integration Tests", () => {
 
     const list = await request(app).get("/api/v1/products/variants");
     expect(list.body.data.some((v: { slug: string }) => v.slug === slug)).toBe(true);
+
+    // archive → restore comes back as a draft, and a live product cannot be restored
+    await request(app).delete(`/api/v1/products/${productId}`).set(auth(owner.accessToken));
+    const restored = await request(app)
+      .patch(`/api/v1/products/${productId}/restore`)
+      .set(auth(owner.accessToken));
+    expect(restored.status).toBe(200);
+    expect(restored.body.data.status).toBe("INACTIVE");
+    expect(restored.body.data.deletedAt).toBeNull();
+    expect(
+      await request(app)
+        .patch(`/api/v1/products/${productId}/restore`)
+        .set(auth(owner.accessToken))
+        .then((r) => r.status),
+    ).toBe(400);
+    // and not by another vendor
+    expect(
+      await request(app)
+        .patch(`/api/v1/products/${productId}/restore`)
+        .set(auth(other.accessToken))
+        .then((r) => r.status),
+    ).toBe(404);
   });
 });

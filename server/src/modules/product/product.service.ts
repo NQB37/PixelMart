@@ -164,6 +164,19 @@ class ProductService {
     });
   }
 
+  async restoreProduct(vendorId: string, productId: string) {
+    const product = await this.findVendorProduct(vendorId, productId, true);
+    if (!product.deletedAt) {
+      throw ApiError.badRequest('Product is not archived');
+    }
+
+    // restored as a draft — the vendor publishes it again themselves
+    return prisma.product.update({
+      where: { id: productId },
+      data: { deletedAt: null, status: ProductStatus.INACTIVE },
+    });
+  }
+
   async deleteProductPermanent(vendorId: string, productId: string) {
     await this.findVendorProduct(vendorId, productId, true);
 
@@ -261,7 +274,7 @@ class ProductService {
   private async findVendorProduct(
     vendorId: string,
     productId: string,
-    // only the permanent delete may target an already-archived product
+    // only restore + permanent delete may target an already-archived product
     includeDeleted = false,
   ) {
     const product = await prisma.product.findFirst({
