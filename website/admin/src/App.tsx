@@ -5,7 +5,24 @@ import "react-toastify/dist/ReactToastify.css";
 import { router } from "@/router";
 import { useAuthStore } from "@/features/auth/stores/auth.store";
 
-const queryClient = new QueryClient();
+import axios from "axios";
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: (failureCount, error: Error) => {
+        if (axios.isAxiosError(error)) {
+          const status = error.response?.status;
+          if (status && status >= 400 && status < 500) {
+            return false;
+          }
+        }
+        return failureCount < 2;
+      },
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 function InnerApp() {
   const user = useAuthStore((state) => state.user);
