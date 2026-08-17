@@ -27,6 +27,11 @@ export const updateProductSchema = z.object({
   optionNames: z.array(z.string().trim().min(1)).optional(),
 });
 
+// publish/unpublish on its own, so a toggle doesn't have to resend the record
+export const updateProductStatusSchema = z.object({
+  status: z.enum(['ACTIVE', 'INACTIVE']),
+});
+
 export const createProductVariantSchema = z.object({
   // Meta
   metaTitle: z.string().optional(),
@@ -57,6 +62,9 @@ export const listProductsQuerySchema = z.object({
 
 export type CreateProductInput = z.infer<typeof createProductSchema>;
 export type UpdateProductInput = z.infer<typeof updateProductSchema>;
+export type UpdateProductStatusInput = z.infer<
+  typeof updateProductStatusSchema
+>;
 export type CreateProductVariantInput = z.infer<
   typeof createProductVariantSchema
 >;

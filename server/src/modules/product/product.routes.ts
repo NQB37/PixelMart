@@ -9,6 +9,7 @@ import {
   createProductVariantSchema,
   listProductsQuerySchema,
   updateProductSchema,
+  updateProductStatusSchema,
 } from './product.validation';
 import { ROLE } from '@/generated/prisma/client';
 
@@ -50,6 +51,14 @@ router.delete(
   isAuth,
   isVendorOwner,
   productController.deleteProduct,
+);
+
+router.patch(
+  '/:productId/status',
+  isAuth,
+  isVendorOwner,
+  validate(updateProductStatusSchema),
+  productController.updateProductStatus,
 );
 
 router.patch(

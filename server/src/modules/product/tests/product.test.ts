@@ -83,10 +83,20 @@ describe("Product Integration Tests", () => {
     expect(foreignRead.status).toBe(404);
 
     // an unpublished product and its variants are invisible to the public
-    await request(app)
-      .patch(`/api/v1/products/${productId}`)
+    const unpublished = await request(app)
+      .patch(`/api/v1/products/${productId}/status`)
       .set(auth(owner.accessToken))
-      .send({ name: "Mint Keyboard", status: "INACTIVE" });
+      .send({ status: "INACTIVE" });
+    expect(unpublished.status).toBe(200);
+    expect(unpublished.body.data.status).toBe("INACTIVE");
+    // the status route is publish/unpublish only — no archiving through it
+    expect(
+      await request(app)
+        .patch(`/api/v1/products/${productId}/status`)
+        .set(auth(owner.accessToken))
+        .send({ status: "ARCHIVED" })
+        .then((r) => r.status),
+    ).toBe(400);
     const inactiveList = await request(app).get("/api/v1/products/variants");
     expect(inactiveList.body.data.some((v: { slug: string }) => v.slug === slug)).toBe(false);
     expect(await request(app).get(`/api/v1/products/variants/${slug}`).then((r) => r.status)).toBe(404);
@@ -104,9 +114,9 @@ describe("Product Integration Tests", () => {
 
     // published again → back on the storefront
     await request(app)
-      .patch(`/api/v1/products/${productId}`)
+      .patch(`/api/v1/products/${productId}/status`)
       .set(auth(owner.accessToken))
-      .send({ name: "Mint Keyboard", status: "ACTIVE" });
+      .send({ status: "ACTIVE" });
 
     const detail = await request(app).get(`/api/v1/products/variants/${slug}`);
     expect(detail.status).toBe(200);

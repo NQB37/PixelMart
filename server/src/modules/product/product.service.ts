@@ -4,6 +4,7 @@ import {
   CreateProductVariantInput,
   ListProductsQuery,
   UpdateProductInput,
+  UpdateProductStatusInput,
 } from './product.validation';
 import { ApiError } from '@/utils/ApiError';
 import { ProductStatus } from '@/generated/prisma/enums';
@@ -152,6 +153,19 @@ class ProductService {
           },
         }),
       },
+    });
+  }
+
+  async updateProductStatus(
+    vendorId: string,
+    productId: string,
+    { status }: UpdateProductStatusInput,
+  ) {
+    await this.findVendorProduct(vendorId, productId);
+
+    return prisma.product.update({
+      where: { id: productId },
+      data: { status },
     });
   }
 
