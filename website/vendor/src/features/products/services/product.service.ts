@@ -2,8 +2,16 @@ import { api } from "@/lib/api";
 import type { Product, ProductDetail, ProductVariant } from "../types/product";
 import type {
   CreateProductInput,
+  CreateVariantInput,
   UpdateProductInput,
 } from "../schemas/product.schema";
+
+// the (productId, optionsKey) unique index is what stops duplicate option
+// combos — same insertion order as the product's optionNames
+const toOptionsKey = (options: Record<string, string>) =>
+  Object.entries(options)
+    .map(([name, value]) => `${name}:${value}`)
+    .join("|");
 
 export const productApi = {
   // Public
@@ -53,6 +61,33 @@ export const productApi = {
   getProductVariants: async (productId: string) => {
     const response = await api.get<ProductVariant[]>(
       `products/${productId}/variants`,
+    );
+    return response.data;
+  },
+  createProductVariant: async (
+    productId: string,
+    data: CreateVariantInput & { thumbnail?: string },
+  ) => {
+    const response = await api.post<ProductVariant>(
+      `products/${productId}/variants`,
+      { ...data, optionsKey: toOptionsKey(data.options) },
+    );
+    return response.data;
+  },
+  updateProductVariant: async (
+    productId: string,
+    variantId: string,
+    data: CreateVariantInput & { thumbnail?: string },
+  ) => {
+    const response = await api.patch<ProductVariant>(
+      `products/${productId}/variants/${variantId}`,
+      { ...data, optionsKey: toOptionsKey(data.options) },
+    );
+    return response.data;
+  },
+  deleteProductVariant: async (productId: string, variantId: string) => {
+    const response = await api.delete<ProductVariant>(
+      `products/${productId}/variants/${variantId}`,
     );
     return response.data;
   },

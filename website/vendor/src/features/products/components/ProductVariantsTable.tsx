@@ -1,4 +1,5 @@
-import { ImageIcon, MoreHorizontal, Pencil, Plus, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { ImageIcon, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import {
   Badge,
   Button,
@@ -9,6 +10,9 @@ import {
   DropdownMenuTrigger,
 } from "@website/shared/ui";
 import type { ProductVariant } from "../types/product";
+import { CreateVariantModal } from "./CreateVariantModal";
+import { UpdateVariantModal } from "./UpdateVariantModal";
+import { DeleteVariantModal } from "./DeleteVariantModal";
 
 const price = (cents: number) => `$${cents.toLocaleString("en-US")}`;
 
@@ -23,14 +27,22 @@ function StockBadge({ stock }: { stock: number }) {
 }
 
 interface ProductVariantsTableProps {
+  productId: string;
   optionNames: string[];
   variants: ProductVariant[];
 }
 
 export function ProductVariantsTable({
+  productId,
   optionNames,
   variants,
 }: ProductVariantsTableProps) {
+  // one modal for the whole table — unmounting it on close resets its state
+  const [editing, setEditing] = useState<ProductVariant | null>(null);
+  const [deleting, setDeleting] = useState<ProductVariant | null>(null);
+  // the server refuses to leave a product with zero variants
+  const canDelete = variants.length > 1;
+
   return (
     <div className='space-y-4'>
       <div className='flex flex-wrap items-center justify-between gap-3'>
@@ -38,10 +50,7 @@ export function ProductVariantsTable({
           {variants.length} variant{variants.length === 1 ? "" : "s"} ·
           options: {optionNames.join(", ") || "—"}
         </p>
-        <Button>
-          <Plus className='h-4 w-4' />
-          Add variant
-        </Button>
+        <CreateVariantModal productId={productId} optionNames={optionNames} />
       </div>
 
       <div className='overflow-x-auto rounded-xl border border-border bg-card shadow-sm'>
@@ -120,14 +129,18 @@ export function ProductVariantsTable({
                         }
                       />
                       <DropdownMenuContent align='end'>
-                        <DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setEditing(variant)}>
                           <Pencil className='h-4 w-4' />
                           Edit
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem variant='destructive'>
+                        <DropdownMenuItem
+                          variant='destructive'
+                          disabled={!canDelete}
+                          onClick={() => setDeleting(variant)}
+                        >
                           <Trash2 className='h-4 w-4' />
-                          Delete
+                          {canDelete ? "Delete" : "Last variant"}
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -138,6 +151,25 @@ export function ProductVariantsTable({
           </tbody>
         </table>
       </div>
+
+      {editing && (
+        <UpdateVariantModal
+          productId={productId}
+          variant={editing}
+          optionNames={optionNames}
+          open
+          onOpenChange={(next) => !next && setEditing(null)}
+        />
+      )}
+
+      {deleting && (
+        <DeleteVariantModal
+          productId={productId}
+          variant={deleting}
+          open
+          onOpenChange={(next) => !next && setDeleting(null)}
+        />
+      )}
     </div>
   );
 }

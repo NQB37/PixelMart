@@ -1,6 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { productApi } from "../services/product.service";
-import type { UpdateProductInput } from "../schemas/product.schema";
+import type {
+  CreateVariantInput,
+  UpdateProductInput,
+} from "../schemas/product.schema";
 
 // Product
 export function useGetMyProducts() {
@@ -93,5 +96,44 @@ export function useGetProductVariants(productId: string) {
   return useQuery({
     queryKey: ["products", productId, "variants"],
     queryFn: () => productApi.getProductVariants(productId),
+  });
+}
+
+export function useCreateVariant(productId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: CreateVariantInput & { thumbnail?: string }) =>
+      productApi.createProductVariant(productId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+    },
+  });
+}
+
+export function useUpdateVariant(productId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: {
+      variantId: string;
+      data: CreateVariantInput & { thumbnail?: string };
+    }) =>
+      productApi.updateProductVariant(productId, input.variantId, input.data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+    },
+  });
+}
+
+export function useDeleteVariant(productId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (variantId: string) =>
+      productApi.deleteProductVariant(productId, variantId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+    },
   });
 }

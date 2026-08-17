@@ -144,6 +144,7 @@ function ProductDetailBody({ product }: { product: ProductDetailType }) {
 
         <TabsContent value='variants' className='pt-4'>
           <ProductVariantsTable
+            productId={product.id}
             optionNames={product.optionNames}
             variants={product.variants}
           />
