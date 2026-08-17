@@ -5,7 +5,8 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { useNavigate } from "@tanstack/react-router";
-import { MoreHorizontal, Pencil, Power, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { Archive, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import {
   Badge,
   Button,
@@ -17,25 +18,22 @@ import {
 } from "@website/shared/ui";
 import { STATUS_BADGE, type Product } from "../types/product";
 import { useGetAllBrands, useGetAllCategories } from "../hooks/useCatalog";
+import { DeleteProductModal } from "./DeleteProductModal";
 
 const columnHelper = createColumnHelper<Product>();
 
 interface ProductsTableProps {
   products: Product[];
   isLoading: boolean;
-  onEdit: (product: Product) => void;
-  onDelete: (product: Product) => void;
-  onToggleStatus: (product: Product) => void;
 }
 
-export function ProductsTable({
-  products,
-  isLoading,
-  onEdit,
-  onDelete,
-  onToggleStatus,
-}: ProductsTableProps) {
+export function ProductsTable({ products, isLoading }: ProductsTableProps) {
   const navigate = useNavigate();
+  // one modal for the whole table — unmounting it on close resets the confirm box
+  const [deleting, setDeleting] = useState<{
+    product: Product;
+    permanent: boolean;
+  } | null>(null);
   const { data: brands = [] } = useGetAllBrands();
   const { data: categories = [] } = useGetAllCategories();
   const brandItems = brands.map((b) => ({ value: b.id, label: b.name }));
@@ -57,7 +55,7 @@ export function ProductsTable({
       header: "Category",
       cell: ({ getValue }) => (
         <span className='text-sm text-foreground/80'>
-          {getValue()
+          {(getValue() ?? [])
             .map((id) => categoryItems.find((c) => c.value === id)?.label)
             .filter(Boolean)
             .join(", ") || "—"}
@@ -84,7 +82,6 @@ export function ProductsTable({
       header: "",
       cell: ({ row }) => {
         const product = row.original;
-        const isActive = product.status === "ACTIVE";
         return (
           <div className='flex justify-end'>
             <DropdownMenu>
@@ -100,21 +97,36 @@ export function ProductsTable({
                 }
               />
               <DropdownMenuContent align='end'>
-                <DropdownMenuItem onClick={() => onEdit(product)}>
-                  <Pencil className='h-4 w-4' />
-                  Edit
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onToggleStatus(product)}>
-                  <Power className='h-4 w-4' />
-                  {isActive ? "Deactivate" : "Activate"}
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
+                {/* an archived product can only be wiped for good */}
+                {!product.deletedAt && (
+                  <>
+                    <DropdownMenuItem
+                      onClick={() =>
+                        navigate({
+                          to: "/products/$productId/edit",
+                          params: { productId: product.id },
+                        })
+                      }
+                    >
+                      <Pencil className='h-4 w-4' />
+                      Edit
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      variant='destructive'
+                      onClick={() => setDeleting({ product, permanent: false })}
+                    >
+                      <Archive className='h-4 w-4' />
+                      Archive
+                    </DropdownMenuItem>
+                  </>
+                )}
                 <DropdownMenuItem
                   variant='destructive'
-                  onClick={() => onDelete(product)}
+                  onClick={() => setDeleting({ product, permanent: true })}
                 >
                   <Trash2 className='h-4 w-4' />
-                  Delete
+                  Delete permanently
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -131,63 +143,73 @@ export function ProductsTable({
   });
 
   return (
-    <table className='w-full text-left'>
-      <thead>
-        {table.getHeaderGroups().map((headerGroup) => (
-          <tr key={headerGroup.id} className='border-b border-border'>
-            {headerGroup.headers.map((header) => (
-              <th
-                key={header.id}
-                className='px-4 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground'
-              >
-                {flexRender(
-                  header.column.columnDef.header,
-                  header.getContext(),
-                )}
-              </th>
-            ))}
-          </tr>
-        ))}
-      </thead>
-      <tbody>
-        {!isLoading && products.length === 0 && (
-          <tr>
-            <td
-              colSpan={columns.length}
-              className='px-4 py-10 text-center text-sm text-muted-foreground'
-            >
-              No products found.
-            </td>
-          </tr>
-        )}
-        {table.getRowModel().rows.map((row) => (
-          <tr
-            key={row.id}
-            className='cursor-pointer border-b border-border last:border-0 hover:bg-accent/40'
-            onClick={() =>
-              navigate({
-                to: "/products/$productId",
-                params: { productId: row.original.id },
-              })
-            }
-          >
-            {row.getVisibleCells().map((cell) => (
+    <>
+      <table className='w-full text-left'>
+        <thead>
+          {table.getHeaderGroups().map((headerGroup) => (
+            <tr key={headerGroup.id} className='border-b border-border'>
+              {headerGroup.headers.map((header) => (
+                <th
+                  key={header.id}
+                  className='px-4 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground'
+                >
+                  {flexRender(
+                    header.column.columnDef.header,
+                    header.getContext(),
+                  )}
+                </th>
+              ))}
+            </tr>
+          ))}
+        </thead>
+        <tbody>
+          {!isLoading && products.length === 0 && (
+            <tr>
               <td
-                key={cell.id}
-                className='px-4 py-3'
-                // the actions menu lives inside the row — don't navigate from it
-                onClick={
-                  cell.column.id === "actions"
-                    ? (e) => e.stopPropagation()
-                    : undefined
-                }
+                colSpan={columns.length}
+                className='px-4 py-10 text-center text-sm text-muted-foreground'
               >
-                {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                No products found.
               </td>
-            ))}
-          </tr>
-        ))}
-      </tbody>
-    </table>
+            </tr>
+          )}
+          {table.getRowModel().rows.map((row) => (
+            <tr
+              key={row.id}
+              className='cursor-pointer border-b border-border last:border-0 hover:bg-accent/40'
+              onClick={() =>
+                navigate({
+                  to: "/products/$productId",
+                  params: { productId: row.original.id },
+                })
+              }
+            >
+              {row.getVisibleCells().map((cell) => (
+                <td
+                  key={cell.id}
+                  className='px-4 py-3'
+                  onClick={
+                    cell.column.id === "actions"
+                      ? (e) => e.stopPropagation()
+                      : undefined
+                  }
+                >
+                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      {deleting && (
+        <DeleteProductModal
+          product={deleting.product}
+          permanent={deleting.permanent}
+          open
+          onOpenChange={(next) => !next && setDeleting(null)}
+        />
+      )}
+    </>
   );
 }

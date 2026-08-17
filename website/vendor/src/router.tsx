@@ -13,6 +13,7 @@ import Forbidden from "@/pages/Forbidden";
 import Dashboard from "@/pages/Dashboard";
 import Products from "@/pages/Products";
 import ProductDetail from "@/pages/ProductDetail";
+import ProductEdit from "@/pages/ProductEdit";
 import Placeholder from "@/pages/Placeholder";
 import VendorLayout from "@/components/layout/VendorLayout";
 import { hasRole, type UserInfo } from "@website/shared/auth";
@@ -109,6 +110,12 @@ const productDetailRoute = createRoute({
   component: ProductDetail,
 });
 
+const productEditRoute = createRoute({
+  getParentRoute: () => vendorLayoutRoute,
+  path: "/products/$productId/edit",
+  component: ProductEdit,
+});
+
 const placeholderRoute = (path: string, title: string) =>
   createRoute({
     getParentRoute: () => vendorLayoutRoute,
@@ -126,6 +133,7 @@ const routeTree = rootRoute.addChildren([
     placeholderRoute("/orders/returns", "Return / Refund / Cancel"),
     productsRoute,
     productDetailRoute,
+    productEditRoute,
     placeholderRoute("/products/new", "New Product"),
     placeholderRoute("/products/import", "Import Product (CSV)"),
     placeholderRoute("/vouchers", "Vouchers"),

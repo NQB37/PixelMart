@@ -1,5 +1,4 @@
 import * as z from "zod";
-import { slugSchema } from "@website/shared/utils";
 
 export const createProductSchema = z.object({
   brandId: z.uuid().optional(),
@@ -7,41 +6,16 @@ export const createProductSchema = z.object({
   // General
   name: z
     .string()
-    .min(2, "Product name must be at least 2 characters")
+    .min(3, "Product name must be at least 3 characters")
     .max(100, "Product name must be at most 100 characters")
     .trim(),
-  slug: slugSchema,
-  sku: z.string().optional(),
-  description: z.string().optional(),
-
-  // Metadata
-  metaTitle: z.string().optional(),
-  metaDescription: z.string().optional(),
-
-  // Media
-  thumbnail: z.string().optional(),
+  // Options
+  optionNames: z.array(z.string().trim().min(1, "Option name is required")),
 });
 
-export const updateProductSchema = createProductSchema.partial().extend({
-  brandId: z.uuid().optional(),
-  categoryId: z.array(z.uuid()).optional(),
-  // General
-  name: z
-    .string()
-    .min(2, "Product name must be at least 2 characters")
-    .max(100, "Product name must be at most 100 characters")
-    .trim(),
-  slug: slugSchema,
-  sku: z.string().optional(),
-  description: z.string().optional(),
-
-  // Metadata
-  metaTitle: z.string().optional(),
-  metaDescription: z.string().optional(),
-
-  // Media
-  thumbnail: z.string().optional(),
-});
+// ponytail: the update endpoint takes the exact same fields — one schema, two names.
+// `status` is deliberately absent: the server's updateProductSchema drops it.
+export const updateProductSchema = createProductSchema;
 
 export type CreateProductInput = z.infer<typeof createProductSchema>;
-export type UpdateProductInput = z.infer<typeof updateProductSchema>;
+export type UpdateProductInput = CreateProductInput;

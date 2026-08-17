@@ -43,13 +43,7 @@ export default function Products() {
       />
 
       <div className='overflow-x-auto rounded-xl border border-border bg-card shadow-sm'>
-        <ProductsTable
-          products={products || []}
-          isLoading={isPending}
-          onEdit={() => {}}
-          onDelete={() => {}}
-          onToggleStatus={() => {}}
-        />
+        <ProductsTable products={products || []} isLoading={isPending} />
       </div>
     </div>
   );

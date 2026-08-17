@@ -38,9 +38,30 @@ export const MOCK_PRODUCT_DETAIL: ProductDetail = {
   createdAt: "2026-07-02T09:12:00.000Z",
   updatedAt: "2026-08-01T14:30:00.000Z",
   variants: [
-    variant("v1", { Color: "Natural Titanium", Storage: "256GB" }, 1199, 24, "IP17P-NT-256", "titanium"),
-    variant("v2", { Color: "Natural Titanium", Storage: "512GB" }, 1399, 8, "IP17P-NT-512", "titanium"),
-    variant("v3", { Color: "Deep Blue", Storage: "256GB" }, 1199, 0, "IP17P-DB-256", "deep-blue"),
+    variant(
+      "v1",
+      { Color: "Natural Titanium", Storage: "256GB" },
+      1199,
+      24,
+      "IP17P-NT-256",
+      "titanium",
+    ),
+    variant(
+      "v2",
+      { Color: "Natural Titanium", Storage: "512GB" },
+      1399,
+      8,
+      "IP17P-NT-512",
+      "titanium",
+    ),
+    variant(
+      "v3",
+      { Color: "Deep Blue", Storage: "256GB" },
+      1199,
+      0,
+      "IP17P-DB-256",
+      "deep-blue",
+    ),
     variant("v4", { Color: "Deep Blue", Storage: "1TB" }, 1699, 3, null, null),
   ],
 };

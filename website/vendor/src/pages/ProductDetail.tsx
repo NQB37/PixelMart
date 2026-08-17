@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useParams } from "@tanstack/react-router";
 import { ArrowLeft, Pencil } from "lucide-react";
 import {
   Badge,
@@ -44,7 +44,11 @@ function Row({
 }
 
 export default function ProductDetail() {
-  // ponytail: mock data — no GET /products/:id endpoint yet.
+  // ponytail: still mock data — only the id below comes from the URL, so the
+  // edit link lands on the real product.
+  const { productId } = useParams({
+    from: "/vendor-layout/products/$productId",
+  });
   const product = MOCK_PRODUCT_DETAIL;
   const status = STATUS_BADGE[product.status];
 
@@ -70,7 +74,12 @@ export default function ProductDetail() {
             </Badge>
           </div>
         </div>
-        <Button variant='outline'>
+        <Button
+          variant='outline'
+          render={
+            <Link to='/products/$productId/edit' params={{ productId }} />
+          }
+        >
           <Pencil className='h-4 w-4' />
           Edit product
         </Button>

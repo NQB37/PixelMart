@@ -1,5 +1,5 @@
 import { api } from "@/lib/api";
-import type { Product } from "../types/product";
+import type { Product, ProductVariant } from "../types/product";
 import type {
   CreateProductInput,
   UpdateProductInput,
@@ -24,12 +24,22 @@ export const productApi = {
     const response = await api.post<Product>(`products`, data);
     return response.data;
   },
-  updateProduct: async (id: string, data: Partial<UpdateProductInput>) => {
+  updateProduct: async (id: string, data: UpdateProductInput) => {
     const response = await api.patch<Product>(`products/${id}`, data);
     return response.data;
   },
   deleteProduct: async (id: string) => {
     const response = await api.delete<Product>(`products/${id}`);
+    return response.data;
+  },
+  deleteProductPermanent: async (id: string) => {
+    const response = await api.delete<Product>(`products/${id}/permanent`);
+    return response.data;
+  },
+  getProductVariants: async (productId: string) => {
+    const response = await api.get<ProductVariant[]>(
+      `products/${productId}/variants`,
+    );
     return response.data;
   },
   uploadThumbnail: async (file: File) => {
@@ -39,6 +49,4 @@ export const productApi = {
     const response = await api.post<{ url: string }>("uploads", formData);
     return response.data.url;
   },
-  // Admin
-  // Private
 };

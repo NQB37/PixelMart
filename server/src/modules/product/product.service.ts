@@ -55,7 +55,8 @@ class ProductService {
   // Shop
   async getVendorProducts(vendorId: string) {
     const products = await prisma.product.findMany({
-      where: { vendorId, deletedAt: null },
+      // archived (soft-deleted) products stay in the vendor's own list
+      where: { vendorId },
       orderBy: { createdAt: 'desc' },
       include: {
         variants: true,
@@ -167,7 +168,7 @@ class ProductService {
   }
 
   async deleteProductPermanent(vendorId: string, productId: string) {
-    await this.findVendorProduct(vendorId, productId);
+    await this.findVendorProduct(vendorId, productId, true);
 
     return prisma.product.delete({
       where: { id: productId },
@@ -291,9 +292,18 @@ class ProductService {
   }
 
   // Private
-  private async findVendorProduct(vendorId: string, productId: string) {
+  private async findVendorProduct(
+    vendorId: string,
+    productId: string,
+    // only the permanent delete may target an already-archived product
+    includeDeleted = false,
+  ) {
     const product = await prisma.product.findFirst({
-      where: { id: productId, vendorId, deletedAt: null },
+      where: {
+        id: productId,
+        vendorId,
+        ...(includeDeleted ? {} : { deletedAt: null }),
+      },
     });
     if (!product) {
       throw ApiError.notFound('Product not found');

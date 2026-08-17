@@ -1,4 +1,4 @@
-export type ProductStatus = "DRAFT" | "ACTIVE" | "OUT_OF_STOCK" | "BANNED";
+export type ProductStatus = "DRAFT" | "ACTIVE" | "ARCHIVED" | "BANNED";
 
 export const STATUS_BADGE: Record<
   ProductStatus,
@@ -9,9 +9,9 @@ export const STATUS_BADGE: Record<
     label: "Draft",
     className: "bg-secondary text-secondary-foreground",
   },
-  OUT_OF_STOCK: {
-    label: "Out of stock",
-    className: "bg-warning text-foreground",
+  ARCHIVED: {
+    label: "Archived",
+    className: "bg-secondary text-secondary-foreground",
   },
   BANNED: {
     label: "Banned",
@@ -33,13 +33,17 @@ export type ApprovalStatus = "PENDING" | "APPROVED" | "REJECTED";
 export interface ProductVariant {
   id: string;
   productId: string;
+  // General
   slug: string;
   description: string | null;
+  // Inventory & Pricing
   sku: string | null;
   price: number;
   stock: number;
+  // Metadata
   metaTitle: string | null;
   metaDescription: string | null;
+  // Media
   thumbnail: string | null;
   options: Record<string, string>;
   optionsKey: string;
@@ -53,12 +57,15 @@ export interface ProductDetail {
   brandId: string | null;
   brandName: string | null;
   categories: string[];
+  // General
   status: ProductStatus;
   approvalStatus: ApprovalStatus;
   rejectedReason: string | null;
+  // Options
   optionNames: string[];
   createdAt: string;
   updatedAt: string;
+  // Variants
   variants: ProductVariant[];
 }
 
@@ -68,13 +75,13 @@ export interface Product {
   // General Info
   id: string;
   name: string;
-  slug: string;
-  sku: string | null;
-  description: string | null;
   status: ProductStatus;
-  // metadata
-  metaTitle: string | null;
-  metaDescription: string | null;
-  // Media
-  thumbnail: string | null;
+  approvalStatus: ApprovalStatus;
+  rejectedReason: string | null;
+  // Options
+  optionNames: string[];
+  createdAt: string;
+  updatedAt: string;
+  // set once the product is archived (soft-deleted)
+  deletedAt: string | null;
 }

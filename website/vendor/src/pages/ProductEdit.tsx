@@ -1,0 +1,153 @@
+import { Link, useNavigate, useParams } from "@tanstack/react-router";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { toast } from "react-toastify";
+import { ArrowLeft, Info } from "lucide-react";
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+  Badge,
+  Button,
+  Skeleton,
+  Spinner,
+} from "@website/shared/ui";
+import { ProductFormFields } from "@/features/products/components/ProductFormFields";
+import {
+  useGetMyProducts,
+  useUpdateProduct,
+} from "@/features/products/hooks/useProduct";
+import {
+  updateProductSchema,
+  type UpdateProductInput,
+} from "@/features/products/schemas/product.schema";
+import { STATUS_BADGE, type Product } from "@/features/products/types/product";
+
+const APPROVAL_BADGE = {
+  PENDING: "bg-warning text-foreground",
+  APPROVED: "bg-success text-white",
+  REJECTED: "bg-destructive text-destructive-foreground",
+} as const;
+
+function EditProductForm({ product }: { product: Product }) {
+  const navigate = useNavigate();
+  const { mutateAsync: updateProduct } = useUpdateProduct();
+  const form = useForm<UpdateProductInput>({
+    resolver: zodResolver(updateProductSchema),
+    defaultValues: {
+      name: product.name,
+      brandId: product.brandId ?? undefined,
+      categoryId: product.categoryId,
+      optionNames: product.optionNames,
+    },
+  });
+  const {
+    handleSubmit,
+    formState: { isSubmitting, isDirty },
+  } = form;
+
+  const onSubmit = async (data: UpdateProductInput) => {
+    try {
+      await updateProduct({ productId: product.id, data });
+      toast.success(`Product ${data.name} updated successfully`);
+      navigate({ to: "/products" });
+    } catch {
+      // api client already toasts the error — keep the form open to retry
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className='space-y-5'>
+      {product.approvalStatus === "REJECTED" && product.rejectedReason && (
+        <Alert variant='destructive'>
+          <AlertTitle>This product was rejected</AlertTitle>
+          <AlertDescription>{product.rejectedReason}</AlertDescription>
+        </Alert>
+      )}
+
+      <Alert>
+        <Info />
+        <AlertTitle>Saving sends the product back for approval</AlertTitle>
+        <AlertDescription>
+          Any edit resets its review status to pending, so it stays off the
+          storefront until an admin approves it again.
+        </AlertDescription>
+      </Alert>
+
+      <div className='space-y-4 rounded-xl border border-border bg-card p-5 shadow-sm'>
+        <ProductFormFields form={form} />
+        <p className='text-xs text-muted-foreground'>
+          Clearing every category isn&apos;t saved yet — the product keeps the
+          categories it has now.
+        </p>
+      </div>
+
+      <div className='flex justify-end gap-2'>
+        <Button
+          type='button'
+          variant='outline'
+          render={<Link to='/products' />}
+        >
+          Cancel
+        </Button>
+        <Button type='submit' disabled={isSubmitting || !isDirty}>
+          {isSubmitting && <Spinner />}
+          {isSubmitting ? "Saving…" : "Save changes"}
+        </Button>
+      </div>
+    </form>
+  );
+}
+
+export default function ProductEdit() {
+  const { productId } = useParams({
+    from: "/vendor-layout/products/$productId/edit",
+  });
+  // ponytail: the vendor product list is a single unpaginated request and is
+  // already cached by /products — no need for a second by-id endpoint yet.
+  const { data: products, isPending } = useGetMyProducts();
+  const product = products?.find((p) => p.id === productId);
+
+  return (
+    <div className='space-y-5'>
+      <Link
+        to='/products'
+        className='inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground'
+      >
+        <ArrowLeft className='h-4 w-4' />
+        Products
+      </Link>
+
+      {isPending ? (
+        <div className='space-y-4'>
+          <Skeleton className='h-8 w-64' />
+          <Skeleton className='h-72 w-full rounded-xl' />
+        </div>
+      ) : !product ? (
+        <p className='rounded-xl border border-border bg-card p-10 text-center text-sm text-muted-foreground'>
+          Product not found.
+        </p>
+      ) : (
+        <>
+          <div className='flex flex-wrap items-start justify-between gap-3'>
+            <div>
+              <h1 className='font-display text-xl font-semibold text-foreground'>
+                Edit {product.name}
+              </h1>
+              <div className='mt-2 flex flex-wrap items-center gap-2'>
+                <Badge className={STATUS_BADGE[product.status].className}>
+                  {STATUS_BADGE[product.status].label}
+                </Badge>
+                <Badge className={APPROVAL_BADGE[product.approvalStatus]}>
+                  {product.approvalStatus}
+                </Badge>
+              </div>
+            </div>
+          </div>
+
+          <EditProductForm product={product} />
+        </>
+      )}
+    </div>
+  );
+}
