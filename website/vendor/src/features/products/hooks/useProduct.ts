@@ -53,6 +53,18 @@ export function useDeleteProduct() {
   });
 }
 
+export function useUpdateProductStatus() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: { productId: string; status: "ACTIVE" | "INACTIVE" }) =>
+      productApi.updateProductStatus(input.productId, input.status),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+    },
+  });
+}
+
 export function useRestoreProduct() {
   const queryClient = useQueryClient();
 

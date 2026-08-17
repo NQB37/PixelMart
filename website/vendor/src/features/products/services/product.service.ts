@@ -36,6 +36,12 @@ export const productApi = {
     const response = await api.delete<Product>(`products/${id}`);
     return response.data;
   },
+  updateProductStatus: async (id: string, status: "ACTIVE" | "INACTIVE") => {
+    const response = await api.patch<Product>(`products/${id}/status`, {
+      status,
+    });
+    return response.data;
+  },
   restoreProduct: async (id: string) => {
     const response = await api.patch<Product>(`products/${id}/restore`);
     return response.data;

@@ -9,10 +9,14 @@ import { useState } from "react";
 import {
   Archive,
   ArchiveRestore,
+  Ban,
+  Eye,
+  EyeOff,
   MoreHorizontal,
   Pencil,
   Trash2,
 } from "lucide-react";
+import { toast } from "react-toastify";
 import {
   Badge,
   Button,
@@ -24,6 +28,7 @@ import {
 } from "@website/shared/ui";
 import { STATUS_BADGE, type Product } from "../types/product";
 import { useGetAllBrands, useGetAllCategories } from "../hooks/useCatalog";
+import { useUpdateProductStatus } from "../hooks/useProduct";
 import { DeleteProductModal } from "./DeleteProductModal";
 import { RestoreProductModal } from "./RestoreProductModal";
 
@@ -42,6 +47,24 @@ export function ProductsTable({ products, isLoading }: ProductsTableProps) {
     permanent: boolean;
   } | null>(null);
   const [restoring, setRestoring] = useState<Product | null>(null);
+  // publish/unpublish is reversible in one click — no confirmation modal
+  const { mutateAsync: updateStatus, isPending: isTogglingStatus } =
+    useUpdateProductStatus();
+  const toggleStatus = async (
+    product: Product,
+    status: "ACTIVE" | "INACTIVE",
+  ) => {
+    try {
+      await updateStatus({ productId: product.id, status });
+      toast.success(
+        status === "ACTIVE"
+          ? `Product ${product.name} is now active`
+          : `Product ${product.name} is now inactive`,
+      );
+    } catch {
+      // api client already toasts the error
+    }
+  };
   const { data: brands = [] } = useGetAllBrands();
   const { data: categories = [] } = useGetAllCategories();
   const brandItems = brands.map((b) => ({ value: b.id, label: b.name }));
@@ -105,11 +128,27 @@ export function ProductsTable({ products, isLoading }: ProductsTableProps) {
                 }
               />
               <DropdownMenuContent align='end'>
-                {/* an archived product can only be restored or wiped for good */}
+                {/* archived: restore or wipe for good — nothing else applies */}
                 {product.deletedAt ? (
-                  <DropdownMenuItem onClick={() => setRestoring(product)}>
-                    <ArchiveRestore className='h-4 w-4' />
-                    Restore
+                  <>
+                    <DropdownMenuItem onClick={() => setRestoring(product)}>
+                      <ArchiveRestore className='h-4 w-4' />
+                      Restore
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      variant='destructive'
+                      onClick={() => setDeleting({ product, permanent: true })}
+                    >
+                      <Trash2 className='h-4 w-4' />
+                      Delete permanently
+                    </DropdownMenuItem>
+                  </>
+                ) : product.status === "BANNED" ? (
+                  // banned products are frozen server-side — nothing to offer
+                  <DropdownMenuItem disabled>
+                    <Ban className='h-4 w-4' />
+                    Locked by admin
                   </DropdownMenuItem>
                 ) : (
                   <>
@@ -124,6 +163,27 @@ export function ProductsTable({ products, isLoading }: ProductsTableProps) {
                       <Pencil className='h-4 w-4' />
                       Edit
                     </DropdownMenuItem>
+                    <DropdownMenuItem
+                      disabled={isTogglingStatus}
+                      onClick={() =>
+                        toggleStatus(
+                          product,
+                          product.status === "ACTIVE" ? "INACTIVE" : "ACTIVE",
+                        )
+                      }
+                    >
+                      {product.status === "ACTIVE" ? (
+                        <>
+                          <EyeOff className='h-4 w-4' />
+                          Set inactive
+                        </>
+                      ) : (
+                        <>
+                          <Eye className='h-4 w-4' />
+                          Set active
+                        </>
+                      )}
+                    </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
                       variant='destructive'
@@ -134,14 +194,6 @@ export function ProductsTable({ products, isLoading }: ProductsTableProps) {
                     </DropdownMenuItem>
                   </>
                 )}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  variant='destructive'
-                  onClick={() => setDeleting({ product, permanent: true })}
-                >
-                  <Trash2 className='h-4 w-4' />
-                  Delete permanently
-                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

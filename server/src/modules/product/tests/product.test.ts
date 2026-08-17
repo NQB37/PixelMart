@@ -125,6 +125,23 @@ describe("Product Integration Tests", () => {
     const list = await request(app).get("/api/v1/products/variants");
     expect(list.body.data.some((v: { slug: string }) => v.slug === slug)).toBe(true);
 
+    // a banned product is frozen: no edit, no status change, no archiving
+    await prisma.product.update({ where: { id: productId }, data: { status: "BANNED" } });
+    for (const res of await Promise.all([
+      request(app)
+        .patch(`/api/v1/products/${productId}`)
+        .set(auth(owner.accessToken))
+        .send({ name: "Renamed While Banned" }),
+      request(app)
+        .patch(`/api/v1/products/${productId}/status`)
+        .set(auth(owner.accessToken))
+        .send({ status: "ACTIVE" }),
+      request(app).delete(`/api/v1/products/${productId}`).set(auth(owner.accessToken)),
+    ])) {
+      expect(res.status).toBe(403);
+    }
+    await prisma.product.update({ where: { id: productId }, data: { status: "ACTIVE" } });
+
     // archive → restore comes back as a draft, and a live product cannot be restored
     await request(app).delete(`/api/v1/products/${productId}`).set(auth(owner.accessToken));
     const restored = await request(app)

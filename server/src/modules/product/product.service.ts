@@ -301,6 +301,14 @@ class ProductService {
     if (!product) {
       throw ApiError.notFound('Product not found');
     }
+    // ponytail: a banned product is frozen for its vendor — every write goes
+    // through here, so one guard covers them all. Lift it per-action if admins
+    // ever need to let a vendor fix a banned product instead of just appealing.
+    if (product.status === ProductStatus.BANNED) {
+      throw ApiError.forbidden(
+        'This product has been banned. Contact support to have it reviewed.',
+      );
+    }
 
     return product;
   }
