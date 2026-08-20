@@ -3,11 +3,7 @@ import { ProductCard } from "@/components/shared/ProductCard";
 import { useProducts } from "@/features/products/hooks/useProduct";
 import { Skeleton } from "@website/shared/ui";
 
-// name/category/rating/sold aren't on the variant API yet
-// title + fixed stats. Drop this once the API returns them.
-const titleFromSlug = (slug: string) =>
-  slug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
-
+// category/rating/sold aren't on the variant API yet — fixed stats until they are.
 const ProductsPage = () => {
   const { data, isLoading, isError } = useProducts();
 
@@ -31,7 +27,7 @@ const ProductsPage = () => {
                 key={v.id}
                 p={{
                   id: v.id,
-                  name: titleFromSlug(v.slug),
+                  name: v.name,
                   category: "Gaming Gear",
                   price: v.price,
                   rating: 4.5,
