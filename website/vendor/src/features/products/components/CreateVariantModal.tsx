@@ -34,6 +34,7 @@ export function CreateVariantModal({
 }: CreateVariantModalProps) {
   const { mutateAsync: createVariant } = useCreateVariant(productId);
   const emptyVariant: CreateVariantInput = {
+    name: "",
     slug: "",
     sku: "",
     price: 0,
@@ -72,7 +73,7 @@ export function CreateVariantModal({
         sku: data.sku || undefined,
         thumbnail: thumbnailUrl,
       });
-      toast.success(`Variant ${data.slug} created successfully`);
+      toast.success(`Variant ${data.name} created successfully`);
       setIsOpened(false);
     } catch {
       // api client already toasts the error — keep the modal open to retry

@@ -46,6 +46,7 @@ export function UpdateVariantModal({
   const form = useForm<CreateVariantInput>({
     resolver: zodResolver(createVariantSchema),
     defaultValues: {
+      name: variant.name,
       slug: variant.slug,
       sku: variant.sku ?? "",
       price: variant.price,
@@ -73,7 +74,7 @@ export function UpdateVariantModal({
         variantId: variant.id,
         data: { ...data, sku: data.sku || undefined, thumbnail: thumbnailUrl },
       });
-      toast.success(`Variant ${data.slug} updated successfully`);
+      toast.success(`Variant ${data.name} updated successfully`);
       onOpenChange(false);
       onUpdated?.(updated);
     } catch {

@@ -22,6 +22,11 @@ export const updateProductSchema = createProductSchema.extend({
 // ponytail: mirrors the server's createProductVariantSchema minus the fields no
 // form asks for yet (description, meta*) — optionsKey is derived in the service.
 export const createVariantSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(1, "Variant name is required")
+    .max(100, "Variant name must be at most 100 characters"),
   slug: z
     .string()
     .trim()

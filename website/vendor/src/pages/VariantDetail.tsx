@@ -48,10 +48,6 @@ function VariantDetailBody({ variant }: { variant: VariantDetailType }) {
   const [isDeleting, setIsDeleting] = useState(false);
   const { product } = variant;
   const status = STATUS_BADGE[product.status];
-  const options = product.optionNames
-    .map((name) => `${name}: ${variant.options[name] || "—"}`)
-    .join(" · ");
-
   return (
     <div className='space-y-5'>
       <Link
@@ -66,7 +62,7 @@ function VariantDetailBody({ variant }: { variant: VariantDetailType }) {
       <div className='flex flex-wrap items-start justify-between gap-3'>
         <div>
           <h1 className='font-display text-xl font-semibold text-foreground'>
-            {options || variant.slug}
+            {variant.name}
           </h1>
           <div className='mt-2 flex flex-wrap items-center gap-2'>
             <Badge className={status.className}>{status.label}</Badge>

@@ -19,6 +19,19 @@ export function VariantFormFields({
 
   return (
     <>
+      <div className='space-y-1.5'>
+        <Label htmlFor='variant-name'>
+          Name <span className='text-destructive'>*</span>
+        </Label>
+        <Input
+          id='variant-name'
+          placeholder='e.g. Keyboard K7 Pro — Red'
+          aria-invalid={!!errors.name}
+          {...register("name")}
+        />
+        <FieldError>{errors.name?.message}</FieldError>
+      </div>
+
       {optionNames.length === 0 ? (
         <p className='rounded-lg border border-border bg-muted/40 p-3 text-sm text-muted-foreground'>
           This product has no option names yet — edit the product and add at

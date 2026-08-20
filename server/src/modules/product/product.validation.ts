@@ -38,6 +38,7 @@ export const createProductVariantSchema = z.object({
   metaDescription: z.string().optional(),
 
   // General info
+  name: z.string().trim().min(1).max(100),
   slug: slugSchema,
   description: z.string().optional(),
 

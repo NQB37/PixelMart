@@ -340,6 +340,7 @@ model ProductVariant {
   productId String
 
   // General info
+  name        String
   slug        String  @unique
   description String? @db.Text
 

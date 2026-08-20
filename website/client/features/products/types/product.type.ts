@@ -2,6 +2,7 @@ export interface ProductVariant {
   id: string;
   productId: string;
   // General
+  name: string;
   slug: string;
   description: string | null;
   // Inventory & Pricing

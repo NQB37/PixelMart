@@ -60,6 +60,7 @@ export function ProductVariantsTable({
           <thead>
             <tr className='border-b border-border text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
               <th className='px-4 py-3'>Image</th>
+              <th className='px-4 py-3'>Name</th>
               {optionNames.map((name) => (
                 <th key={name} className='px-4 py-3'>
                   {name}
@@ -75,7 +76,7 @@ export function ProductVariantsTable({
             {variants.length === 0 && (
               <tr>
                 <td
-                  colSpan={optionNames.length + 5}
+                  colSpan={optionNames.length + 6}
                   className='px-4 py-10 text-center text-sm text-muted-foreground'
                 >
                   No variants yet. Add one to start selling this product.
@@ -105,6 +106,9 @@ export function ProductVariantsTable({
                       <ImageIcon className='h-4 w-4' strokeWidth={1.75} />
                     )}
                   </span>
+                </td>
+                <td className='px-4 py-3 text-sm font-medium text-foreground'>
+                  {variant.name}
                 </td>
                 {optionNames.map((name) => (
                   <td key={name} className='px-4 py-3'>

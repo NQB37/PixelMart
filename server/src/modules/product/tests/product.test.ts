@@ -56,6 +56,7 @@ describe("Product Integration Tests", () => {
       .post(`/api/v1/products/${productId}/variants`)
       .set(auth(owner.accessToken))
       .send({
+        name: "Mint Keyboard Red",
         slug,
         price: 1990,
         stock: 5,
@@ -73,14 +74,14 @@ describe("Product Integration Tests", () => {
     const dupe = await request(app)
       .post(`/api/v1/products/${productId}/variants`)
       .set(auth(owner.accessToken))
-      .send({ slug: `${slug}-2`, price: 1990, stock: 1, options: { Color: "Red" }, optionsKey: "Color:Red" });
+      .send({ name: "Mint Keyboard Red 2", slug: `${slug}-2`, price: 1990, stock: 1, options: { Color: "Red" }, optionsKey: "Color:Red" });
     expect(dupe.status).toBe(409);
 
     // another vendor cannot add variants to, or read variants of, someone else's product
     const foreign = await request(app)
       .post(`/api/v1/products/${productId}/variants`)
       .set(auth(other.accessToken))
-      .send({ slug: `${slug}-3`, price: 1, stock: 1, options: { Color: "Blue" }, optionsKey: "Color:Blue" });
+      .send({ name: "Mint Keyboard Blue", slug: `${slug}-3`, price: 1, stock: 1, options: { Color: "Blue" }, optionsKey: "Color:Blue" });
     expect(foreign.status).toBe(404);
     const foreignRead = await request(app)
       .get(`/api/v1/products/${productId}/variants`)
@@ -187,6 +188,7 @@ describe("Product Integration Tests", () => {
         .post(`/api/v1/products/${productId}/variants`)
         .set(auth)
         .send({
+          name: `Mint Mouse ${color}`,
           slug: `mint-mouse-${color.toLowerCase()}-${stamp}`,
           sku,
           price: 990,
