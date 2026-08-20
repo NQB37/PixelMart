@@ -1,18 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { ZodError, ZodType } from "zod";
-
-const toZodError = (error: unknown) => {
-  if (error instanceof ZodError) {
-    return {
-      name: "ZodError",
-      errors: error.issues.map((e) => ({
-        field: e.path.join("."),
-        message: e.message,
-      })),
-    };
-  }
-  return error;
-};
+import { ZodType } from "zod";
 
 export const validate =
   (schema: ZodType) =>
@@ -21,7 +8,7 @@ export const validate =
       req.body = await schema.parseAsync(req.body);
       next();
     } catch (error) {
-      next(toZodError(error));
+      next(error);
     }
   };
 
@@ -34,6 +21,6 @@ export const validateQuery =
       req.validatedQuery = (await schema.parseAsync(req.query)) as Record<string, unknown>;
       next();
     } catch (error) {
-      next(toZodError(error));
+      next(error);
     }
   };
