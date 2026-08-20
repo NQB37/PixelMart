@@ -1,5 +1,5 @@
 import { Badge, Card } from "@website/shared/ui";
-import { LucideIcon, ShoppingCart, Star } from "lucide-react";
+import { ImageOff, LucideIcon, ShoppingCart, Star } from "lucide-react";
 
 export interface Product {
   id: string;
@@ -8,23 +8,35 @@ export interface Product {
   price: number;
   oldPrice?: number;
   rating: number;
+  reviews?: number;
+  sold?: number;
   badge?: string;
-  icon: LucideIcon;
+  thumbnail?: string | null;
+  icon?: LucideIcon;
 }
 
 export function ProductCard({ p }: { p: Product }) {
   const discount = p.oldPrice
     ? Math.round((1 - p.price / p.oldPrice) * 100)
     : 0;
-  const Icon = p.icon;
+  const Icon = p.icon ?? ImageOff;
 
   return (
     <Card className='group flex flex-col overflow-hidden transition-shadow hover:shadow-lg hover:shadow-primary/10'>
-      <div className='relative flex aspect-square items-center justify-center bg-muted'>
-        <Icon
-          className='h-14 w-14 text-muted-foreground/50 transition-transform group-hover:scale-105'
-          strokeWidth={1}
-        />
+      <div className='relative flex aspect-square items-center justify-center overflow-hidden bg-muted'>
+        {p.thumbnail ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={p.thumbnail}
+            alt={p.name}
+            className='h-full w-full object-cover transition-transform group-hover:scale-105'
+          />
+        ) : (
+          <Icon
+            className='h-14 w-14 text-muted-foreground/50 transition-transform group-hover:scale-105'
+            strokeWidth={1}
+          />
+        )}
         {discount > 0 ? (
           <Badge className='absolute top-2 left-2 bg-highlight text-highlight-foreground'>
             -{discount}%
@@ -50,9 +62,15 @@ export function ProductCard({ p }: { p: Product }) {
             />
           ))}
           <span className='ml-1 text-sm text-muted-foreground'>
-            ({p.rating.toFixed(1)})
+            ({p.rating.toFixed(1)}
+            {p.reviews ? ` · ${p.reviews}` : ""})
           </span>
         </div>
+        {p.sold !== undefined && (
+          <span className='text-xs text-muted-foreground tabular-nums'>
+            {p.sold.toLocaleString()} sold
+          </span>
+        )}
         <div className='mt-auto flex items-end justify-between pt-2'>
           <div>
             {p.oldPrice && (
