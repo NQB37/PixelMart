@@ -14,6 +14,7 @@ import Dashboard from "@/pages/Dashboard";
 import Products from "@/pages/Products";
 import ProductDetail from "@/pages/ProductDetail";
 import ProductEdit from "@/pages/ProductEdit";
+import VariantDetail from "@/pages/VariantDetail";
 import Placeholder from "@/pages/Placeholder";
 import VendorLayout from "@/components/layout/VendorLayout";
 import { hasRole, type UserInfo } from "@website/shared/auth";
@@ -110,6 +111,14 @@ const productDetailRoute = createRoute({
   component: ProductDetail,
 });
 
+// kept off /products/$productId/variants/$slug — the variant slug is globally
+// unique, so the product segment would only make the URL longer
+const variantDetailRoute = createRoute({
+  getParentRoute: () => vendorLayoutRoute,
+  path: "/variants/$slug",
+  component: VariantDetail,
+});
+
 const productEditRoute = createRoute({
   getParentRoute: () => vendorLayoutRoute,
   path: "/products/$productId/edit",
@@ -134,6 +143,7 @@ const routeTree = rootRoute.addChildren([
     productsRoute,
     productDetailRoute,
     productEditRoute,
+    variantDetailRoute,
     placeholderRoute("/products/new", "New Product"),
     placeholderRoute("/products/import", "Import Product (CSV)"),
     placeholderRoute("/vouchers", "Vouchers"),

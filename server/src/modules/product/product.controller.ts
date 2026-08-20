@@ -95,6 +95,16 @@ const getProductVariants = asyncHandler(async (req, res) => {
   ApiResponse.success(res, productVariants);
 });
 
+const getVendorVariantBySlug = asyncHandler(async (req, res) => {
+  const { slug } = req.params as { slug: string };
+  const variant = await productService.getVendorVariantBySlug(
+    req.vendor!.id,
+    slug,
+  );
+
+  ApiResponse.success(res, variant);
+});
+
 const createProduct = asyncHandler(async (req, res) => {
   const product = await productService.createProduct(req.vendor!.id, req.body);
 
@@ -160,6 +170,7 @@ export {
   restoreProduct,
   deleteProductPermanent,
   getProductVariants,
+  getVendorVariantBySlug,
   createProduct,
   createProductVariant,
   updateProductVariant,

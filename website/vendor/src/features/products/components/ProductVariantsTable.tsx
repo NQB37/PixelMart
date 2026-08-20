@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import { ImageIcon, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import {
   Badge,
@@ -37,6 +38,7 @@ export function ProductVariantsTable({
   optionNames,
   variants,
 }: ProductVariantsTableProps) {
+  const navigate = useNavigate();
   // one modal for the whole table — unmounting it on close resets its state
   const [editing, setEditing] = useState<ProductVariant | null>(null);
   const [deleting, setDeleting] = useState<ProductVariant | null>(null);
@@ -83,7 +85,13 @@ export function ProductVariantsTable({
             {variants.map((variant) => (
               <tr
                 key={variant.id}
-                className='border-b border-border last:border-0 hover:bg-accent/40'
+                className='cursor-pointer border-b border-border last:border-0 hover:bg-accent/40'
+                onClick={() =>
+                  navigate({
+                    to: "/variants/$slug",
+                    params: { slug: variant.slug },
+                  })
+                }
               >
                 <td className='px-4 py-3'>
                   <span className='grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-md border border-border bg-secondary text-secondary-foreground'>
@@ -114,7 +122,7 @@ export function ProductVariantsTable({
                 <td className='px-4 py-3'>
                   <StockBadge stock={variant.stock} />
                 </td>
-                <td className='px-4 py-3'>
+                <td className='px-4 py-3' onClick={(e) => e.stopPropagation()}>
                   <div className='flex justify-end'>
                     <DropdownMenu>
                       <DropdownMenuTrigger

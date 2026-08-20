@@ -18,6 +18,7 @@ interface DeleteVariantModalProps {
   variant: ProductVariant;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onDeleted?: () => void;
 }
 
 // Controlled for the same reason as DeleteProductModal: opened from a dropdown
@@ -27,6 +28,7 @@ export function DeleteVariantModal({
   variant,
   open,
   onOpenChange,
+  onDeleted,
 }: DeleteVariantModalProps) {
   const { mutateAsync: deleteVariant, isPending } = useDeleteVariant(productId);
   const options = Object.entries(variant.options)
@@ -38,6 +40,7 @@ export function DeleteVariantModal({
       await deleteVariant(variant.id);
       toast.success(`Variant ${variant.slug} deleted`);
       onOpenChange(false);
+      onDeleted?.();
     } catch {
       // api client already toasts the error — keep the modal open to retry
     }

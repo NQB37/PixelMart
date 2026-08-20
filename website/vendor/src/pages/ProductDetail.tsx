@@ -9,6 +9,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@website/shared/ui";
+import { DetailRow } from "@/features/products/components/DetailRow";
 import { ProductVariantsTable } from "@/features/products/components/ProductVariantsTable";
 import { useGetProductById } from "@/features/products/hooks/useProduct";
 import {
@@ -22,21 +23,6 @@ const date = (value: string) =>
     month: "short",
     year: "numeric",
   });
-
-function Row({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className='grid gap-1 border-b border-border px-4 py-3 last:border-0 sm:grid-cols-[180px_1fr] sm:gap-4'>
-      <dt className='text-sm text-muted-foreground'>{label}</dt>
-      <dd className='text-sm text-foreground'>{children}</dd>
-    </div>
-  );
-}
 
 export default function ProductDetail() {
   const { productId } = useParams({
@@ -109,9 +95,9 @@ function ProductDetailBody({ product }: { product: ProductDetailType }) {
 
         <TabsContent value='details' className='pt-4'>
           <dl className='rounded-xl border border-border bg-card shadow-sm'>
-            <Row label='Name'>{product.name}</Row>
-            <Row label='Brand'>{product.brand?.name || "—"}</Row>
-            <Row label='Categories'>
+            <DetailRow label='Name'>{product.name}</DetailRow>
+            <DetailRow label='Brand'>{product.brand?.name || "—"}</DetailRow>
+            <DetailRow label='Categories'>
               {categories.length ? (
                 <span className='flex flex-wrap gap-1.5'>
                   {categories.map((c) => (
@@ -123,8 +109,8 @@ function ProductDetailBody({ product }: { product: ProductDetailType }) {
               ) : (
                 "—"
               )}
-            </Row>
-            <Row label='Option names'>
+            </DetailRow>
+            <DetailRow label='Option names'>
               {product.optionNames.length ? (
                 <span className='flex flex-wrap gap-1.5'>
                   {product.optionNames.map((o) => (
@@ -136,9 +122,9 @@ function ProductDetailBody({ product }: { product: ProductDetailType }) {
               ) : (
                 "—"
               )}
-            </Row>
-            <Row label='Created'>{date(product.createdAt)}</Row>
-            <Row label='Last updated'>{date(product.updatedAt)}</Row>
+            </DetailRow>
+            <DetailRow label='Created'>{date(product.createdAt)}</DetailRow>
+            <DetailRow label='Last updated'>{date(product.updatedAt)}</DetailRow>
           </dl>
         </TabsContent>
 

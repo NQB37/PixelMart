@@ -28,6 +28,7 @@ interface UpdateVariantModalProps {
   optionNames: string[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onUpdated?: (variant: ProductVariant) => void;
 }
 
 // Controlled for the same reason as DeleteVariantModal: opened from a dropdown
@@ -39,6 +40,7 @@ export function UpdateVariantModal({
   optionNames,
   open,
   onOpenChange,
+  onUpdated,
 }: UpdateVariantModalProps) {
   const { mutateAsync: updateVariant } = useUpdateVariant(productId);
   const form = useForm<CreateVariantInput>({
@@ -67,12 +69,13 @@ export function UpdateVariantModal({
       const thumbnailUrl = thumbnail
         ? await productApi.uploadThumbnail(thumbnail)
         : undefined;
-      await updateVariant({
+      const updated = await updateVariant({
         variantId: variant.id,
         data: { ...data, sku: data.sku || undefined, thumbnail: thumbnailUrl },
       });
       toast.success(`Variant ${data.slug} updated successfully`);
       onOpenChange(false);
+      onUpdated?.(updated);
     } catch {
       // api client already toasts the error — keep the modal open to retry
     }

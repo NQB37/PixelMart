@@ -99,6 +99,13 @@ export function useGetProductVariants(productId: string) {
   });
 }
 
+export function useGetMyVariantBySlug(slug: string) {
+  return useQuery({
+    queryKey: ["products", "variants", slug],
+    queryFn: () => productApi.getMyVariantBySlug(slug),
+  });
+}
+
 export function useCreateVariant(productId: string) {
   const queryClient = useQueryClient();
 

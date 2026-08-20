@@ -49,6 +49,17 @@ export interface ProductVariant {
   updatedAt: string;
 }
 
+// GET /products/me/variants/:slug — the variant plus just enough of its product
+export interface VariantDetail extends ProductVariant {
+  images: { id: string; url: string; isMain: boolean }[];
+  product: {
+    id: string;
+    name: string;
+    status: ProductStatus;
+    optionNames: string[];
+  };
+}
+
 // GET /products/:id — nested exactly as the API returns it
 export interface ProductDetail {
   id: string;

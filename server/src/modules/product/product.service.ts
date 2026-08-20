@@ -81,6 +81,24 @@ class ProductService {
     });
   }
 
+  // slug is globally unique, so the vendor scope is the only guard needed
+  async getVendorVariantBySlug(vendorId: string, slug: string) {
+    const variant = await prisma.productVariant.findFirst({
+      where: { slug, product: { vendorId } },
+      include: {
+        images: { orderBy: { sortOrder: 'asc' } },
+        product: {
+          select: { id: true, name: true, status: true, optionNames: true },
+        },
+      },
+    });
+    if (!variant) {
+      throw ApiError.notFound('Variant not found');
+    }
+
+    return variant;
+  }
+
   async createProduct(vendorId: string, input: CreateProductInput) {
     // Check if categories exist
     const { categoryId, ...data } = input;

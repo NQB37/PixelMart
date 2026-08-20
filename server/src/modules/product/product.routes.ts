@@ -78,6 +78,13 @@ router.delete(
 
 // Variant
 router.get(
+  '/me/variants/:slug',
+  isAuth,
+  isVendorOwner,
+  productController.getVendorVariantBySlug,
+);
+
+router.get(
   '/:productId/variants',
   isAuth,
   isVendorOwner,
