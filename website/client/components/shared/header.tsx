@@ -10,19 +10,12 @@ import {
   Input,
 } from "@website/shared/ui";
 import { useState } from "react";
-import { usePathname } from "next/navigation";
 import { useAuthStore } from "@/features/auth/stores/auth.store";
 import { useLogout } from "@/features/auth/hooks/useLogout";
 import ThemeToggle from "./theme-toggle";
 
-const NAV = [
-  { to: "/", label: "Home" },
-  { to: "/products", label: "Products" },
-];
-
 const Header = () => {
   const [open, setOpen] = useState(false);
-  const pathname = usePathname();
   const user = useAuthStore((state) => state.user);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const { mutate: logout, isPending } = useLogout();
@@ -30,7 +23,7 @@ const Header = () => {
   return (
     <header className='sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur'>
       <div className='mx-auto flex h-16 max-w-7xl items-center gap-4 px-4 md:px-6 lg:px-8'>
-        <Link href='/' className='flex items-center gap-2'>
+        <Link href='/' className='flex shrink-0 items-center gap-2'>
           <span className='grid h-9 w-9 place-items-center rounded-lg bg-primary text-primary-foreground'>
             <ShoppingBag className='h-5 w-5' strokeWidth={1.5} />
           </span>
@@ -39,30 +32,12 @@ const Header = () => {
           </span>
         </Link>
 
-        <nav className='ml-6 hidden items-center gap-6 md:flex'>
-          {NAV.map((n) => {
-            const isActive = pathname === n.to;
-            return (
-              <Link
-                key={n.label}
-                href={n.to}
-                className={
-                  isActive
-                    ? "font-display text-sm font-semibold text-primary"
-                    : "font-display text-sm font-medium text-foreground/70 hover:text-primary"
-                }
-              >
-                {n.label}
-              </Link>
-            );
-          })}
-        </nav>
+        <div className='relative mx-auto min-w-0 max-w-2xl flex-1'>
+          <Search className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground' />
+          <Input placeholder='Search products…' className='w-full pl-9' />
+        </div>
 
-        <div className='ml-auto hidden items-center gap-3 md:flex'>
-          <div className='relative'>
-            <Search className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground' />
-            <Input placeholder='Search products…' className='w-56 pl-9' />
-          </div>
+        <div className='hidden shrink-0 items-center gap-3 md:flex'>
           <ThemeToggle />
           <Link
             href='/cart'
@@ -106,7 +81,7 @@ const Header = () => {
           )}
         </div>
 
-        <div className='ml-auto flex items-center gap-2 md:hidden'>
+        <div className='flex shrink-0 items-center gap-2 md:hidden'>
           <ThemeToggle />
           <button
             type='button'
@@ -122,23 +97,6 @@ const Header = () => {
       {open && (
         <div className='border-t border-border bg-background md:hidden'>
           <nav className='flex flex-col p-4'>
-            {NAV.map((n) => {
-              const isActive = pathname === n.to;
-              return (
-                <Link
-                  key={n.label}
-                  href={n.to}
-                  className={`py-2 font-display text-sm ${
-                    isActive
-                      ? "font-semibold text-primary"
-                      : "text-foreground/70 hover:text-primary"
-                  }`}
-                  onClick={() => setOpen(false)}
-                >
-                  {n.label}
-                </Link>
-              );
-            })}
             <Link
               href='/cart'
               className='py-2 font-display text-sm text-foreground/70 hover:text-primary'
