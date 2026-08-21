@@ -35,36 +35,36 @@ export default function RegisterForm() {
 
   return (
     <AuthShell
-      heading="Start selling in minutes."
-      description="Join thousands of vendors already growing their business on PixelMart."
+      heading='Start selling in minutes.'
+      description='Join thousands of vendors already growing their business on PixelMart.'
       trustPoints={TRUST_POINTS}
     >
-      <div className="text-xs font-semibold uppercase tracking-wide text-primary">
+      <div className='text-xs font-semibold uppercase tracking-wide text-primary'>
         Vendor portal
       </div>
-      <h2 className="mt-2 font-display text-2xl font-bold text-foreground">
+      <h2 className='mt-2 font-display text-2xl font-bold text-foreground'>
         Create your vendor account
       </h2>
 
       {error && (
-        <Alert variant="destructive" className="mt-6">
+        <Alert variant='destructive' className='mt-6'>
           <AlertDescription>{error.message}</AlertDescription>
         </Alert>
       )}
 
-      <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-4">
-        <div className="space-y-1.5">
-          <Label htmlFor="vendor-register-email">Email</Label>
-          <div className="relative">
+      <form onSubmit={handleSubmit(onSubmit)} className='mt-6 space-y-4'>
+        <div className='space-y-1.5'>
+          <Label htmlFor='vendor-register-email'>Email</Label>
+          <div className='relative'>
             <Mail
-              className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+              className='pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground'
               strokeWidth={1.5}
             />
             <Input
-              id="vendor-register-email"
-              type="email"
-              className="pl-9"
-              autoComplete="email"
+              id='vendor-register-email'
+              type='email'
+              className='pl-9'
+              autoComplete='email'
               aria-invalid={!!errors.email}
               {...register("email")}
             />
@@ -72,18 +72,18 @@ export default function RegisterForm() {
           <FieldError>{errors.email?.message}</FieldError>
         </div>
 
-        <div className="space-y-1.5">
-          <Label htmlFor="vendor-register-password">Password</Label>
-          <div className="relative">
+        <div className='space-y-1.5'>
+          <Label htmlFor='vendor-register-password'>Password</Label>
+          <div className='relative'>
             <Lock
-              className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+              className='pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground'
               strokeWidth={1.5}
             />
             <Input
-              id="vendor-register-password"
-              type="password"
-              className="pl-9"
-              autoComplete="new-password"
+              id='vendor-register-password'
+              type='password'
+              className='pl-9'
+              autoComplete='new-password'
               aria-invalid={!!errors.password}
               {...register("password")}
             />
@@ -91,35 +91,46 @@ export default function RegisterForm() {
           <FieldError>{errors.password?.message}</FieldError>
         </div>
 
-        <div className="space-y-1.5">
-          <Label htmlFor="vendor-register-confirm-password">
+        <div className='space-y-1.5'>
+          <Label htmlFor='vendor-register-confirm-password'>
             Confirm password
           </Label>
-          <div className="relative">
+          <div className='relative'>
             <Lock
-              className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+              className='pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground'
               strokeWidth={1.5}
             />
             <Input
-              id="vendor-register-confirm-password"
-              type="password"
-              className="pl-9"
-              autoComplete="new-password"
+              id='vendor-register-confirm-password'
+              type='password'
+              className='pl-9'
+              autoComplete='new-password'
               aria-invalid={!!errors.confirmPassword}
               {...register("confirmPassword")}
             />
           </div>
           <FieldError>{errors.confirmPassword?.message}</FieldError>
         </div>
-        <Button variant="default" className="w-full" disabled={isPending}>
-          {isPending && <Spinner />}
-          {isPending ? "Creating account…" : "Create account"}
+        <Button
+          type='submit'
+          variant='default'
+          className='w-full'
+          disabled={isPending}
+        >
+          {isPending ? (
+            <>
+              <Spinner />
+              <span className='ml-2'>Creating account…</span>
+            </>
+          ) : (
+            "Create account"
+          )}
         </Button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-muted-foreground">
+      <p className='mt-6 text-center text-sm text-muted-foreground'>
         Already have an account?{" "}
-        <Link to="/login" className="font-medium text-primary hover:underline">
+        <Link to='/login' className='font-medium text-primary hover:underline'>
           Sign in
         </Link>
       </p>

@@ -1,6 +1,17 @@
 "use client";
 
-import { Card, Button, Form, FormField, FormItem, FormLabel, FormControl, FormMessage, Input, Spinner } from "@website/shared/ui";
+import {
+  Card,
+  Button,
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+  Input,
+  Spinner,
+} from "@website/shared/ui";
 import { ShoppingBag } from "lucide-react";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
@@ -19,7 +30,12 @@ const getPasswordStrength = (password: string): number => {
   return score;
 };
 
-const STRENGTH_COLORS = ["bg-primary/40", "bg-primary/60", "bg-primary/80", "bg-primary"];
+const STRENGTH_COLORS = [
+  "bg-primary/40",
+  "bg-primary/60",
+  "bg-primary/80",
+  "bg-primary",
+];
 
 const RegisterForm = () => {
   const [formError, setFormError] = useState<string | null>(null);
@@ -71,10 +87,7 @@ const RegisterForm = () => {
             </h1>
           </div>
           <Form {...methods}>
-            <form
-              className='mt-6 space-y-4'
-              onSubmit={handleSubmit(onSubmit)}
-            >
+            <form className='mt-6 space-y-4' onSubmit={handleSubmit(onSubmit)}>
               <FormField
                 control={control}
                 name='email'
@@ -83,9 +96,9 @@ const RegisterForm = () => {
                     <FormLabel>Email</FormLabel>
                     <FormControl>
                       <Input
-                      type='email'
-                      placeholder='you@email.com'
-                      autoComplete='email'
+                        type='email'
+                        placeholder='you@email.com'
+                        autoComplete='email'
                         {...field}
                       />
                     </FormControl>
@@ -101,9 +114,9 @@ const RegisterForm = () => {
                     <FormLabel>Password</FormLabel>
                     <FormControl>
                       <Input
-                      type='password'
-                      placeholder='••••••••'
-                      autoComplete='new-password'
+                        type='password'
+                        placeholder='••••••••'
+                        autoComplete='new-password'
                         {...field}
                       />
                     </FormControl>
@@ -137,9 +150,9 @@ const RegisterForm = () => {
                     <FormLabel>Confirm password</FormLabel>
                     <FormControl>
                       <Input
-                      type='password'
-                      placeholder='••••••••'
-                      autoComplete='new-password'
+                        type='password'
+                        placeholder='••••••••'
+                        autoComplete='new-password'
                         {...field}
                       />
                     </FormControl>
@@ -153,6 +166,7 @@ const RegisterForm = () => {
                 </div>
               )}
               <Button
+                type='submit'
                 variant='default'
                 className='w-full disabled:cursor-not-allowed disabled:opacity-60'
                 disabled={isPending}
@@ -164,7 +178,10 @@ const RegisterForm = () => {
           </Form>
           <div className='mt-6 text-center text-sm text-muted-foreground'>
             Already have an account?{" "}
-            <Link href='/login' className='font-medium text-primary hover:underline'>
+            <Link
+              href='/login'
+              className='font-medium text-primary hover:underline'
+            >
               Log in
             </Link>
           </div>

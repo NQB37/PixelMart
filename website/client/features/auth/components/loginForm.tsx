@@ -5,7 +5,18 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { ShoppingBag } from "lucide-react";
-import { Card, Button, Form, FormField, FormItem, FormLabel, FormControl, FormMessage, Input, Spinner } from "@website/shared/ui";
+import {
+  Card,
+  Button,
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+  Input,
+  Spinner,
+} from "@website/shared/ui";
 import { useLogin } from "../hooks/useLogin";
 
 const LoginForm = () => {
@@ -55,9 +66,9 @@ const LoginForm = () => {
                     <FormLabel>Email</FormLabel>
                     <FormControl>
                       <Input
-                      type='email'
-                      placeholder='you@email.com'
-                      autoComplete='email'
+                        type='email'
+                        placeholder='you@email.com'
+                        autoComplete='email'
                         {...field}
                       />
                     </FormControl>
@@ -73,9 +84,9 @@ const LoginForm = () => {
                     <FormLabel>Password</FormLabel>
                     <FormControl>
                       <Input
-                      type='password'
-                      placeholder='••••••••'
-                      autoComplete='current-password'
+                        type='password'
+                        placeholder='••••••••'
+                        autoComplete='current-password'
                         {...field}
                       />
                     </FormControl>
@@ -96,6 +107,7 @@ const LoginForm = () => {
                 </a>
               </div>
               <Button
+                type='submit'
                 variant='default'
                 className='w-full disabled:cursor-not-allowed disabled:opacity-60'
                 disabled={isPending}
@@ -118,7 +130,10 @@ const LoginForm = () => {
           </Form>
           <div className='mt-6 text-center text-sm text-muted-foreground'>
             New here?{" "}
-            <Link href='/register' className='font-medium text-primary hover:underline'>
+            <Link
+              href='/register'
+              className='font-medium text-primary hover:underline'
+            >
               Create an account
             </Link>
           </div>
