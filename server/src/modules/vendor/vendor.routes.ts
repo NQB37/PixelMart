@@ -49,4 +49,4 @@ router.patch(
   vendorController.rejectVendor,
 );
 
-export const vendorRoutes = router;
+export const vendorRoutes: Router = router;

@@ -56,7 +56,6 @@ Thumbs.db
 
 # Package manager
 .pnpm-store/
-pnpm-lock.yaml
 pnpm-workspace.yaml
 
 # Docker

@@ -15,4 +15,4 @@ router.post(
   uploadController.uploadImage,
 );
 
-export const uploadRoutes = router;
+export const uploadRoutes: Router = router;
