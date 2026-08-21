@@ -28,7 +28,7 @@ const setRefreshTokenCookie = (
   res.cookie(refreshTokenCookieName(req), refreshToken, {
     httpOnly: true,
     secure: env.nodeEnv === "production",
-    sameSite: "lax",
+    sameSite: env.nodeEnv === "production" ? "none" : "lax",
     maxAge: env.refreshTokenExpiresInDays * 24 * 60 * 60 * 1000,
     path: COOKIE_PATH,
   });
@@ -38,7 +38,11 @@ const getRefreshTokenCookie = (req: Request): string | undefined =>
   req.cookies[refreshTokenCookieName(req)];
 
 const clearTokenCookies = (req: Request, res: Response) => {
-  res.clearCookie(refreshTokenCookieName(req), { path: COOKIE_PATH });
+  res.clearCookie(refreshTokenCookieName(req), {
+    path: COOKIE_PATH,
+    secure: env.nodeEnv === "production",
+    sameSite: env.nodeEnv === "production" ? "none" : "lax",
+  });
 };
 
 export { setRefreshTokenCookie, getRefreshTokenCookie, clearTokenCookies };
