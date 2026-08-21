@@ -34,4 +34,4 @@ router.delete(
   brandController.deleteBrand,
 );
 
-export const brandRoutes = router;
+export const brandRoutes: Router = router;

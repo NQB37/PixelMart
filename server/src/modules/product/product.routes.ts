@@ -122,4 +122,4 @@ router.get(
   productController.getProductById,
 );
 
-export const productRoutes = router;
+export const productRoutes: Router = router;

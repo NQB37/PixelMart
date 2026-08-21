@@ -1,5 +1,6 @@
 import { useRouter } from "next/navigation";
 import { authApi } from "../services/auth.service";
+import { getErrorMessage } from "@/lib/api";
 import { useMutation } from "@tanstack/react-query";
 import { useAuthStore } from "../stores/auth.store";
 import { toast } from "react-toastify";
@@ -14,8 +15,8 @@ export const useLogin = () => {
       setAuth(data.user, data.accessToken);
       router.push("/");
     },
-    onError: (error: any) => {
-      toast.error(error?.response?.data?.message || "Login failed!");
+    onError: (error) => {
+      toast.error(getErrorMessage(error, "Login failed!"));
     },
   });
 };
