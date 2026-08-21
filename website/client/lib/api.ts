@@ -1,3 +1,4 @@
+import axios from "axios";
 import { createAuthApiClient } from "@website/shared/auth";
 import { useAuthStore } from "@/features/auth/stores/auth.store";
 import { toast } from "react-toastify";
@@ -20,3 +21,8 @@ export const api = createAuthApiClient({
   },
   notifyError: (message) => toast.error(message),
 });
+
+export const getErrorMessage = (error: unknown, fallback: string) =>
+  (axios.isAxiosError<{ message?: string }>(error) &&
+    error.response?.data?.message) ||
+  fallback;
