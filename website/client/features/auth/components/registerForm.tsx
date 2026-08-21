@@ -10,6 +10,7 @@ import {
   FormControl,
   FormMessage,
   Input,
+  PasswordInput,
   Spinner,
 } from "@website/shared/ui";
 import { ShoppingBag } from "lucide-react";
@@ -113,8 +114,7 @@ const RegisterForm = () => {
                   <FormItem>
                     <FormLabel>Password</FormLabel>
                     <FormControl>
-                      <Input
-                        type='password'
+                      <PasswordInput
                         placeholder='••••••••'
                         autoComplete='new-password'
                         {...field}
@@ -149,8 +149,7 @@ const RegisterForm = () => {
                   <FormItem>
                     <FormLabel>Confirm password</FormLabel>
                     <FormControl>
-                      <Input
-                        type='password'
+                      <PasswordInput
                         placeholder='••••••••'
                         autoComplete='new-password'
                         {...field}

@@ -15,6 +15,7 @@ import {
   FormControl,
   FormMessage,
   Input,
+  PasswordInput,
   Spinner,
 } from "@website/shared/ui";
 import { useLogin } from "../hooks/useLogin";
@@ -83,8 +84,7 @@ const LoginForm = () => {
                   <FormItem>
                     <FormLabel>Password</FormLabel>
                     <FormControl>
-                      <Input
-                        type='password'
+                      <PasswordInput
                         placeholder='••••••••'
                         autoComplete='current-password'
                         {...field}

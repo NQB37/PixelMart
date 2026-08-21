@@ -4,6 +4,7 @@ export { default as SectionHeader } from "./SectionHeader";
 export * from "./field";
 export { Label } from "./label";
 export { Input } from "./input";
+export { PasswordInput } from "./password-input";
 export { Badge, badgeVariants } from "./badge";
 export * from "./card";
 export * from "./form";

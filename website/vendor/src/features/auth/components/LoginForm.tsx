@@ -8,6 +8,7 @@ import {
   Button,
   FieldError,
   Input,
+  PasswordInput,
   Label,
   Spinner,
 } from "@website/shared/ui";
@@ -79,9 +80,8 @@ export default function LoginForm() {
               className='pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground'
               strokeWidth={1.5}
             />
-            <Input
+            <PasswordInput
               id='vendor-login-password'
-              type='password'
               className='pl-9'
               autoComplete='current-password'
               aria-invalid={!!errors.password}
