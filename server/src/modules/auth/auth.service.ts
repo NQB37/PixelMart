@@ -72,9 +72,11 @@ class AuthService {
       include: { roles: { select: { role: { select: { name: true } } } } },
     });
 
-    // Compare password
-    const isPasswordValid = await comparePassword(data.password, user.password);
-    if (!user || !isPasswordValid) {
+    // Compare password (OAuth users have no password, so `user.password` is nullable)
+    if (
+      !user?.password ||
+      !(await comparePassword(data.password, user.password))
+    ) {
       throw ApiError.unauthorized('Invalid credentials');
     }
 
