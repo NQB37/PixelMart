@@ -10,6 +10,7 @@
 - Đọc lại [knowledge/github-actions.md](../../knowledge/github-actions.md) mục 3, phần "Postgres cho integration test".
 - Tài khoản: **Neon** (tạo project, region gần Render nhất), **Sentry** (tạo 3 project: api, web, admin).
 - Phiên bản: **Prisma ORM 7**. Cấu hình connection đã chuyển từ `schema.prisma` sang `prisma.config.ts`, và client dùng **driver adapter** (`@prisma/adapter-pg`). Tutorial cũ (Prisma 5–6) có `url`/`directUrl` trong `schema.prisma`: **đừng làm theo**.
+- **Prisma 7 CLI không còn tự đọc file `.env`.** `prisma.config.ts` phải có `import 'dotenv/config'` ở dòng đầu (và cài `dotenv`), nếu không `env('DIRECT_URL')` sẽ báo lỗi ngay lần `db:migrate` đầu tiên. Ngoài ra, `migrate dev` **không** tự chạy `generate` và seed như trước: hãy gọi `prisma generate` và `prisma db seed` tường minh trong script. Đọc Prisma v7 upgrade guide để biết đầy đủ các thay đổi.
 
 ## 1. Bức tranh tổng
 
@@ -72,7 +73,7 @@ Bạn sẽ test những gì để tin rằng (a) seed idempotent, (b) truncate g
 - Chạy seed 2 lần → bảng `stores` có đúng 1 dòng slug `pixelmart`.
 - Tạo 2 store cùng `slug` → lỗi unique (Prisma `P2002`).
 - Test A tạo dữ liệu, test file B chạy sau → không thấy dữ liệu của A.
-- `id` được sinh tự động, đúng định dạng UUID, phiên bản 7 (ký tự thứ 13 là `7`).
+- `id` được sinh tự động, đúng định dạng UUID, phiên bản 7 (chữ số hex đầu tiên của nhóm thứ 3 là `7`, tức ký tự thứ 15 nếu tính cả dấu `-`: `xxxxxxxx-xxxx-7xxx-…`).
 - Test chạy song song không giẫm lên nhau (xem bẫy bên dưới).
 </details>
 
@@ -84,7 +85,7 @@ Làm cho `pnpm db:migrate` chạy được ở local với Postgres trong Docker
 
 <details><summary>Hint 2: khái niệm/API</summary>
 
-- Prisma 7: `defineConfig({ schema, migrations: { path, seed }, datasource: { url: env('DIRECT_URL') } })` từ `prisma/config`.
+- Prisma 7: `defineConfig({ schema, migrations: { path, seed }, datasource: { url: env('DIRECT_URL') } })` từ `prisma/config`, với `import 'dotenv/config'` ở đầu file.
 - Client: `new PrismaClient({ adapter: new PrismaPg({ connectionString: env.DATABASE_URL }) })`.
 - Truncate tất cả bảng: lấy danh sách bảng từ `pg_tables` (schema `public`, trừ `_prisma_migrations`), rồi `TRUNCATE ... RESTART IDENTITY CASCADE` trong một câu lệnh.
 - Vitest mặc định chạy **các file test song song**. Với một DB dùng chung, bật `fileParallelism: false` (đơn giản), hoặc mỗi worker một schema/DB (nhanh hơn, phức tạp hơn).
@@ -113,6 +114,8 @@ test/db.ts
 | Triệu chứng | Nguyên nhân | Cách tránh |
 |---|---|---|
 | Làm theo tutorial, `url` trong `schema.prisma` báo lỗi | Tutorial cho Prisma ≤ 6 | Prisma 7: URL nằm trong `prisma.config.ts`, client dùng adapter |
+| `prisma migrate dev` báo không tìm thấy `DIRECT_URL` dù `.env` có đủ | Prisma 7 CLI không tự load `.env` | `import 'dotenv/config'` đầu `prisma.config.ts` |
+| Đổi schema, migrate xong nhưng type trong code vẫn cũ | Prisma 7 `migrate dev` không tự `generate` | Chạy `prisma generate` (đưa vào script `db:migrate` hoặc `postinstall`) |
 | `migrate deploy` trên Neon bị treo hoặc lỗi prepared statement | Dùng URL pooled cho migration | Migration dùng `DIRECT_URL` |
 | Test chập chờn, lúc pass lúc fail | Các file test chạy song song cùng truncate một DB | `fileParallelism: false` hoặc tách DB/schema theo worker |
 | Dữ liệu dev biến mất | Test trỏ nhầm vào DB dev | DB test riêng. Kiểm tra trong setup: tên DB phải chứa `test`, sai thì dừng |
@@ -436,9 +439,13 @@ src/routes/
 1. **API:** `@sentry/nestjs`. File `instrument.ts` khởi tạo Sentry và phải được import **đầu tiên** trong `main.ts`. Thêm `SentryModule.forRoot()`. Lỗi 500 trong filter của PXM-16 → `Sentry.captureException`. Không gửi lỗi 4xx (đó là lỗi của client, không phải bug).
 2. **Web:** `@sentry/nextjs` (wizard `npx @sentry/wizard -i nextjs` tạo sẵn file config, nhưng hãy đọc hiểu từng file nó sinh ra).
 3. **Admin:** `@sentry/react` + `@sentry/vite-plugin` để upload source map lúc build.
-4. **CI/CD:** `SENTRY_AUTH_TOKEN` (secret), `SENTRY_RELEASE=${{ github.sha }}`. Upload source map cho API dùng `sentry-cli sourcemaps inject` + `upload`.
-5. DSN qua env (DSN không phải secret, nhưng vẫn để trong env cho mỗi môi trường).
-6. Tạo một route/nút "throw test error" chỉ bật ở môi trường không phải production, hoặc bảo vệ bằng flag, để kiểm chứng.
+4. **CI/CD (web, admin):** `SENTRY_AUTH_TOKEN` (secret), release = git SHA. Plugin của Next/Vite upload source map **trong chính lần build được deploy** (Vercel build). Vì vậy release và source map luôn khớp nhau.
+5. **API trên Render:** cẩn thận, Render **tự build lại image** từ Dockerfile (PXM-13), nên source map mà CI upload thuộc về **một lần build khác** với cái đang chạy (debug ID/đường dẫn không khớp). Hai cách:
+   - **Đơn giản (đủ cho v1):** build API kèm source map (`sourceMap: true` trong tsconfig build), giữ file `.map` trong image (API không public file tĩnh nên không lộ), và chạy Node với `--enable-source-maps` (`CMD ["node", "--enable-source-maps", "dist/main.js"]`). Stack trace gửi lên Sentry đã được ánh xạ về file `.ts`.
+   - **Đầy đủ:** chạy `sentry-cli sourcemaps inject` + `upload` **bên trong stage build của Dockerfile**, token truyền bằng build secret (`RUN --mount=type=secret`). Kiểm tra docs Render về cách truyền secret lúc build Docker.
+   - **Release ở runtime:** đọc từ biến `RENDER_GIT_COMMIT` mà Render tự cung cấp cho mỗi deploy (kiểm tra trong danh sách biến môi trường mặc định của Render). Dùng cùng giá trị cho `APP_VERSION` của `/v1/health` (PXM-13).
+6. DSN qua env (DSN không phải secret, nhưng vẫn để trong env cho mỗi môi trường).
+7. Tạo một route/nút "throw test error" chỉ bật ở môi trường không phải production, hoặc bảo vệ bằng flag, để kiểm chứng.
 
 ### File dự kiến tạo/sửa
 `apps/api/src/instrument.ts`, `apps/api/src/main.ts`, `apps/api/src/common/filters/problem-details.filter.ts`, `apps/web/{instrumentation.ts,sentry.*.config.ts,next.config.ts}`, `apps/admin/{src/main.tsx,vite.config.ts}`, workflow CI/CD, `.env.example` các app.
@@ -476,7 +483,8 @@ API:   instrument.ts → Sentry.init({ dsn, release, environment, sendDefaultPii
        main.ts dòng 1: import instrument
        filter nhánh 500: Sentry.captureException(err)
 Admin: Sentry.init trong main.tsx; vite build sourcemap + sentryVitePlugin (upload rồi xóa .map)
-CI:    env SENTRY_AUTH_TOKEN (secret), SENTRY_RELEASE = github.sha khi build
+       release = process.env.RENDER_GIT_COMMIT · chạy node --enable-source-maps (dist có .map)
+Web/Admin: SENTRY_AUTH_TOKEN (secret) trong env build của Vercel, release = git SHA
 ```
 </details>
 
@@ -484,6 +492,7 @@ CI:    env SENTRY_AUTH_TOKEN (secret), SENTRY_RELEASE = github.sha khi build
 | Triệu chứng | Nguyên nhân | Cách tránh |
 |---|---|---|
 | Stack trace là code đã minify | Source map không được upload, hoặc `release` lúc upload khác `release` lúc chạy | Dùng cùng một giá trị SHA cho cả build/upload và runtime |
+| Stack trace API vẫn trỏ vào `dist/*.js` dù CI đã upload source map | Render build lại image nên bản đang chạy khác bản CI đã upload | `--enable-source-maps`, hoặc upload ngay trong Docker build |
 | File `.map` công khai trên production | Vite build source map rồi deploy luôn | `filesToDeleteAfterUpload` hoặc `sourcemap: 'hidden'` + xóa |
 | Sentry nhận hàng nghìn issue 404 | Gửi mọi exception | Chỉ capture lỗi 5xx/lỗi lạ |
 | Hết quota free trong một ngày | Một lỗi lặp trong vòng lặp, hoặc tracing 100% | `tracesSampleRate` thấp (0.1) hoặc tắt. Đặt rate limit/spike protection |

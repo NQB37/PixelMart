@@ -156,6 +156,7 @@ register(input):
   - `SameSite=Lax`: không gửi cookie trong request cross-site do trang khác tạo (form POST, fetch), nên phần lớn CSRF bị chặn. `shop.<domain>` và `api.<domain>` là **same-site** (cùng registrable domain) nên vẫn gửi được.
   - `Domain=<domain gốc>`: cookie dùng chung cho `shop.`, `admin.`, `api.`.
   - Refresh cookie `Path=/v1/auth`: chỉ được gửi tới các endpoint auth, giảm bề mặt lộ.
+- **Cookie gợi ý phiên (`pm_session=1`):** access cookie hết hạn sau 15 phút thì browser **xóa** nó. Khi đó shop (Next.js `proxy.ts`, Sprint 4) không còn cách nào biết người dùng "vẫn đang có phiên" (vì refresh cookie chỉ gửi tới `/v1/auth`) và sẽ đá họ về `/login`. Cách xử lý được chọn: set thêm một cookie **không HttpOnly**, không chứa bí mật, giá trị chỉ là `1`, `Path=/`, `Domain` gốc, **sống bằng refresh token**. Nó chỉ nói "có thể đang đăng nhập, hãy thử refresh", không bao giờ dùng để xác thực. GitHub dùng đúng kiểu cookie này (`logged_in`). Login và refresh set lại nó, logout và reuse detection xóa nó. Ghi lựa chọn này (và các phương án khác: cho access cookie sống lâu hơn JWT, hoặc trang login tự thử refresh trước) vào ADR-0006.
 - **User enumeration:** sai email và sai password phải trả **cùng** status, **cùng** thông báo, và **gần cùng thời gian**. Nếu email không tồn tại mà trả ngay (không chạy argon2), kẻ tấn công đo thời gian là biết email nào tồn tại (timing attack).
 - **Rate limit:** 5 lần/phút/IP cho login, chống brute force. Phía sau proxy (Render), IP thật nằm trong `X-Forwarded-For`, nên phải cấu hình **trust proxy**.
 
@@ -175,9 +176,10 @@ Viết ra ít nhất 8 case. Nghĩ về: response, cookie, dữ liệu DB, kẻ 
 
 <details><summary>Đáp án tham khảo</summary>
 
-1. Đúng email/password → 200, 2 header `Set-Cookie`.
+1. Đúng email/password → 200, 3 header `Set-Cookie` (access, refresh, `pm_session`).
 2. Cookie access có `HttpOnly`, `Secure`, `SameSite=Lax`, `Domain`, `Max-Age`/`Expires` khoảng 15 phút.
 3. Cookie refresh có `Path=/v1/auth`.
+3b. Cookie `pm_session` có giá trị `1`, **không** HttpOnly, `Path=/`, `Max-Age` bằng thời hạn refresh token.
 4. DB có 1 bản ghi `RefreshToken` với `tokenHash` **khác** giá trị trong cookie.
 5. Sai password → 401, thông báo X. Email không tồn tại → 401, **cùng** thông báo X.
 6. Email viết hoa → vẫn đăng nhập được (chuẩn hóa).
@@ -218,6 +220,7 @@ login(email, password):
 controller:
   setCookie("access",  access,  httpOnly, secure, lax, domain, path "/",        maxAge 15m)
   setCookie("refresh", refresh, httpOnly, secure, lax, domain, path "/v1/auth", maxAge N ngày)
+  setCookie("pm_session", "1", KHÔNG httpOnly, secure, lax, domain, path "/", maxAge N ngày)   // chỉ là gợi ý cho UI
   return toUserResponse(user)
 ```
 </details>
@@ -271,7 +274,7 @@ sequenceDiagram
 
 - **Race condition hợp lệ:** hai tab cùng refresh với R1 gần như cùng lúc. Tab thứ hai sẽ bị coi là "reuse" và đá người dùng ra ngoài. Cách giảm thiểu: single-flight phía client (PXM-27) và/hoặc một **grace period** ngắn (vài giây) cho token vừa bị rotate. Đây là đánh đổi **an toàn vs trải nghiệm**: ghi lựa chọn của bạn vào ADR-0006.
 - **Cập nhật có điều kiện:** "thu hồi R1 nếu R1 chưa bị thu hồi" phải là **một câu lệnh atomic** (`UPDATE … WHERE id = ? AND revokedAt IS NULL` rồi kiểm tra số dòng bị ảnh hưởng), không phải "đọc rồi ghi" (hai request cùng đọc thấy "chưa thu hồi").
-- **Logout:** thu hồi token hiện tại, xóa cả hai cookie (set lại với cùng `Domain`/`Path` và `Max-Age=0`).
+- **Logout:** thu hồi token hiện tại, xóa cả ba cookie (access, refresh, `pm_session`) bằng cách set lại với cùng `Domain`/`Path` và `Max-Age=0`. Refresh thành công thì set lại cả ba. Phát hiện reuse thì cũng xóa cả ba.
 
 ### Hướng tiếp cận
 1. Viết test kịch bản tấn công (sequence diagram ở trên) **đầu tiên**. Đây là AC quan trọng nhất của v1.
@@ -296,7 +299,7 @@ sequenceDiagram
 4. Token hết hạn → 401.
 5. Không có cookie refresh → 401.
 6. Token rác/không tồn tại → 401, không 500.
-7. Logout → 204, cookie bị xóa (`Max-Age=0`), sau đó refresh → 401.
+7. Logout → 204, cả ba cookie bị xóa (`Max-Age=0`), sau đó refresh → 401.
 8. Logout khi không có cookie → vẫn 204 (idempotent).
 9. Hai request refresh song song với cùng R1 → hành vi đúng như bạn đã quyết định trong ADR (cả hai 401 do reuse, hoặc một cái thành công nếu có grace period), **không** sinh ra hai token hợp lệ cùng lúc mà không bị phát hiện.
 10. Access token mới sau refresh vẫn gọi được `/v1/me`.
@@ -326,13 +329,17 @@ refresh(rawToken):
   if rec.revokedAt != null:
       revokeFamily(rec.familyId); log.warn("refresh token reuse", { userId, familyId }); 401
 
-  trong transaction:
+  result = trong transaction:
       n = revoke rec WHERE revokedAt IS NULL          // atomic
-      if n == 0: revokeFamily(rec.familyId); 401       // ai đó vừa dùng nó → coi như reuse
+      if n == 0: return REUSED                         // ⚠️ KHÔNG throw ở đây (xem bên dưới)
       newRaw = random 32 bytes
       create { userId, familyId: rec.familyId, tokenHash: sha256(newRaw), expiresAt }
+      return newRaw
+  // transaction đã commit xong
+  if result == REUSED:                                 // ai đó vừa dùng token này → coi như reuse
+      revokeFamily(rec.familyId); log.warn(...); 401   // thu hồi family NGOÀI transaction, rồi mới trả 401
   access = sign(user)
-  return { access, newRaw }
+  return { access, newRaw: result }
 
 logout(rawToken):
   if rawToken: revoke where tokenHash = sha256(rawToken)   // không lỗi nếu không thấy
@@ -345,6 +352,7 @@ logout(rawToken):
 | Triệu chứng | Nguyên nhân | Cách tránh |
 |---|---|---|
 | Kịch bản tấn công không bị phát hiện | Khi gặp token đã thu hồi, chỉ trả 401 mà không thu hồi family | Reuse → thu hồi **cả family** |
+| Reuse được phát hiện (trả 401) nhưng family **vẫn còn sống** | `revokeFamily` rồi `throw` **bên trong** `prisma.$transaction(async tx => …)`. Throw trong interactive transaction = **rollback mọi thứ** trong đó, kể cả lệnh thu hồi family | Transaction trả về một giá trị đánh dấu (`REUSED`). Sau khi transaction kết thúc mới thu hồi family và throw 401. Test: sau kịch bản race, query DB kiểm tra mọi token của family đều có `revokedAt` |
 | Hai request song song đều refresh thành công | Kiểm tra `revokedAt` bằng `findUnique` rồi mới `update` | Update có điều kiện, kiểm tra `count` |
 | Logout xong vẫn còn cookie trên browser | `clearCookie` khác `domain`/`path` so với lúc set | Dùng chung một hàm tạo option cookie |
 | Người dùng mở 2 tab hay bị đá ra | Race condition khi refresh đồng thời | Single-flight ở client (PXM-27) + cân nhắc grace period, ghi vào ADR |
@@ -462,7 +470,10 @@ RolesGuard.canActivate(ctx):
 ### Khái niệm cần nắm
 - **CORS không bảo vệ server.** Nó là cơ chế của **browser**: browser quyết định trang ở origin A có được **đọc** response từ origin B hay không. curl/Postman/kẻ tấn công không bị CORS chặn. Mục đích của CORS là cho phép đúng các frontend của ta đọc response kèm cookie.
 - **`credentials: true` + allowlist:** khi cho phép cookie, `Access-Control-Allow-Origin` **không được** là `*`. Phải là origin cụ thể nằm trong allowlist (`https://shop.<domain>`, `https://admin.<domain>`).
-- **CSRF và SameSite:** SameSite=Lax chặn phần lớn CSRF cross-site. Nhưng một trang **cross-site** vẫn có thể gửi form POST `text/plain`/`application/x-www-form-urlencoded` (một "simple request" không cần preflight). Bắt buộc `Content-Type: application/json` cho mọi mutation thì những request đó bị từ chối (415), còn request JSON cross-origin phải qua preflight CORS, và preflight sẽ bị allowlist chặn. Đây là lớp phòng thủ thứ hai.
+- **CSRF và SameSite: phân biệt "same-site" với "same-origin".**
+  - Trang **cross-site** (ví dụ `evil.com`) gửi form POST tới `api.<domain>`: browser **không** gửi cookie `SameSite=Lax` kèm theo, nên request đến API như một request chưa đăng nhập. Với cookie Lax, CSRF từ site khác **đã bị chặn**.
+  - Lỗ hổng còn lại là **kẻ tấn công cùng site** (same-site attacker): một subdomain khác dưới `<domain>` bị chiếm hoặc dính XSS (ví dụ `blog.<domain>` hay một preview cũ). Với browser, `blog.<domain>` → `api.<domain>` là **same-site**, nên cookie Lax **vẫn được gửi**. SameSite không bảo vệ được trường hợp này.
+  - Lớp phòng thủ thứ hai: bắt buộc `Content-Type: application/json` cho mọi mutation. Form HTML chỉ gửi được `text/plain`/`application/x-www-form-urlencoded`/`multipart/form-data` (các "simple request" không cần preflight), nên sẽ bị từ chối (415). Còn `fetch` JSON từ origin khác (dù same-site) phải qua **preflight CORS**, và preflight bị allowlist chặn. Lớp này cũng giúp phòng thủ chiều sâu cho browser cũ chưa áp dụng SameSite mặc định.
 - **Preview deployment của Vercel** (`*.vercel.app`) là cross-site so với `api.<domain>`, nên cookie SameSite=Lax **không** được gửi. Login trên preview sẽ không hoạt động. Hãy biết điều này và ghi lại trong ADR (chấp nhận ở v1).
 
 ### Hướng tiếp cận

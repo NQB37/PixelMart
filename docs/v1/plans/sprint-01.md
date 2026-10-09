@@ -8,7 +8,7 @@
 
 **Kiến thức nên đọc trước**
 - [Docker](../../knowledge/docker.md): mục 1, 2, 4 (trước PXM-11)
-- [GitHub Actions](../../knowledge/github-actions.md): mục 1, 2, 4 (trước PXM-12)
+- [GitHub Actions](../../knowledge/github-actions.md): mục 1, 2, 4 (trước PXM-12). **KHÔNG đọc mục 3** (các đoạn YAML mẫu) cho tới khi bạn đã tự viết xong `ci.yml`.
 - [Quy trình branch](../../rules/01-git-branching.md) và [commit/PR](../../rules/02-commits-and-pull-requests.md)
 
 **Cài đặt trên máy**
@@ -481,6 +481,7 @@ CMD ["node", "dist/main.js"]
 | `ERR_PNPM_OUTDATED_LOCKFILE` | Lockfile cắt gọn không khớp, hoặc quên copy lockfile | Dùng đúng `out/json` và lockfile do `turbo prune` sinh ra |
 | Container bị Render kill khi deploy, request bị cắt | Không xử lý SIGTERM | `CMD` dạng exec + `enableShutdownHooks()` |
 | `exec format error` trên Render | Build image trên máy ARM rồi push | Render tự build từ Dockerfile nên ở v1 sẽ không gặp. Nhớ bẫy này cho v3 |
+| Container báo `Cannot find module '/app/dist/main.js'` dù build thành công | `pnpm deploy` copy file theo quy tắc giống `pnpm pack`: `dist` nằm trong `.gitignore` và `package.json` của api không khai báo `"files"` nên `dist` bị bỏ qua | Thêm `"files": ["dist"]` vào `apps/api/package.json`, rồi `ls /prod/api` trong stage build để kiểm tra. Đối chiếu với docs `pnpm deploy` của pnpm 12 |
 
 ### Kiểm chứng AC
 - [ ] `docker compose up -d --build` → `curl localhost:3000/v1/health` trả 200.
@@ -498,7 +499,7 @@ CMD ["node", "dist/main.js"]
 ## 3.6 PXM-12 · CI pipeline (GitHub Actions)
 
 ### Khái niệm cần nắm
-- Đọc [knowledge/github-actions.md](../../knowledge/github-actions.md) mục 2, 3, 4.
+- Đọc [knowledge/github-actions.md](../../knowledge/github-actions.md) mục 2 và 4. Mục 3 (YAML mẫu) chỉ mở **sau khi** `ci.yml` của bạn đã chạy xanh, để so sánh.
 - **Đây là workflow GitHub Actions đầu tiên của bạn.** Theo [rule 05](../../rules/05-working-with-claude.md), bạn **tự viết**. Plan chỉ đưa khung job và tên step, không có YAML hoàn chỉnh.
 - **Test trong NestJS với Vitest:** Vitest dùng esbuild, mà esbuild **không phát ra decorator metadata**, trong khi DI của NestJS cần nó. Cần plugin SWC (`unplugin-swc`) trong `vitest.config`. Nếu thiếu, test sẽ lỗi kiểu "Nest can't resolve dependencies".
 - **Supertest:** gọi HTTP vào `app.getHttpServer()` mà không cần mở port thật.

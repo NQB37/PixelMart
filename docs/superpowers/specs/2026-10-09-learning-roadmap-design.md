@@ -40,7 +40,7 @@ Học viên hoàn thành lộ trình sẽ có:
 | v7 | Kubernetes & Jenkins | Một VPS + compose không scale, không có staging | k3s (k3d local), Deployment/Service/Ingress-NGINX/HPA/probe, Helm, cert-manager, kube-prometheus-stack. Jenkins trên K8s (pod agent) làm CD staging → prod có bước approve. GH Actions giữ vai trò CI cho PR | 4 | 26–29 |
 | v8 | Microservices & Kafka | Tải và team tăng, cần tách module | Strangler fig: notification, search (read model/CQRS), analytics, payment mock + saga. Kafka làm event backbone (so sánh với RabbitMQ). OpenTelemetry tracing, API gateway | 5 | 30–34 |
 
-- **Release:** tag `vN.0.0` khi kết thúc mỗi version, `vN.x.0` cho các sprint ở giữa.
+- **Release:** sprint cuối của version N → `vN.0.0`. Các sprint trước đó tăng minor từ version trước (v2: sprint 8–11 → `v1.1.0`–`v1.4.0`, sprint 12 → `v2.0.0`). Major = mốc lộ trình (ghi trong rule 01). Trong cùng một version lộ trình không được phá vỡ API.
 - **Chi phí ước tính:** v1–v2 là 0đ. v3–v6 dùng VPS 8GB (~€7/tháng). v7–v8 dùng VPS ~16GB (~€15–20/tháng). Giá cụ thể kiểm tra lại khi viết v3.
 - **Số sprint ở trên là ước lượng:** con số chính xác được chốt khi viết chi tiết từng version.
 

@@ -61,7 +61,10 @@ main    ──●───────────●  ← tag v0.2.0 → GitHub
 | Sprint 1 → Sprint 6 | `v0.1.0` → `v0.6.0` (minor tăng mỗi sprint) |
 | Sprint 7 (MVP hoàn chỉnh) | `v1.0.0` |
 | Hotfix | tăng patch: `v0.2.0` → `v0.2.1` |
-| Sau v1 | Tính năng mới → minor; phá vỡ API → major |
+| Sau v1: các sprint của version lộ trình N+1 | tăng minor từ `vN`: ví dụ v2 (sprint 8–12) → sprint 8–11 là `v1.1.0` → `v1.4.0` |
+| Sau v1: sprint cuối của version lộ trình N+1 | `v(N+1).0.0`: ví dụ sprint 12 kết thúc v2 → `v2.0.0` |
+
+> **Major = mốc lộ trình**, không phải SemVer thuần. Trong SemVer thuần, major chỉ tăng khi API bị phá vỡ. Ở PixelMart, major tăng khi kết thúc một version của [lộ trình](../README.md). Đổi lại, quy tắc tương thích được giữ chặt hơn: **trong cùng một version lộ trình, không được phá vỡ API** (chỉ thêm field/endpoint, field cũ được đánh dấu deprecated). Thay đổi phá vỡ dồn về sprint cuối của version và được ghi rõ trong changelog.
 
 ## Hotfix (bug trên production)
 
@@ -83,7 +86,7 @@ git push origin develop             # (hoặc mở PR main → develop nếu dev
 | `develop` | ✅ | Không deploy API (v1 chỉ có production) |
 | `main` | ✅ | **Production**: migrate DB → deploy API (Render) → web/admin (Vercel) |
 
-> Ghi chú: Công ty thật thường có `develop → staging`. Ta hoãn staging sang v2 để giữ free tier đơn giản. Hệ quả: `develop` chỉ được kiểm chứng bằng test tự động + chạy local → **test integration càng quan trọng**.
+> Ghi chú: Công ty thật thường có `develop → staging`. Ta hoãn staging sang **v7** (namespace staging trên Kubernetes, xem [lộ trình](../README.md)) để giữ free tier đơn giản. Hệ quả: `develop` chỉ được kiểm chứng bằng test tự động + chạy local → **test integration càng quan trọng**.
 
 ## Branch protection (GitHub → Settings → Rules)
 

@@ -81,6 +81,6 @@ Chi tiết từng công nghệ: [`knowledge/`](knowledge/README.md).
 ## Quy ước
 
 - **Sprint đánh số liên tục toàn dự án:** v1 = sprint 1–7, v2 bắt đầu từ `sprint-08.md`. Mã ticket tạm `S8-01` = sprint 8, ticket 01. Jira key tăng liên tục.
-- **Release:** kết thúc mỗi version → tag `vN.0.0`. Các sprint ở giữa → `vN.x.0`.
+- **Release:** sprint cuối của version lộ trình N → tag `vN.0.0`. Các sprint trước đó của version N tăng minor từ version trước. Ví dụ v2 (sprint 8–12): sprint 8–11 → `v1.1.0` … `v1.4.0`, sprint 12 → `v2.0.0`. **Major = mốc lộ trình**, không phải SemVer thuần, chi tiết ở [rule 01](rules/01-git-branching.md#quy-tắc-đánh-version-semver).
 - **Sprint đánh dấu *draft*** phải được refine (cập nhật AC, estimate lại) trước khi kéo vào sprint. Xem [`rules/04-sprint-lifecycle.md`](rules/04-sprint-lifecycle.md).
 - Quyết định kiến trúc → `docs/adr/`. Retro → `docs/retro/`. Hai thư mục này dùng chung cho mọi version.

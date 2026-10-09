@@ -41,6 +41,10 @@ Event (pull_request, push, tag, schedule, workflow_dispatch)
 
 ## 3. Lệnh / cấu hình hay dùng
 
+> ⚠️ **Đang ở v1 và chưa xong PXM-12?** Theo [rule 05](../rules/05-working-with-claude.md), workflow GitHub Actions **đầu tiên** phải do bạn tự viết. Các đoạn YAML dưới đây ghép lại gần như thành một `ci.yml` hoàn chỉnh, nên chúng được giấu trong khối bên dưới. Hãy tự viết `ci.yml` bằng mục 2 và docs chính thức (mục 10) trước, rồi mới mở ra để so sánh. Bảng lệnh `gh` ở cuối mục này thì xem lúc nào cũng được.
+
+<details><summary>Mở sau khi đã tự viết ci.yml (PXM-12): các đoạn YAML mẫu</summary>
+
 **Trigger thường dùng**
 
 ```yaml
@@ -102,7 +106,9 @@ jobs:
           --health-cmd "pg_isready -U test"
           --health-interval 5s --health-retries 10
     env:
-      DATABASE_URL: postgresql://test:test@localhost:5432/pixelmart_test   # job chạy trên runner nên dùng localhost
+      # job chạy trên runner nên dùng localhost
+      DATABASE_URL: postgresql://test:test@localhost:5432/pixelmart_test   # app/test (Prisma adapter)
+      DIRECT_URL: postgresql://test:test@localhost:5432/pixelmart_test     # Prisma CLI (prisma.config.ts) — trên CI hai URL giống nhau
 ```
 
 **Chỉ chạy job ở `main`, sau CI**
@@ -115,6 +121,8 @@ jobs:
     runs-on: ubuntu-latest
 ```
 
+</details>
+
 **`gh` CLI để theo dõi từ terminal**
 
 | Lệnh | Dùng khi |
@@ -123,8 +131,8 @@ jobs:
 | `gh run watch` | Theo dõi run đang chạy |
 | `gh run view <id> --log-failed` | Chỉ xem log của step bị lỗi |
 | `gh run rerun <id> --failed` | Chạy lại các job lỗi |
-| `gh workflow run deploy.yml -f ref=main` | Kích hoạt `workflow_dispatch` |
-| `gh secret set RENDER_DEPLOY_HOOK` | Đặt secret (nhập giá trị qua stdin, không lưu vào history) |
+| `gh workflow run deploy.yml --ref main` | Kích hoạt `workflow_dispatch` trên branch `main` (`-f key=value` dùng để truyền **input** của workflow) |
+| `gh secret set RENDER_DEPLOY_HOOK_URL --env production` | Đặt secret cho environment `production` (nhập giá trị qua prompt, không lưu vào shell history) |
 
 **Chạy thử ở local:** [`act`](https://github.com/nektos/act) chạy workflow trong Docker. Hữu ích để thử nhanh cú pháp, nhưng không giống 100% runner thật.
 

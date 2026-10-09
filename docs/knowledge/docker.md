@@ -112,7 +112,9 @@ services:
     build:
       context: .
       dockerfile: apps/api/Dockerfile
-    env_file: apps/api/.env
+    env_file:
+      - path: apps/api/.env       # tạo bằng: cp apps/api/.env.example apps/api/.env
+        required: false           # clone mới chưa có .env thì compose vẫn chạy (cần Compose ≥ 2.24)
     environment:
       DATABASE_URL: postgresql://pixelmart:pixelmart@postgres:5432/pixelmart   # host là "postgres", không phải localhost
     ports:
@@ -135,7 +137,7 @@ volumes:
 6. **Một container chỉ làm một việc** (API, worker, DB tách riêng). Dễ scale, dễ xem log, dễ restart.
 7. **Cấu hình qua biến môi trường** (12-factor), không "nướng" secret vào image. Cùng một image phải chạy được ở dev/staging/prod.
 8. **Có `HEALTHCHECK` hoặc healthcheck trong Compose/K8s** để orchestrator biết lúc nào app sẵn sàng thật sự, không chỉ là process đang sống.
-9. **Dùng BuildKit cache mount** cho package manager để build lại nhanh hơn: `RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile`.
+9. **Dùng BuildKit cache mount** cho package manager để build lại nhanh hơn: `RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store pnpm install --frozen-lockfile`. `target` phải trùng với store thật của pnpm trong image: kiểm tra bằng `pnpm store path` (store đổi chỗ nếu bạn đặt `PNPM_HOME`/`store-dir`, hoặc build bằng user khác root).
 10. **Gắn tag image bằng version hoặc git SHA**, không ghi đè cùng một tag. Rollback khi đó chỉ là chạy lại tag cũ.
 
 ## 5. Khi nào nên / không nên dùng
@@ -187,7 +189,7 @@ Không gọi được service:
 1. Port đã publish chưa? `docker ps` phải hiện `0.0.0.0:3000->3000/tcp`.
 2. App có listen trên `0.0.0.0` không? Listen trên `127.0.0.1` **trong container** thì bên ngoài không gọi vào được.
 3. Hai container có cùng network không? `docker network inspect <net>`.
-4. Từ container A gọi thử: `docker compose exec api wget -qO- http://postgres:5432` (hoặc `nc -zv postgres 5432`).
+4. Từ container A thử kết nối: `docker compose exec api nc -zv postgres 5432` (kiểm tra cổng TCP; Postgres không nói HTTP nên đừng dùng `curl`/`wget`), hoặc `docker compose exec postgres pg_isready -U pixelmart`. Với service HTTP thì dùng `docker compose exec web wget -qO- http://api:3000/v1/health`.
 
 Build chậm hoặc image to:
 1. `docker history <img>`: tìm layer nặng.

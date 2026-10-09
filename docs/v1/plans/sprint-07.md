@@ -334,10 +334,10 @@ GitHub hiển thị được Mermaid trong README. Dùng `gh codespace create` h
 ## 3.5 PXM-44 · Release v1.0.0 & retro tổng
 
 ### Khái niệm cần nắm
-- **SemVer `1.0.0`:** cam kết API public ổn định. Từ giờ, thay đổi phá vỡ API → major (`2.0.0`), tính năng mới → minor, sửa lỗi → patch. Xem [rule 01](../../rules/01-git-branching.md#quy-tắc-đánh-version-semver).
+- **`1.0.0`:** cam kết API public ổn định. Trong SemVer thuần: phá vỡ API → major, tính năng mới → minor, sửa lỗi → patch. PixelMart điều chỉnh một chút: **major = mốc lộ trình** (kết thúc v2 → `v2.0.0`), còn trong một version lộ trình thì **không được phá vỡ API**. Xem [rule 01](../../rules/01-git-branching.md#quy-tắc-đánh-version-semver).
 - **Changelog:** liệt kê thay đổi theo nhóm (Features, Fixes, Security…) kèm ticket. `gh release create --generate-notes` sinh từ tiêu đề PR. Tiêu đề PR chuẩn Conventional Commits là lý do changelog đọc được.
 - **Retro tổng (`docs/retro/v1.md`):** nhìn lại cả 7 sprint: velocity thực tế so với kế hoạch, ước lượng đúng/sai ở đâu, điều gì sẽ làm khác ở v2. Đây là đầu vào để lập kế hoạch v2.
-- **Backlog v2:** theo [lộ trình](../../README.md), version tiếp theo là **v2: Marketplace multi-vendor** (câu "backlog v1.1 mobile" trong file sprint đã được thay bằng v2, mobile dời sang v6). Tạo Epic v2 trên Jira.
+- **Backlog v2:** theo [lộ trình](../../README.md), version tiếp theo là **v2: Marketplace multi-vendor** (câu "backlog v1.1 mobile" trong file sprint được hiểu là backlog v2, vì mobile đã dời sang v6). Tạo Epic v2 trên Jira.
 
 ### Hướng tiếp cận
 1. Code freeze → release checklist (rule 04).
@@ -439,7 +439,7 @@ Dev mode không minify, không cache, có overlay/HMR, render chậm hơn nhiề
 5. Sau `v1.0.0`, một thay đổi đổi tên field trong response thì version tiếp theo là gì?
 <details><summary>Gợi ý</summary>
 
-Phá vỡ API → major (`v2.0.0`), hoặc làm theo kiểu tương thích ngược (thêm field mới, giữ field cũ, đánh dấu deprecated) để chỉ cần lên minor.
+SemVer thuần: phá vỡ API → major. Theo quy ước của PixelMart (rule 01), các sprint giữa v2 không được phá vỡ API, nên làm theo kiểu tương thích ngược: thêm field mới, giữ field cũ và đánh dấu deprecated → minor (`v1.1.0`). Field cũ chỉ được xóa ở sprint cuối của version lộ trình (`v2.0.0`), kèm ghi chú trong changelog.
 </details>
 
 6. Retro tổng khác retro sprint ở điểm nào?

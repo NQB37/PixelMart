@@ -55,9 +55,13 @@ PXM-29 category API ──▶ PXM-30 product API ──▶ (quay lại) test "x�
 - **Một schema, hai nơi validate:** form dùng `zodResolver(loginSchema)` từ `@pixelmart/contracts`, nên lỗi hiển thị trên form giống hệt rule của API. Nhưng API **vẫn** validate: client validation là để trải nghiệm tốt hơn, không phải để bảo mật.
 - **Map lỗi server vào form:** API trả 400 với `errors[].path` (PXM-16) → `setError(path, …)` cho đúng field. 401 → lỗi chung ở đầu form. 409 (email trùng) → lỗi ở field email.
 - **Auth state trong RSC:** Server Component đọc cookie bằng `await cookies()` rồi **tự chuyển tiếp** cookie khi gọi API (fetch phía server **không** tự gửi cookie của browser). Header hiển thị tên người dùng ngay từ HTML đầu tiên, không nhấp nháy.
-- **`proxy.ts`:** chạy trước khi render. Kiểm tra cookie `access` có tồn tại cho các route cần đăng nhập, không có thì redirect `/login?redirect=…`. Proxy **không** cần verify JWT (không có secret, API là nơi quyết định), chỉ là lớp UX.
+- **`proxy.ts`:** chạy trước khi render. Với các route cần đăng nhập, kiểm tra **cookie gợi ý phiên `pm_session`** (PXM-22), **không** kiểm tra cookie `access`. Lý do: access cookie bị browser xóa sau 15 phút, nếu proxy dựa vào nó thì người dùng vẫn còn refresh token hợp lệ sẽ bị đá về `/login`. Không có `pm_session` → redirect `/login?redirect=…`. Proxy **không** verify gì (không có secret, API là nơi quyết định), nó chỉ là lớp UX.
 - **Open redirect:** `?redirect=https://evil.com` → sau khi đăng nhập người dùng bị đưa sang trang lừa đảo. **Chỉ chấp nhận đường dẫn tương đối** bắt đầu bằng `/` và không bắt đầu bằng `//`.
-- **Refresh cookie không tới được shop:** cookie refresh có `Path=/v1/auth` trên domain API, nên Server Component của shop **không thể** tự refresh khi access hết hạn. Khi SSR gặp 401: render trạng thái "chưa đăng nhập/đang kiểm tra", để client (api-client, PXM-27) refresh rồi `router.refresh()`. Đây là một quyết định thiết kế, hãy ghi lại.
+- **Refresh cookie không tới được shop:** cookie refresh có `Path=/v1/auth` trên domain API, nên Server Component của shop **không thể** tự refresh khi access hết hạn. Ba trạng thái SSR cần phân biệt:
+  - không có `pm_session` → **chưa đăng nhập**;
+  - có `pm_session`, `/v1/me` trả 200 → **đã đăng nhập**;
+  - có `pm_session` nhưng `/v1/me` trả 401 (access đã hết hạn) → **đang khôi phục phiên**: render skeleton/trạng thái trung gian, **không** render "chưa đăng nhập" hay redirect. Một Client Component nhỏ gọi api-client (`/v1/me` → 401 → silent refresh, PXM-27), xong thì `router.refresh()`. Refresh thất bại (đã logout ở thiết bị khác, reuse…) thì API xóa `pm_session` và chuyển về login.
+  Đây là một quyết định thiết kế, ghi nó vào ADR-0006 cùng với PXM-22.
 
 ### Hướng tiếp cận
 1. Trang `/register`, `/login` (Client Component cho form): React Hook Form + `zodResolver` + component shadcn `Form`/`Input`/`Button`.
@@ -82,6 +86,7 @@ Liệt kê case cho form, cho redirect và cho SSR.
 - `?redirect=https://evil.com`, `?redirect=//evil.com`, `?redirect=javascript:alert(1)` → về `/`.
 - Reload trang sau khi đăng nhập → header vẫn hiển thị tên (view source có tên trong HTML).
 - Chưa đăng nhập vào `/account/orders` → bị chuyển sang `/login?redirect=%2Faccount%2Forders`.
+- **Access đã hết hạn nhưng refresh còn hạn** (đặt TTL access 30 giây ở local, chờ 1 phút) → **reload** `/account/orders` → **không** bị chuyển về login, trang hiện trạng thái trung gian rồi tự hiển thị đơn hàng.
 - Bấm submit 2 lần nhanh → chỉ gửi 1 request (nút disabled khi `isSubmitting`).
 </details>
 
@@ -95,7 +100,7 @@ Viết `safeRedirect` + unit test trước (thuần logic, dễ). Rồi làm for
 
 - `@hookform/resolvers/zod` hỗ trợ Zod 4. Kiểm tra version của resolver tương thích với Zod bạn đang dùng.
 - `const cookieStore = await cookies(); cookieStore.toString()` (hoặc `getAll()` rồi ghép chuỗi) → đặt vào header `cookie` khi fetch.
-- Proxy: `export function proxy(request: NextRequest)`, `request.cookies.has('access')`, `NextResponse.redirect(new URL('/login?redirect=…', request.url))`, `export const config = { matcher: [...] }`.
+- Proxy: `export function proxy(request: NextRequest)`, `request.cookies.has('pm_session')`, `NextResponse.redirect(new URL('/login?redirect=…', request.url))`, `export const config = { matcher: [...] }`.
 - Local dev: shop `localhost:3001`, API `localhost:3000`. Cookie không phân biệt port nên dùng chung được. Ở local, đặt `COOKIE_DOMAIN` rỗng (host-only).
 </details>
 
@@ -125,6 +130,7 @@ LoginForm:
 | Đăng nhập xong header không đổi | Server Component đã render từ trước | `router.refresh()` sau login/logout |
 | Open redirect | Dùng thẳng `?redirect=` | `safeRedirect` + test |
 | Proxy chạy trên cả file tĩnh, trang chậm | `matcher` quá rộng | Chỉ match các route cần bảo vệ |
+| Cứ 15 phút người dùng lại bị đá về login khi reload | Proxy/SSR dựa vào cookie `access` (bị browser xóa khi hết hạn) | Proxy dựa vào `pm_session`. SSR gặp 401 thì để client refresh |
 | Đọc tutorial thấy `middleware.ts` | Tutorial trước Next.js 16 | Dùng `proxy.ts` (cùng khái niệm) |
 | Login trên preview Vercel không được | Cookie cross-site | Đã biết từ PXM-25, test trên local/production |
 
@@ -132,6 +138,7 @@ LoginForm:
 - [ ] Nhập password ngắn → thông điệp giống hệt khi API trả 400 (cùng schema).
 - [ ] Đăng nhập từ `/login?redirect=/account/orders` → về `/account/orders`.
 - [ ] Reload → vẫn đăng nhập (view source thấy tên trong HTML).
+- [ ] TTL access 30 giây (local), chờ 1 phút rồi **reload** `/account/orders` → không bị redirect về login (proxy dựa vào `pm_session`, client tự refresh).
 - [ ] Unit test `safeRedirect` xanh.
 
 ### Đọc thêm
@@ -238,7 +245,7 @@ request(path, init, { retried = false } = {}):
 
 ### Kiểm chứng AC
 - [ ] Unit test single-flight (case 2) xanh.
-- [ ] Đặt TTL access = 30 giây ở local, đăng nhập, chờ 1 phút, thao tác → không bị đá ra (tab Network có một request `/refresh`).
+- [ ] Đặt TTL access = 30 giây ở local, đăng nhập, chờ 1 phút, thao tác **và cả reload trang** → không bị đá ra (tab Network có một request `/refresh`).
 - [ ] Xóa cookie refresh trong DevTools, chờ access hết hạn → bị chuyển về login.
 
 ### Đọc thêm
