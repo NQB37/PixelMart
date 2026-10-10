@@ -156,7 +156,7 @@ VND (0 chữ số thập phân):
 UI:
 - Đổi trang → URL `?page=2`, reload vẫn ở trang 2.
 - Lọc category → về trang 1.
-- `formatMoney(19900, 'USD', 'en-US')` → `$199.00`. `formatMoney(199000, 'VND', 'vi-VN')` → `199.000 ₫`.
+- `formatMoney(19900, 'USD', 'en-US')` → `$199.00`. `formatMoney(199000, 'VND', 'vi-VN')` → `199.000 ₫`. Chú ý: `Intl` chèn **khoảng trắng không ngắt dòng** (U+00A0) trước `₫`, nên test `toBe('199.000 ₫')` gõ bằng dấu cách thường sẽ fail. Viết chuỗi mong đợi có ` `, hoặc chuẩn hóa khoảng trắng trước khi so sánh.
 </details>
 
 ### Gợi ý

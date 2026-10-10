@@ -72,7 +72,7 @@ PXM-29 category API ──▶ PXM-30 product API ──▶ (quay lại) test "x�
 6. Hàm `safeRedirect(param)` + unit test.
 
 ### File dự kiến tạo/sửa
-`apps/web/app/(auth)/{login,register}/page.tsx`, `apps/web/components/auth/{login-form,register-form,logout-button}.tsx`, `apps/web/lib/{auth.ts,safe-redirect.ts}`, `apps/web/proxy.ts`, `apps/web/components/site-header.tsx`, `packages/api-client/src/auth.ts`.
+`apps/web/app/(auth)/{login,register}/page.tsx`, `apps/web/components/auth/{login-form,register-form,logout-button}.tsx`, `apps/web/lib/auth.ts`, `packages/api-client/src/safe-redirect.ts` (hàm thuần dùng chung cho web và admin ở PXM-28, kèm unit test), `apps/web/proxy.ts`, `apps/web/components/site-header.tsx`, `packages/api-client/src/auth.ts`.
 
 ### Tự nghĩ test case trước
 Liệt kê case cho form, cho redirect và cho SSR.
@@ -265,7 +265,7 @@ request(path, init, { retried = false } = {}):
 ### Hướng tiếp cận
 1. Tạo layout route có pathless (ví dụ `_authed.tsx`) chứa các route admin. `login.tsx` nằm ngoài layout.
 2. `meQueryOptions` dùng api-client. `beforeLoad` của `_authed`: `ensureQueryData` → 401 thì `redirect({ to: '/login', search: { redirect: location.href } })` → role khác `ADMIN` thì `redirect({ to: '/forbidden' })`.
-3. Trang login dùng chung `loginSchema`. Đăng nhập xong thì `invalidate` query `me` và điều hướng tới `search.redirect` (đã qua `safeRedirect`).
+3. Trang login dùng chung `loginSchema`. Đăng nhập xong thì `invalidate` query `me` và điều hướng tới `search.redirect` (đã qua `safeRedirect` import từ `@pixelmart/api-client`, cùng một hàm với shop. Đừng copy hàm sang admin, vì hai bản sẽ lệch nhau theo thời gian).
 4. `onAuthFailure` của api-client (PXM-27) → điều hướng về `/login`.
 
 ### File dự kiến tạo/sửa
@@ -423,7 +423,7 @@ deleteCategory(id):
 ### Hướng tiếp cận
 1. Contract: `productSchema`, `createProductSchema`, `updateProductSchema`, `listProductsQuerySchema` (`page`, `pageSize`, `categoryId`, coerce từ query string), `paginatedSchema`.
 2. Prisma: model `Product` (`storeId`, `categoryId` FK `Restrict`, `name`, `slug`, `description`, `priceMinor Int`, `currency`, `imageUrl`, timestamps, `@@unique([storeId, slug])`, index theo `categoryId`).
-3. Service: dùng lại `slugify` và logic slug unique. List chạy `findMany` + `count` (trong `$transaction` để nhất quán).
+3. Service: dùng lại `slugify` và logic slug unique. List chạy `findMany` + `count` (trong `$transaction` để chạy trên cùng một kết nối. Lưu ý: ở mức READ COMMITTED mặc định, hai câu vẫn có thể thấy dữ liệu lệch nhau một chút nếu có ghi xen giữa. Với phân trang admin thì chấp nhận được).
 4. Controller admin CRUD, xóa cứng.
 5. Quay lại PXM-29 để hoàn thành test 409.
 
@@ -452,7 +452,7 @@ Viết schema trong contracts thật chặt trước (đây là "cửa vào"), r
 
 - Zod 4: `z.int().nonnegative()` hoặc `z.number().int().min(0)`. URL https: xem API `z.url()` (Zod 4 có option giới hạn `protocol`). Kiểm tra docs Zod 4.
 - Query string luôn là string: dùng `z.coerce.number().int().min(1)` cho `page`, `.max(50)` cho `pageSize`.
-- Prisma: `$transaction([findMany, count])` chạy hai query nhất quán.
+- Prisma: `$transaction([findMany, count])` chạy hai query trên cùng một kết nối. Ở READ COMMITTED, mỗi câu có snapshot riêng, nên `total` có thể lệch một chút so với `items` khi có ghi đồng thời. Muốn một snapshot duy nhất thì cần `RepeatableRead`, việc này không cần thiết cho admin.
 - `categoryId` không tồn tại: kiểm tra trước, hoặc bắt `P2003` khi create → 422 (giống quy ước PXM-37 sau này).
 </details>
 

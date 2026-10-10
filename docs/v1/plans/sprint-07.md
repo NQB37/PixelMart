@@ -166,7 +166,8 @@ Viết một checklist rà soát của **bạn** trước, rồi so với đáp 
 ```
 API:   helmet() · body limit · redact log · throttle bổ sung cho register/refresh/orders
 Web:   next.config headers(): HSTS(max-age=63072000; includeSubDomains), nosniff, Referrer-Policy strict-origin-when-cross-origin,
-       CSP (Report-Only → enforce), frame-ancestors 'none'
+       Permissions-Policy (tắt camera/microphone/geolocation… không dùng),
+       CSP (Report-Only để dò → **enforce trước khi chấm securityheaders.com**: Report-Only không được tính điểm), frame-ancestors 'none'
 Admin: vercel.json headers tương tự
 Rà soát: bảng OWASP API Top 10 ↔ nơi xử lý ↔ test
 ```

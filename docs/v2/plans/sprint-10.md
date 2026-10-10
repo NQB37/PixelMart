@@ -233,7 +233,9 @@ createOrder(userId, key, lines):
     // + trừ kho ở S10-03, SAU khi đã insert Order
   )
   bắt unique (userId, key) → trả order đã có
-  payment.charge(order.id, plan.total)
+  payment.charge(order.id, plan.total)          // sau commit
+  thành công → update có điều kiện paymentStatus UNPAID → PAID (S11-05 thêm bút toán vào cùng transaction này)
+  thất bại  → paymentStatus = FAILED (hoàn kho cho đơn thất bại: v5)
 ```
 </details>
 

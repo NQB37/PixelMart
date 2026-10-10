@@ -185,6 +185,7 @@ sequenceDiagram
 3. `productId` không tồn tại → 422, **không** có order nào được tạo (kiểm tra DB).
 4. `quantity: 0`, `-1`, `1.5`, `1000` → 400.
 5. `items: []` → 400. Trùng `productId` trong cùng request → 400 (hoặc gộp: hãy quyết định).
+5b. Cùng `Idempotency-Key` nhưng **payload khác** (giỏ khác) → **422** (giống Stripe và bản nháp IETF): lưu hash của payload cùng key, so sánh khi gặp lại key. Không được âm thầm trả order của giỏ cũ.
 6. Thiếu `Idempotency-Key` → 400. Key không phải UUID → 400.
 7. Gửi 2 lần **tuần tự** cùng key → cùng `order.id`, DB có 1 order.
 8. Gửi 2 lần **đồng thời** cùng key (`Promise.all`) → cùng `order.id`, DB có 1 order, không có 500.
@@ -272,12 +273,12 @@ Câu hỏi để bạn tự trả lời: gọi `charge` **trong** hay **ngoài**
 
 ### Hướng tiếp cận
 1. Trang `/checkout`: tóm tắt giỏ (dùng lại phần lấy giá từ `?ids=`), nút "Đặt hàng".
-2. Giữ key bằng `useState(() => crypto.randomUUID())`, tạo lại khi nội dung giỏ thay đổi.
-3. `useMutation` gọi `api.createOrder(items, key)`. Thành công → `clear()` → `/orders/[id]/success` (hoặc `/account/orders/[id]`). Thất bại → hiển thị lỗi, giữ giỏ. 422 → làm mới giỏ (một sản phẩm vừa bị xóa).
+2. Lưu key trong **store giỏ hàng** (Zustand): `checkoutKey` được sinh khi giỏ thay đổi (trong các action `add`/`setQuantity`/`remove`) và bị xóa khi `clear()`. Không dùng `useMemo` hay `useState` để giữ key: React không đảm bảo `useMemo` giữ giá trị (có thể tính lại), còn `useState` mất key khi rời trang checkout rồi quay lại.
+3. `useMutation` gọi `api.createOrder(items, key)`. Thành công → `clear()` → `/account/orders/[id]?placed=1` (trang chi tiết đơn hiển thị thông báo "Đặt hàng thành công" khi có `placed=1`). Thất bại → hiển thị lỗi, giữ giỏ. 422 → làm mới giỏ (một sản phẩm vừa bị xóa).
 4. Test thủ công (và component test nếu có thể) cho double-click.
 
 ### File dự kiến tạo/sửa
-`apps/web/app/checkout/page.tsx`, `apps/web/components/checkout/place-order-button.tsx`, `apps/web/app/account/orders/[id]/success/page.tsx` (hoặc tương đương), `apps/web/proxy.ts`, `packages/api-client/src/orders.ts`.
+`apps/web/app/checkout/page.tsx`, `apps/web/components/checkout/place-order-button.tsx`, `apps/web/app/account/orders/[id]/page.tsx` (thông báo khi `?placed=1`), `apps/web/lib/cart/store.ts` (`checkoutKey`), `apps/web/proxy.ts`, `packages/api-client/src/orders.ts`.
 
 ### Tự nghĩ test case trước
 <details><summary>Đáp án tham khảo</summary>
@@ -288,6 +289,7 @@ Câu hỏi để bạn tự trả lời: gọi `charge` **trong** hay **ngoài**
 - API trả 422 → thông báo + giỏ được làm mới.
 - Giỏ rỗng → không vào checkout được (hoặc thấy thông báo).
 - Đặt xong, bấm Back về checkout → không tạo thêm đơn.
+- Đổi giỏ sau khi một lần đặt thất bại → key mới (đọc `checkoutKey` trong DevTools/Redux devtools của Zustand).
 </details>
 
 ### Gợi ý
@@ -307,7 +309,7 @@ Trả lời câu hỏi "khi nào sinh key mới?" bằng một câu, viết vào
 
 ```
 CheckoutPage:
-  key = useMemo(() → randomUUID(), [cartSignature])
+  key = useCartStore(s → s.checkoutKey)        // sinh trong action của store khi giỏ đổi
   mutation = useMutation(() → api.createOrder(items, key), {
     onSuccess(order) → cart.clear(); router.replace(`/account/orders/${order.id}?placed=1`)
     onError(e) → e.status == 422 ? refreshCart() + toast : toast("Đặt hàng thất bại, giỏ hàng vẫn được giữ")

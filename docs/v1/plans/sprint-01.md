@@ -192,7 +192,7 @@ Kiểm tra cuối: `pnpm turbo lint typecheck build` → chạy lại → dòng 
 ### Kiểm chứng AC
 - [ ] `pnpm turbo lint typecheck build` → toàn bộ xanh.
 - [ ] Chạy lại lệnh trên → `FULL TURBO`.
-- [ ] `grep -r '"extends"' packages/*/tsconfig.json` → tất cả trỏ về `@pixelmart/config/...`.
+- [ ] `grep -r '"extends"' apps/*/tsconfig.json packages/*/tsconfig.json` → tất cả trỏ về `@pixelmart/config/...`.
 - [ ] Thử phá: sửa một type trong `contracts` cho sai → `pnpm turbo typecheck` báo lỗi đúng chỗ.
 
 ### Đọc thêm
@@ -661,7 +661,7 @@ job deploy-api:
 ### Kiểm chứng AC
 - [ ] Merge PR release `develop → main` → không thao tác tay gì thêm → `https://api.<domain>/v1/health` trả `version` mới, `https://shop.<domain>` cập nhật.
 - [ ] Tag `v0.1.0` + GitHub Release (`gh release create v0.1.0 --generate-notes`).
-- [ ] `git grep -nE "onrender.com/deploy|hook" -- . ':!docs'` → không có URL hook nào trong repo.
+- [ ] `git grep -n "api.render.com/deploy" -- . ':!docs'` → không có URL deploy hook nào trong repo (đừng grep chữ `hook`: sẽ khớp cả `enableShutdownHooks`).
 
 ### Đọc thêm
 - Render deploy hooks: https://render.com/docs/deploy-hooks

@@ -15,7 +15,7 @@
 ### S10-01 · Schema Order → VendorOrder + migration đơn v1
 `Task` · Multi-vendor Checkout · **2 pts** · `api` `db`
 
-- `Order`: đơn của khách (userId, totalMinor, idempotencyKey, trạng thái thanh toán).
+- `Order`: đơn của khách (userId, totalMinor, idempotencyKey, `paymentStatus`: `UNPAID | PAID | FAILED`). Đơn v1 đã tạo được migrate thành `PAID`.
 - `VendorOrder`: một đơn con cho mỗi shop (orderId, storeId, status, subtotalMinor, shippingFeeMinor, commissionRateBps, commissionMinor, sellerNetMinor).
 - `OrderItem` chuyển sang thuộc `VendorOrder` (vẫn snapshot tên + giá).
 - Migration: mỗi đơn v1 → một VendorOrder của shop "PixelMart", trạng thái giữ nguyên, hoa hồng 0.
