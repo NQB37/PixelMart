@@ -1,0 +1,9 @@
+pnpm-lock.yaml
+.turbo
+dist
+.next
+coverage
+
+# Tài liệu viết tay (bảng, tiếng Việt) — không auto-format để tránh diff nhiễu
+*.md
+docs/v1/sprints/playbook.html
