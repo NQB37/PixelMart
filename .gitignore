@@ -87,3 +87,5 @@ Thumbs.db
 *.njsproj
 *.sln
 *.sw?
+# Turborepo
+.turbo/

@@ -1,0 +1,21 @@
+{
+  "name": "@pixelmart/api-client",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@pixelmart/contracts": "workspace:*"
+  },
+  "devDependencies": {
+    "@pixelmart/config": "workspace:*",
+    "eslint": "^10.12.0",
+    "typescript": "~6.0.3"
+  }
+}
