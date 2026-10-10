@@ -71,7 +71,7 @@ S10-01 schema + migration ──▶ S10-02 checkout tách đơn ──▶ S10-03
 4. Chạy migration trên Neon branch, chạy lại script đối soát, so sánh.
 5. Cập nhật service đọc đơn: response có thêm `vendorOrders` theo `customerVendorOrderSchema` (không có field kế toán). Viết test `not.toHaveProperty('commissionMinor')`.
 6. Sửa admin confirm (PXM-40): cập nhật trạng thái Order và VendorOrder trong cùng transaction.
-7. Ghi chú: Field `status` của Order: tạm thời lấy từ VendorOrder duy nhất (đơn v1), trạng thái tổng hợp làm ở S11-01.
+7. Ghi chú: Field `status` của Order: tạm thời lấy từ VendorOrder duy nhất (đơn v1). Từ S11-01, trạng thái tổng hợp nằm ở field **mới** `fulfillmentStatus`, field `status` giữ nguyên tập giá trị của v1 (deprecated, xóa ở S12-05).
 
 ### File dự kiến tạo/sửa
 `apps/api/prisma/schema.prisma`, `apps/api/prisma/migrations/<ts>_vendor_orders/migration.sql`, `apps/api/scripts/reconcile-orders.ts` (hoặc `.sql`), `packages/contracts/src/orders/order.ts`, `apps/api/src/orders/orders.service.ts`, `apps/api/test/orders-read.e2e-spec.ts`.

@@ -21,13 +21,13 @@
 
 Vòng đời một đồng tiền của shop A (tiếp ví dụ sprint 10–11, sellerNet = 15 900), dấu theo quy ước dương = Nợ, âm = Có:
 
-| Sự kiện | `PLATFORM_CLEARING` | `SELLER_PENDING` A | `SELLER_AVAILABLE` A | `PAYOUT_CLEARING` | Số dư hiển thị cho seller |
-|---|---|---|---|---|---|
-| Khách thanh toán (S11-05) | +15 900 (phần của A) | −15 900 | | | pending 15 900 · available 0 |
-| Khách nhận hàng (S12-01) | | +15 900 | −15 900 | | pending 0 · available 15 900 |
-| Admin chi trả 10 000 (S12-03) | | | +10 000 | −10 000 | pending 0 · available 5 900 |
+| Sự kiện | `PLATFORM_CLEARING` | `SELLER_PENDING` A | `SELLER_AVAILABLE` A | `PAYOUT_CLEARING` | `PLATFORM_REVENUE` | Số dư hiển thị cho seller |
+|---|---|---|---|---|---|---|
+| Khách thanh toán (S11-05), phần của A | +15 999 (999 hàng + 15 000 ship) | −15 900 | | | −99 | pending 15 900 · available 0 |
+| Khách nhận hàng (S12-01) | | +15 900 | −15 900 | | | pending 0 · available 15 900 |
+| Admin chi trả 10 000 (S12-03) | | | +10 000 | −10 000 | | pending 0 · available 5 900 |
 
-`PAYOUT_CLEARING` là "tiền đã chi cho seller, chờ đối chiếu với sao kê ngân hàng". Với payout giả lập của v2 thì không có ngân hàng, nhưng tách tài khoản này giúp đối soát sau này: tiền sàn thật sự còn giữ = `PLATFORM_CLEARING + PAYOUT_CLEARING`.
+`PAYOUT_CLEARING` là tài khoản **thuận Có**: "tiền đã chi cho seller, chờ đối chiếu với sao kê ngân hàng". Với payout giả lập của v2 thì không có ngân hàng, nhưng tách tài khoản này giúp đối soát sau này. Tiền sàn thật sự còn giữ = **Σ thô** (chưa đổi dấu) của `PLATFORM_CLEARING` + `PAYOUT_CLEARING`, với ví dụ đầy đủ ở sprint 11 là 50 999 + (−10 000) = 40 999. Đừng áp `displayBalance` (đổi dấu) vào phép tính này.
 
 ```mermaid
 flowchart LR
@@ -114,7 +114,7 @@ markReceived(userId, orderId, vendorOrderId):
 - [ ] Test: gọi lặp → không ghi trùng.
 
 ### Đọc thêm
-- NestJS testing, overriding providers: https://docs.nestjs.com/fundamentals/testing#overriding-globally-registered-enhancers
+- NestJS testing (testing module, `overrideProvider`): https://docs.nestjs.com/fundamentals/testing
 
 ---
 
@@ -133,13 +133,13 @@ markReceived(userId, orderId, vendorOrderId):
 3. Dashboard trong seller app: 2 thẻ số dư + bảng sao kê.
 
 ### File dự kiến tạo/sửa
-`apps/api/src/ledger/{index.ts,statement.ts}`, `apps/api/src/stores/seller-finance.controller.ts` (hoặc trong `orders`, miễn đúng chiều phụ thuộc), `packages/contracts/src/ledger/*.ts`, `apps/seller/src/routes/_authed/index.tsx`, `apps/seller/src/features/finance/**`, migration (index).
+`apps/api/src/ledger/{index.ts,statement.ts}`, `apps/api/src/orders/seller-finance.controller.ts` (đặt trong `orders`: `orders → ledger` đúng chiều. Đặt trong `stores` sẽ tạo phụ thuộc `stores → ledger` không có trong sơ đồ), `packages/contracts/src/ledger/*.ts`, `apps/seller/src/routes/_authed/index.tsx`, `apps/seller/src/features/finance/**`, migration (index).
 
 ### Tự nghĩ test case trước
 <details><summary>Đáp án tham khảo</summary>
 
 - Sau ví dụ ở mục 1: balance = pending 0, available 5 900.
-- Sao kê 3 dòng: available sau từng dòng là 15 900, 5 900 (theo thứ tự thời gian), mới nhất trước khi hiển thị.
+- Sao kê tài khoản available có 2 dòng (giao hàng, payout): số dư sau từng dòng là 15 900 rồi 5 900, hiển thị mới nhất trước. Nếu hiển thị cả pending, mỗi tài khoản có số dư lũy kế **riêng** (`PARTITION BY "accountId"`), không cộng chung.
 - Trang 2 của sao kê có `balanceAfter` đúng (không bắt đầu từ 0).
 - Seller B gọi → chỉ thấy số liệu của B.
 - So sánh `balance` với tính tay từ danh sách đơn `DELIVERED` − payout (test kiểm chứng chéo).
@@ -198,7 +198,7 @@ LIMIT $2 OFFSET $3;
 
 ### Khái niệm cần nắm
 - **Race condition trên số dư tính từ SUM:** "đọc available → nếu đủ thì ghi bút toán" có cùng lỗi với oversell (S10-03): hai payout đồng thời cùng đọc 150 000, cùng chi 100 000 → available −50 000. Nhưng khác S10-03: **không có một dòng nào** để `UPDATE … WHERE balance >= x`, vì số dư là tổng.
-- **Khóa để tuần tự hóa theo shop:** trước khi đọc số dư, khóa một dòng đại diện cho shop: `SELECT … FROM "LedgerAccount" WHERE type = 'SELLER_AVAILABLE' AND storeId = $1 FOR UPDATE`. Payout thứ hai của **cùng shop** phải chờ, rồi đọc số dư **sau** khi payout đầu đã commit. Payout của shop khác không bị chặn. (Phương án khác: advisory lock theo `storeId`, hoặc isolation `SERIALIZABLE` + retry. Ghi lựa chọn vào ADR-0009.)
+- **Khóa để tuần tự hóa theo shop:** trước khi đọc số dư, khóa một dòng đại diện cho shop: `SELECT "id" FROM "LedgerAccount" WHERE "key" = $1 FOR UPDATE` (với `key = 'SELLER_AVAILABLE:<storeId>'`. Tên bảng/cột phải có ngoặc kép vì Prisma tạo tên phân biệt hoa thường. Nếu so sánh với cột enum thì phải ép kiểu tham số, ví dụ `$1::"LedgerAccountType"`, cột `key` dạng text giúp tránh việc này). Payout thứ hai của **cùng shop** phải chờ, rồi đọc số dư **sau** khi payout đầu đã commit. Payout của shop khác không bị chặn. (Phương án khác: advisory lock theo `storeId`, hoặc isolation `SERIALIZABLE` + retry. Ghi lựa chọn vào ADR-0009.) Cơ chế "khóa rồi mới đọc tổng" đúng ở **READ COMMITTED** (mặc định), vì mỗi câu lệnh lấy snapshot mới sau khi có khóa. Ở `REPEATABLE READ`, payout thứ hai đọc snapshot từ đầu transaction và thấy số dư cũ.
 - **Idempotency-Key cho payout:** admin bấm 2 lần hoặc mạng retry → cùng một Payout. Unique `(storeId, idempotencyKey)` (bài học PXM-37/S10).
 - **Payout là bản ghi + bút toán:** bảng `Payout` (storeId, amountMinor, status `PAID`, createdBy, idempotencyKey) để có nghiệp vụ và hiển thị. Bút toán `PAYOUT` (source = Payout): `SELLER_AVAILABLE +x`, `PAYOUT_CLEARING −x`. Cả hai cùng transaction.
 - **Ai được chi trả:** chỉ ADMIN. Seller không tự rút ở v2 (tự rút = thêm luồng yêu cầu/duyệt, ngoài phạm vi).
@@ -211,7 +211,7 @@ LIMIT $2 OFFSET $3;
 5. Seller thấy dòng payout trong sao kê (S12-02).
 
 ### File dự kiến tạo/sửa
-`apps/api/prisma/schema.prisma` + migration, `apps/api/src/orders/payouts.service.ts` (hoặc module `payouts` riêng phụ thuộc `ledger` và `stores`), `apps/api/src/ledger/{index.ts,locks.ts}`, `packages/contracts/src/payouts/*.ts`, `apps/admin/src/features/payouts/**`, `apps/api/test/payouts.e2e-spec.ts`.
+`apps/api/prisma/schema.prisma` + migration, `apps/api/src/orders/payouts.service.ts` (đặt trong `orders`. Nếu muốn tách module `payouts` riêng thì phải cập nhật ADR-0008, sơ đồ module trong README v2 và rule CI của S8-01), `apps/api/src/ledger/{index.ts,locks.ts}`, `packages/contracts/src/payouts/*.ts`, `apps/admin/src/features/payouts/**`, `apps/api/test/payouts.e2e-spec.ts`.
 
 ### Tự nghĩ test case trước
 <details><summary>Đáp án tham khảo</summary>
@@ -236,8 +236,8 @@ Test 4 là trọng tâm. Nếu nó xanh ngay với cài đặt "đọc rồi ghi
 <details><summary>Hint 2: khái niệm/API</summary>
 
 - Prisma không có API `FOR UPDATE`: dùng `tx.$queryRaw` với `SELECT … FOR UPDATE` bên trong interactive transaction.
-- Advisory lock: `SELECT pg_advisory_xact_lock(hashtext($1))` (tự nhả khi transaction kết thúc).
-- Tài khoản available phải **tồn tại** để khóa được: tạo khi shop được duyệt (S8-04) hoặc upsert trước khi khóa.
+- Advisory lock: `pg_advisory_xact_lock(hashtext(<key>))` (tự nhả khi transaction kết thúc). Hàm trả về `void`, một số phiên bản Prisma không đọc được kết quả `void` qua `$queryRaw`: dùng `$executeRaw`, hoặc `SELECT pg_advisory_xact_lock(...), 1`.
+- Tài khoản available phải **tồn tại** thì mới khóa được: upsert theo `key` trước khi khóa (cùng cơ chế tạo "lười" của S11-04).
 </details>
 
 <details><summary>Hint 3: pseudo-code</summary>
@@ -246,8 +246,10 @@ Test 4 là trọng tâm. Nếu nó xanh ngay với cài đặt "đọc rồi ghi
 createPayout(adminId, storeId, amount, key):
   validate amount: int > 0
   transaction(tx):
-    lock = tx.$queryRaw("SELECT id FROM LedgerAccount WHERE type = SELLER_AVAILABLE AND storeId = ? FOR UPDATE", storeId)
-    if !lock: throw 422 "Shop chưa có số dư"
+    if !stores.exists(storeId): throw 404
+    accountKey = "SELLER_AVAILABLE:" + storeId
+    ledger.ensureAccount(tx, accountKey)                          // upsert để chắc chắn có dòng để khóa
+    tx.$queryRaw`SELECT "id" FROM "LedgerAccount" WHERE "key" = ${accountKey} FOR UPDATE`
     existing = tx.payout.find(storeId, key)
     if existing: return existing.amount == amount ? existing : throw 422 "Key đã dùng cho payout khác"
     available = ledger.displayBalance(tx, SELLER_AVAILABLE(storeId))     // đọc SAU khi đã giữ khóa
@@ -286,7 +288,7 @@ createPayout(adminId, storeId, amount, key):
 - **Đối soát ≠ test:** test kiểm tra code làm đúng với dữ liệu test. Đối soát kiểm tra **dữ liệu thật trên production** có nhất quán không: phát hiện bug đã lọt, dữ liệu bị sửa tay, backfill thiếu.
 - **Hai loại kiểm tra:**
   - **Nội tại của ledger:** tổng mọi entry = 0. Mỗi giao dịch cân bằng.
-  - **Chéo giữa ledger và dữ liệu nghiệp vụ:** với mỗi shop: `pending = Σ sellerNet của VendorOrder thuộc Order PAID, chưa DELIVERED`, `available = Σ sellerNet của VendorOrder DELIVERED − Σ Payout`. Toàn sàn: `PLATFORM_REVENUE = Σ commission của Order PAID`.
+  - **Chéo giữa ledger và dữ liệu nghiệp vụ:** với mỗi shop: `pending = Σ sellerNet của VendorOrder thuộc Order PAID, chưa DELIVERED`, `available = Σ sellerNet của VendorOrder DELIVERED − Σ Payout`. Toàn sàn: `PLATFORM_REVENUE = Σ VendorOrder.commission` (Order PAID), `PLATFORM_CLEARING = Σ Order.total` (Order PAID, so với Σ thô), `PAYOUT_CLEARING = −Σ Payout.amount` (Σ thô).
 - **Đặt ở module nào:** kiểm tra chéo cần cả dữ liệu đơn lẫn ledger, nên nằm ở `orders` (orders → ledger là đúng chiều, xem [README v2](../README.md)).
 - **Báo cáo phải chỉ ra chỗ lệch,** không chỉ "khớp/không khớp": shop nào, lệch bao nhiêu, ở tài khoản nào.
 
@@ -330,7 +332,9 @@ reconcile():
   expectedAvailable = theo shop: Σ sellerNet (VendorOrder DELIVERED) − Σ payout
   actual*           = theo shop: displayBalance(SELLER_PENDING/AVAILABLE)
   so sánh từng shop (full outer join) → mismatches.push({ storeId, account, expected, actual, diff })
-  revenue: Σ commission (Order PAID) vs displayBalance(PLATFORM_REVENUE)
+  revenue:  Σ VendorOrder.commission (Order PAID)  vs displayBalance(PLATFORM_REVENUE)
+  clearing: Σ Order.total (Order PAID)              vs Σ thô(PLATFORM_CLEARING)
+  payout:   −Σ Payout.amount                         vs Σ thô(PAYOUT_CLEARING)
   return { ok: mismatches.empty, mismatches }
 ```
 </details>
@@ -356,7 +360,7 @@ reconcile():
 
 ### Khái niệm cần nắm
 - **Audit có hệ thống, không phải đọc lướt:** liệt kê **mọi** endpoint `/v1/seller/*`, `/v1/admin/*`, `/v1/orders/*` và các route lồng nhau, mỗi endpoint × mỗi vai trò (không token, khách, seller đúng shop, seller khác shop, admin) → kết quả mong đợi → test nào chứng minh. Ô nào không có test là một lỗ hổng tiềm năng. Lấy danh sách endpoint từ OpenAPI JSON để không sót.
-- **Xóa API deprecated = breaking change:** theo [rule 01](../../rules/01-git-branching.md#quy-tắc-đánh-version-semver), chỉ được làm ở sprint cuối của version lộ trình → `v2.0.0`. Danh sách v2: `storeId` của category (S8-03), endpoint admin confirm của v1 (S11-01), các field cũ của Order nếu đã deprecate ở S10-01.
+- **Xóa API deprecated = breaking change:** theo [rule 01](../../rules/01-git-branching.md#quy-tắc-đánh-version-semver), chỉ được làm ở sprint cuối của version lộ trình → `v2.0.0`. Danh sách v2: `storeId` của category (S8-03), endpoint admin confirm của v1 và dòng transition tạm của ADMIN (S11-01), field `status` cũ của Order (thay bằng `fulfillmentStatus`, S11-01), các field cũ khác của Order nếu đã deprecate ở S10-01.
 - **Kiểm tra không còn ai dùng:** trước khi xóa, `grep` toàn repo (web, admin, seller, api-client) để chắc không client nào đọc field/endpoint đó. Contract trong `packages/contracts` đổi thì typecheck sẽ chỉ ra chỗ còn dùng.
 - **Changelog `BREAKING CHANGE`:** commit `feat(api)!: …` với footer `BREAKING CHANGE:` (rule 02). Nội dung changelog do Claude viết từ danh sách PR.
 
@@ -429,7 +433,7 @@ it.each(EXPECTED × roles) → gọi endpoint với dữ liệu dựng sẵn →
 
 ### Hướng tiếp cận
 1. Code freeze → release checklist ([rule 04](../../rules/04-sprint-lifecycle.md#release-checklist-ngày-13)).
-2. Chạy migration và các script backfill (S11-05, S12-01) trên production theo thứ tự, ghi lại.
+2. Chạy migration và script backfill S12-01 trên production theo thứ tự, ghi lại. (Backfill S11-05 đã chạy ở release v1.4.0. Chạy lại để xác nhận, vì nó idempotent.)
 3. PR `develop → main` (merge commit), tag `v2.0.0`, GitHub Release có mục BREAKING CHANGE.
 4. Smoke test theo Exit criteria trong [README v2](../README.md#exit-criteria). Chạy đối soát trên production → phải khớp.
 5. Cung cấp ghi chú retro cho Claude.

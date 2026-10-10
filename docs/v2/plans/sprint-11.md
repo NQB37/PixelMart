@@ -25,7 +25,7 @@ State machine của VendorOrder, mỗi chuyển có **một tác nhân** đượ
 
 ```mermaid
 stateDiagram-v2
-  [*] --> PENDING: Order PAID (S11-05)
+  [*] --> PENDING: tạo cùng Order (S10), seller chỉ thấy khi Order PAID
   PENDING --> CONFIRMED: seller xác nhận
   CONFIRMED --> SHIPPED: seller giao cho vận chuyển
   SHIPPED --> DELIVERED: khách bấm "Đã nhận hàng"
@@ -59,17 +59,17 @@ S11-04 ledger schema + post() ──▶ S11-05 bút toán khi thanh toán
 ### Khái niệm cần nắm
 - **Nhiều tác nhân:** mỗi chuyển trạng thái gắn với **ai** được làm nó. Seller: `PENDING → CONFIRMED → SHIPPED`. Khách: `SHIPPED → DELIVERED` (S11-03). Bảng transition không chỉ có `from → to` mà có `from → to → actor`.
 - **Ownership cho seller:** `GET/PATCH /v1/seller/orders/...` chỉ trên VendorOrder có `storeId` = shop của người gọi **và** Order đã `PAID`. Dùng lại guard `CurrentStore` (S9-01). Không thuộc shop → 404.
-- **Trạng thái tổng hợp (derived state):** trạng thái của Order là **hàm** của các VendorOrder: tất cả `DELIVERED` → "Hoàn tất", một phần `DELIVERED` → "Đã giao một phần", còn lại → "Đang xử lý". Hai lựa chọn:
+- **Trạng thái tổng hợp (derived state), đặt ở field MỚI `fulfillmentStatus`:** là hàm của `paymentStatus` và các VendorOrder. `UNPAID` → "Chờ thanh toán", `FAILED` → "Thanh toán thất bại". Khi `PAID`: tất cả `DELIVERED` → "Hoàn tất", một phần `DELIVERED` → "Đã giao một phần", còn lại → "Đang xử lý". **Không** nhét các giá trị mới vào field `status` cũ của Order: client v1 chỉ biết `PENDING | CONFIRMED`, thêm giá trị enum là phá vỡ API giữa version. Giữ `status` (deprecated, ánh xạ: có VendorOrder đã từ `CONFIRMED` trở lên → `CONFIRMED`, còn lại → `PENDING`), xóa ở S12-05. Hai lựa chọn lưu trữ cho `fulfillmentStatus`:
   - **Tính khi đọc:** không lưu, luôn đúng. Lọc/sắp xếp theo trạng thái tổng hợp khó hơn.
   - **Lưu và cập nhật trong cùng transaction** với mỗi lần VendorOrder đổi trạng thái: query nhanh, nhưng phải đảm bảo không bao giờ lệch.
   - Chọn một và ghi lại. Với v2, tính khi đọc là đủ và an toàn hơn.
-- **Admin confirm của v1 (PXM-40) trở thành dư thừa:** luồng xác nhận giờ thuộc seller. Đánh dấu endpoint admin cũ là deprecated (xóa ở S12-05). Trong thời gian chuyển tiếp, nó vẫn phải cập nhật VendorOrder (S10-01).
+- **Admin confirm của v1 (PXM-40) trở thành dư thừa:** luồng xác nhận giờ thuộc seller. Đánh dấu endpoint admin cũ là deprecated (xóa ở S12-05). Trong thời gian chuyển tiếp, nó chuyển **mọi VendorOrder `PENDING` của một Order `PAID`** sang `CONFIRMED` trong cùng transaction. Thêm tạm một dòng `{ from: PENDING, to: CONFIRMED, actor: ADMIN }` vào bảng transition (xóa cùng endpoint ở S12-05), để mọi chuyển trạng thái vẫn đi qua một bảng.
 
 ### Hướng tiếp cận
 1. Bảng `VENDOR_ORDER_TRANSITIONS` gồm `from`, `to`, `actor` + hàm thuần `canTransition(from, to, actor)` + unit test.
-2. Service `transitionVendorOrder(scope, id, to, actor)`: update có điều kiện `where { id, status: from, storeId? }`, `count = 0` → đọc lại → 404/409.
+2. Service `transitionVendorOrder(scope, id, to, actor)`: update có điều kiện `where { id, status: from, storeId?, order: { paymentStatus: PAID } }`, `count = 0` → đọc lại → 404/409.
 3. Controller seller: list (lọc status, phân trang, chỉ Order `PAID`), `confirm`, `ship`.
-4. Hàm `deriveOrderStatus(vendorOrders)` + unit test. Response của khách dùng nó.
+4. Hàm `deriveFulfillmentStatus(paymentStatus, vendorOrders)` → field mới `fulfillmentStatus` + unit test. Response của khách dùng nó.
 5. Đánh dấu `PATCH /v1/admin/orders/:id/confirm` là deprecated trong OpenAPI.
 
 ### File dự kiến tạo/sửa
@@ -85,14 +85,14 @@ Lập bảng `from × to × actor` và ma trận phân quyền trước khi mở
 - Seller list không thấy VendorOrder của Order `UNPAID`/`FAILED`.
 - `PENDING → SHIPPED` qua API → 409.
 - Hai request confirm đồng thời → một 200, một 409.
-- `deriveOrderStatus`: [DELIVERED, DELIVERED] → COMPLETED. [DELIVERED, SHIPPED] → PARTIALLY_DELIVERED. [PENDING, CONFIRMED] → PROCESSING. Một phần tử → khớp trạng thái của nó.
+- `deriveFulfillmentStatus`: (PAID, [DELIVERED, DELIVERED]) → COMPLETED. (PAID, [DELIVERED, SHIPPED]) → PARTIALLY_DELIVERED. (PAID, [PENDING, CONFIRMED]) → PROCESSING. (PAID, [DELIVERED]) → COMPLETED. (PAID, [SHIPPED]) → PROCESSING. (UNPAID, bất kỳ) → AWAITING_PAYMENT. (FAILED, bất kỳ) → PAYMENT_FAILED. Field `status` cũ vẫn chỉ có `PENDING | CONFIRMED`.
 - Khách gọi endpoint seller → 403.
 </details>
 
 ### Gợi ý
 <details><summary>Hint 1: hướng đi</summary>
 
-Viết bảng transition và `deriveOrderStatus` dạng hàm thuần trước (unit test nhanh). Endpoint chỉ là lớp mỏng gọi hai hàm này cộng update có điều kiện.
+Viết bảng transition và `deriveFulfillmentStatus` dạng hàm thuần trước (unit test nhanh). Endpoint chỉ là lớp mỏng gọi hai hàm này cộng update có điều kiện.
 </details>
 
 <details><summary>Hint 2: khái niệm/API</summary>
@@ -117,7 +117,9 @@ transitionAsSeller(storeId, vendorOrderId, to):
     vo = findFirst(where { id, storeId, order.paymentStatus: PAID })
     throw vo ? Conflict(`Không thể chuyển từ ${vo.status} sang ${to}`) : NotFound
 
-deriveOrderStatus(statuses):
+deriveFulfillmentStatus(paymentStatus, statuses):
+  if paymentStatus == UNPAID: AWAITING_PAYMENT
+  if paymentStatus == FAILED: PAYMENT_FAILED
   if all DELIVERED: COMPLETED
   if any DELIVERED: PARTIALLY_DELIVERED
   return PROCESSING
@@ -135,7 +137,7 @@ deriveOrderStatus(statuses):
 ### Kiểm chứng AC
 - [ ] Test: seller A chuyển trạng thái đơn của shop B → 404.
 - [ ] Test: `PENDING → SHIPPED` → 409.
-- [ ] Unit test `deriveOrderStatus` cho trường hợp một shop đã giao, một shop chưa.
+- [ ] Unit test `deriveFulfillmentStatus` cho trường hợp một shop đã giao, một shop chưa.
 - [ ] Test đồng thời: hai `confirm` → một 200, một 409.
 
 ### Đọc thêm
@@ -271,14 +273,15 @@ markReceived(userId, orderId, vendorOrderId):
 - **Vì sao không có cột `balance`:** `UPDATE balance = balance + x` mất lịch sử ("tiền này từ đâu ra?"), khó đối soát, và một bug ghi đè là mất tiền không dấu vết. Ledger lưu **từng sự kiện tiền** (append-only). Số dư = tổng các bút toán, luôn tái tạo được.
 - **Kế toán kép (double-entry):** tiền không tự sinh ra hay mất đi, nó **di chuyển** giữa các tài khoản. Mỗi giao dịch có ít nhất 2 entry, **tổng bằng 0** (quy ước dấu ở mục 1: dương = Nợ, âm = Có). Nếu một giao dịch không cân bằng thì chắc chắn có bug.
 - **Loại tài khoản và số dư "thuận":** tài sản (`PLATFORM_CLEARING`) tăng khi ghi Nợ (dương). Nợ phải trả (`SELLER_*`) và doanh thu (`PLATFORM_REVENUE`) tăng khi ghi Có (âm). Khi **hiển thị** số dư seller, đổi dấu (`−Σ`) để ra số dương. Lưu `normalBalance` (`DEBIT | CREDIT`) trên tài khoản để hàm hiển thị biết có đổi dấu không.
+- **`PAYOUT_CLEARING`** (dùng ở S12-03): **thuận Có** (`normalBalance = CREDIT`), nghĩa là "tiền đã chi cho seller, chờ đối chiếu với ngân hàng". Phải có tên trong danh sách tài khoản của ADR-0009 cùng với các tài khoản khác.
 - **Append-only:** không `UPDATE`, không `DELETE` entry. Ghi sai thì sửa bằng **bút toán đảo** (reversal). Có thể bảo vệ thêm ở tầng DB (trigger từ chối update/delete, hoặc chỉ cấp quyền `INSERT, SELECT` cho role của app), nhưng tối thiểu: không có đường code nào làm việc đó, và có test.
 - **Idempotent posting:** `LedgerTransaction` có khóa unique `(sourceType, sourceId, kind)`, ví dụ `(ORDER, <orderId>, PAYMENT_CAPTURED)`. Ghi lại cùng sự kiện → bắt unique → trả giao dịch đã có, không ghi trùng. Đây là cùng tư duy với Idempotency-Key.
 - **Ranh giới module:** `ledger` là module độc lập, ở dưới cùng. Public API là `post(tx, { sourceType, sourceId, kind, entries })` và `balanceOf(accountRef)`. Ledger không biết "đơn hàng" là gì, nó chỉ biết tài khoản và số tiền.
-- **Tài khoản của seller:** tạo khi shop được duyệt (S8-04, gọi ledger trong cùng transaction), hoặc tạo "lười" (upsert) lần đầu được ghi. Chọn một, ghi vào ADR-0009.
+- **Tài khoản của seller được tạo "lười":** `ledger.post` upsert tài khoản theo `key` ngay lần đầu được ghi. **Không** tạo lúc duyệt shop: S8-04 nằm trong module `stores`, gọi ledger từ đó tạo ra phụ thuộc `stores → ledger` không có trong sơ đồ module (README v2). Ghi vào ADR-0009.
 
 ### Hướng tiếp cận
 1. Bạn quyết định (ghi vào ADR-0009, Claude viết): quy ước dấu, danh sách tài khoản, `normalBalance`, khóa idempotency, cách tạo tài khoản seller.
-2. Schema: `LedgerAccount` (`id`, `type`, `storeId?`, `normalBalance`, unique `(type, storeId)`), `LedgerTransaction` (`id`, `sourceType`, `sourceId`, `kind`, `description`, `createdAt`, unique `(sourceType, sourceId, kind)`), `LedgerEntry` (`id`, `transactionId`, `accountId`, `amountMinor` (int, ≠ 0), `createdAt`).
+2. Schema: `LedgerAccount` (`id`, **`key` NOT NULL unique** ví dụ `PLATFORM_CLEARING`, `SELLER_PENDING:<storeId>`, `type`, `storeId?`, `normalBalance`), `LedgerTransaction` (`id`, `sourceType`, `sourceId`, `kind`, `description`, `createdAt`, unique `(sourceType, sourceId, kind)`), `LedgerEntry` (`id`, `transactionId`, `accountId`, `amountMinor` (int, ≠ 0), `createdAt`).
 3. Hàm thuần `assertBalanced(entries)` + unit test.
 4. `LedgerService.post(tx, input)`: assert cân bằng → tạo transaction + entries trong `tx` của bên gọi → bắt unique → trả bản đã có.
 5. `balanceOf(account)` = `SUM(amountMinor)` (+ đổi dấu theo `normalBalance` khi hiển thị).
@@ -294,7 +297,7 @@ markReceived(userId, orderId, vendorOrderId):
 - `post` không cân bằng → throw, **không** có entry nào trong DB (kiểm tra cả bảng transaction).
 - `post` hai lần cùng `(sourceType, sourceId, kind)` → một giao dịch duy nhất. Gửi đồng thời → vẫn một.
 - `balanceOf` sau 3 giao dịch = tổng đúng. Số dư hiển thị của seller là số dương.
-- Tổng **toàn bộ** `amountMinor` trong DB = 0 sau mọi test.
+- Tổng **toàn bộ** `amountMinor` trong DB = 0 sau mọi test. (Test nào cố tình chèn dữ liệu lệch, như ở S12-04, phải chạy trên dữ liệu riêng và tự dọn dẹp, để không phá invariant của các test khác.)
 - Không tồn tại export nào để sửa/xóa entry (test trên public API của module, hoặc trigger DB từ chối).
 </details>
 
@@ -323,7 +326,7 @@ post(tx, { sourceType, sourceId, kind, description, entries }):
   assertBalanced(entries)
   existing = tx.ledgerTransaction.find(sourceType, sourceId, kind)
   if existing: return existing                                      // idempotent
-  accounts = resolve/upsert từng account theo (type, storeId)
+  accounts = upsert từng account theo key (ví dụ "SELLER_PENDING:" + storeId)   // upsert đồng thời có thể ném P2002 → transaction bị hủy, xem bẫy
   return tx.ledgerTransaction.create({ sourceType, sourceId, kind, description, entries: create(map(accounts, amount)) })
   // Hai lần post đồng thời cùng khóa: một bên gặp lỗi unique và transaction của nó bị hủy → rollback toàn bộ
   // việc của bên gọi (ví dụ cập nhật PAID), và bên gọi retry/trả về kết quả đã có. Đừng nuốt lỗi unique BÊN TRONG tx.
@@ -336,6 +339,7 @@ displayBalance(account) = (account.normalBalance == CREDIT ? -1 : 1) * Σ amount
 ### Bẫy thường gặp
 | Triệu chứng | Nguyên nhân | Cách tránh |
 |---|---|---|
+| Có hai dòng `PLATFORM_CLEARING` | Unique `(type, storeId)` với `storeId` NULL: Postgres coi mọi NULL là khác nhau, và Prisma không `upsert` được trên khóa phức hợp có NULL | Cột `key` NOT NULL unique (hoặc partial unique index / `NULLS NOT DISTINCT` bằng migration SQL) |
 | Số dư seller hiện số âm | Quên đổi dấu cho tài khoản thuận Có | `normalBalance` + hàm hiển thị |
 | Ghi trùng bút toán khi retry | Không có khóa idempotency | Unique `(sourceType, sourceId, kind)` |
 | Sau khi bắt lỗi unique, mọi query sau đó báo "current transaction is aborted" | Lỗi trong Postgres hủy cả transaction đang mở, kể cả khi code đã bắt exception | Kiểm tra tồn tại trước khi insert, `ON CONFLICT DO NOTHING`, hoặc savepoint |
@@ -383,7 +387,7 @@ displayBalance(account) = (account.normalBalance == CREDIT ? -1 : 1) * Σ amount
 - Retry cùng Idempotency-Key → vẫn 1 giao dịch.
 - Charge thất bại → `FAILED`, không có giao dịch, seller list không có đơn.
 - Backfill chạy 2 lần → không ghi trùng. Sau backfill: mỗi Order `PAID` có đúng một `PAYMENT_CAPTURED`.
-- Invariant: sau 100 đơn ngẫu nhiên, Σ toàn DB = 0, và với mỗi shop `−Σ SELLER_PENDING = Σ sellerNet` của các đơn `PAID` chưa `DELIVERED`.
+- Invariant: sau 100 đơn ngẫu nhiên, Σ toàn DB = 0, và với mỗi shop `−Σ SELLER_PENDING = Σ sellerNet` của **mọi** VendorOrder thuộc Order `PAID`. (Ở S11 chưa có bút toán nào khi giao hàng. Từ S12-01, điều kiện thu hẹp thành "chưa `DELIVERED`".)
 </details>
 
 ### Gợi ý

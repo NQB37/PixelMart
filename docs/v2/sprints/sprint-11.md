@@ -18,7 +18,7 @@
 
 - Trạng thái: `PENDING → CONFIRMED → SHIPPED → DELIVERED`. Seller được chuyển `PENDING→CONFIRMED` và `CONFIRMED→SHIPPED`. Khách được chuyển `SHIPPED→DELIVERED`.
 - `GET /v1/seller/orders?status=` (chỉ VendorOrder của shop mình, thuộc Order đã `PAID`), `PATCH /v1/seller/orders/:id/confirm`, `PATCH /v1/seller/orders/:id/ship`.
-- Trạng thái của `Order` được **tính** từ các VendorOrder (không lưu riêng, hoặc lưu nhưng luôn cập nhật trong cùng transaction): ví dụ "Đang xử lý", "Đã giao một phần", "Hoàn tất".
+- Trạng thái tổng hợp của `Order` nằm ở field **mới** `fulfillmentStatus`, được **tính** từ `paymentStatus` và các VendorOrder (ví dụ "Chờ thanh toán", "Đang xử lý", "Đã giao một phần", "Hoàn tất"). Field `status` cũ giữ nguyên tập giá trị v1 (deprecated, xóa ở S12-05).
 - Mọi chuyển trạng thái dùng update có điều kiện (như PXM-40).
 
 **AC**
@@ -52,13 +52,13 @@
 `Task` · Ledger & Payout · **3 pts** · `api` `db`
 
 - Module `ledger`. `LedgerAccount` (loại: `PLATFORM_CLEARING`, `PLATFORM_REVENUE`, `SELLER_PENDING`, `SELLER_AVAILABLE`, `PAYOUT_CLEARING`; tài khoản seller gắn với `storeId`).
-- `LedgerTransaction` (mô tả, `sourceType` + `sourceId` unique để **ghi idempotent**) gồm nhiều `LedgerEntry` (accountId, số tiền có dấu hoặc cặp debit/credit).
+- `LedgerTransaction` (mô tả, `sourceType` + `sourceId` + `kind` unique để **ghi idempotent**) gồm nhiều `LedgerEntry` (accountId, số tiền có dấu hoặc cặp debit/credit).
 - Dịch vụ `post(transaction)`: từ chối nếu tổng các entry ≠ 0. **Append-only**: không update, không delete entry. Sửa sai bằng bút toán đảo.
 - ADR-0009: thiết kế ledger (quy ước dấu, danh sách tài khoản, idempotency).
 
 **AC**
 - [ ] Ghi một transaction không cân bằng → bị từ chối, không có entry nào được lưu
-- [ ] Ghi lại cùng `sourceType + sourceId` → không tạo bút toán trùng
+- [ ] Ghi lại cùng `sourceType + sourceId + kind` → không tạo bút toán trùng
 - [ ] Không có API hay đường code nào update/delete `LedgerEntry` (kiểm tra bằng test + review)
 - [ ] Số dư một tài khoản = tổng các entry của nó (hàm tính số dư có test)
 
