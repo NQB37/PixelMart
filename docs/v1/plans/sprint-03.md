@@ -201,7 +201,7 @@ Viết test cho `Set-Cookie` trước. Supertest trả `res.headers['set-cookie'
 - Sinh token ngẫu nhiên: `crypto.randomBytes(32)` → base64url. Hash: `crypto.createHash('sha256')`.
 - Cookie: `res.cookie(name, value, { httpOnly, secure, sameSite: 'lax', domain, path, maxAge })` với `@Res({ passthrough: true })`. Cần `cookie-parser` để **đọc** cookie (PXM-23, PXM-24).
 - Throttler: `ttl` tính bằng **milliseconds** (dùng helper `minutes(1)`). `@Throttle({ default: { limit: 5, ttl: minutes(1) } })`.
-- Local dev qua `http://localhost`: Chrome/Firefox coi `localhost` là secure context, nên cookie `Secure` vẫn hoạt động. Không cần tắt `Secure`.
+- Local dev qua `http://localhost`: Chrome/Firefox coi `localhost` là secure context, nên cookie `Secure` vẫn hoạt động. Không cần tắt `Secure`. **Ngoại lệ: Safari** (WebKit) không lưu cookie `Secure` trên `http://localhost`. Nếu dev bằng Safari, chạy local qua HTTPS (ví dụ `mkcert` hoặc `next dev --experimental-https`) hoặc dùng Chrome/Firefox, **đừng** tắt `Secure` bằng một nhánh `if (dev)` dễ lọt lên production.
 </details>
 
 <details><summary>Hint 3: pseudo-code</summary>

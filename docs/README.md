@@ -30,7 +30,7 @@ Thứ tự đọc khi bắt đầu một version:
 | Ver | Chủ đề | Bài toán (vì sao phải học) | Công nghệ chính | Sprint | Trạng thái |
 |---|---|---|---|---|---|
 | [v1](v1/README.md) | MVP single-store | Bán hàng được end-to-end | NestJS monolith, Next.js, Vite admin, Docker cơ bản, GitHub Actions, Render/Vercel/Neon, Sentry | 1–7 | Đang làm · sprints + plans ✅ |
-| [v2](v2/README.md) | Marketplace multi-vendor | Seller đăng ký mở shop, tồn kho theo shop, một giỏ hàng nhiều shop, tách đơn theo shop, hoa hồng, chi trả cho seller | Modular monolith, RBAC + ownership, aggregate Order/VendorOrder, double-entry ledger. *Không thêm infra* | 8–12 | Đang viết · sprints ✅ |
+| [v2](v2/README.md) | Marketplace multi-vendor | Seller đăng ký mở shop, tồn kho theo shop, một giỏ hàng nhiều shop, tách đơn theo shop, hoa hồng, chi trả cho seller | Modular monolith, RBAC + ownership, aggregate Order/VendorOrder, double-entry ledger. *Không thêm infra* | 8–12 | Sẵn sàng · sprints + plans ✅ |
 | v3 | Self-host | Chi phí và giới hạn của PaaS, muốn tự kiểm soát hạ tầng | Docker chuyên sâu, Compose production, **Nginx** (TLS, load balance, gzip, rate limit), Postgres tự host + backup, deploy qua SSH | 13–15 | Chưa viết |
 | v4 | Performance & Observability | Flash sale chậm và oversell. Muốn tối ưu thì phải đo trước | **Prometheus**, **Grafana**, Alertmanager, k6, **Redis** (cache, rate limit phân tán, giữ tồn kho atomic) | 16–18 | Chưa viết |
 | v5 | Async processing | Checkout chậm vì gửi email, đơn chưa thanh toán phải tự hủy | **RabbitMQ**: worker, retry, DLQ, delayed message, idempotent consumer, outbox | 19–21 | Chưa viết |

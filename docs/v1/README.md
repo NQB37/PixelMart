@@ -34,7 +34,8 @@ flowchart LR
   WEB -.lỗi.-> S
   ADM -.lỗi.-> S
   GH[GitHub Actions] -->|migrate + deploy hook| API
-  GH -->|Vercel build| WEB
+  REPO[(GitHub repo)] -->|Git integration: Vercel tự build| WEB
+  REPO -->|Git integration| ADM
 ```
 
 ## Học xong bạn làm được

@@ -19,8 +19,8 @@
 
 - `GET/POST/PATCH/DELETE /v1/seller/products`: shop được xác định từ **người đang đăng nhập**, không bao giờ lấy `storeId` từ body hay query.
 - Product thêm `stock` (int ≥ 0) và `status` (`DRAFT | ACTIVE | ARCHIVED`). Sản phẩm mới mặc định `DRAFT`.
-- Xóa sản phẩm đã từng có đơn → chuyển `ARCHIVED` thay vì xóa cứng (snapshot đơn cũ vẫn giữ được, nhưng cần quyết định hành vi khi đã có `OrderItem` tham chiếu).
-- Endpoint admin sản phẩm của v1 vẫn hoạt động cho admin (trên mọi shop).
+- Xóa sản phẩm đã từng có đơn bị DB chặn (FK `OrderItem.productId` đổi sang `onDelete: Restrict`) → 409, gợi ý chuyển `ARCHIVED`.
+- Endpoint admin sản phẩm của v1 vẫn hoạt động cho admin (trên mọi shop), contract và form admin **thêm `status`, `stock`**.
 
 **AC**
 - [ ] Seller A sửa/xóa/xem sản phẩm của seller B → **404**
@@ -48,13 +48,15 @@
 
 - Public API chỉ trả sản phẩm `ACTIVE` của shop `ACTIVE`.
 - Response sản phẩm thêm `shop: { name, slug }` và `inStock` (boolean, không lộ con số tồn kho chính xác).
-- `GET /v1/shops/:slug`: thông tin shop + sản phẩm của shop (phân trang).
+- `GET /v1/shops/:slug`: thông tin shop + sản phẩm của shop (phân trang). Endpoint nằm ở module `catalog` (đúng chiều phụ thuộc).
+- Checkout hiện tại (PXM-37) dùng chung quy tắc hiển thị: sản phẩm không hiển thị công khai → 422.
 - `GET /v1/products?shop=<slug>` để lọc theo shop.
 
 **AC**
 - [ ] Sản phẩm `DRAFT`/`ARCHIVED` hoặc thuộc shop `SUSPENDED` → không xuất hiện trong danh sách, chi tiết trả 404
 - [ ] Shop `PENDING`/`SUSPENDED`/`REJECTED` → `GET /v1/shops/:slug` trả 404
 - [ ] Response public không có `stock`, `commissionRateBps`, `ownerId`
+- [ ] Checkout với sản phẩm `DRAFT`/`ARCHIVED` hoặc của shop `SUSPENDED` → 422
 
 ### S9-04 · Trang shop & thông tin shop trên storefront
 `Story` · Seller Catalog · **2 pts** · `web`
@@ -83,3 +85,5 @@
 - [ ] Chỉ chuyển trạng thái hợp lệ (`ACTIVE ↔ SUSPENDED`), còn lại → 409
 
 **Ngoài phạm vi:** xử lý đơn đang dở của shop bị khóa (v2 vẫn cho seller xử lý tiếp đơn đã có).
+
+> **Khoảng trống được chấp nhận (v1.2.0 → v1.3.0):** checkout chưa trừ và chưa kiểm tra tồn kho cho tới S10-03. Trong một sprint, khách gọi thẳng API vẫn có thể đặt sản phẩm `stock = 0`. Seller chỉnh tồn kho thủ công nếu cần.

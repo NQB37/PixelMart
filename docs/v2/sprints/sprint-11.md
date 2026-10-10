@@ -17,8 +17,8 @@
 > Là seller, tôi muốn xác nhận và giao các đơn của shop mình.
 
 - Trạng thái: `PENDING → CONFIRMED → SHIPPED → DELIVERED`. Seller được chuyển `PENDING→CONFIRMED` và `CONFIRMED→SHIPPED`. Khách được chuyển `SHIPPED→DELIVERED`.
-- `GET /v1/seller/orders?status=` (chỉ VendorOrder của shop mình), `PATCH /v1/seller/orders/:id/confirm`, `PATCH /v1/seller/orders/:id/ship`.
-- Trạng thái của `Order` được **tính** từ các VendorOrder (không lưu riêng, hoặc lưu nhưng luôn cập nhật trong cùng transaction): ví dụ "Đang xử lý", "Đã giao một phần", "Hoàn tất".
+- `GET /v1/seller/orders?status=` (chỉ VendorOrder của shop mình, thuộc Order đã `PAID`), `PATCH /v1/seller/orders/:id/confirm`, `PATCH /v1/seller/orders/:id/ship`.
+- Trạng thái tổng hợp của `Order` nằm ở field **mới** `fulfillmentStatus`, được **tính** từ `paymentStatus` và các VendorOrder (ví dụ "Chờ thanh toán", "Đang xử lý", "Đã giao một phần", "Hoàn tất"). Field `status` cũ giữ nguyên tập giá trị v1 (deprecated, xóa ở S12-05).
 - Mọi chuyển trạng thái dùng update có điều kiện (như PXM-40).
 
 **AC**
@@ -52,13 +52,13 @@
 `Task` · Ledger & Payout · **3 pts** · `api` `db`
 
 - Module `ledger`. `LedgerAccount` (loại: `PLATFORM_CLEARING`, `PLATFORM_REVENUE`, `SELLER_PENDING`, `SELLER_AVAILABLE`, `PAYOUT_CLEARING`; tài khoản seller gắn với `storeId`).
-- `LedgerTransaction` (mô tả, `sourceType` + `sourceId` unique để **ghi idempotent**) gồm nhiều `LedgerEntry` (accountId, số tiền có dấu hoặc cặp debit/credit).
+- `LedgerTransaction` (mô tả, `sourceType` + `sourceId` + `kind` unique để **ghi idempotent**) gồm nhiều `LedgerEntry` (accountId, số tiền có dấu hoặc cặp debit/credit).
 - Dịch vụ `post(transaction)`: từ chối nếu tổng các entry ≠ 0. **Append-only**: không update, không delete entry. Sửa sai bằng bút toán đảo.
 - ADR-0009: thiết kế ledger (quy ước dấu, danh sách tài khoản, idempotency).
 
 **AC**
 - [ ] Ghi một transaction không cân bằng → bị từ chối, không có entry nào được lưu
-- [ ] Ghi lại cùng `sourceType + sourceId` → không tạo bút toán trùng
+- [ ] Ghi lại cùng `sourceType + sourceId + kind` → không tạo bút toán trùng
 - [ ] Không có API hay đường code nào update/delete `LedgerEntry` (kiểm tra bằng test + review)
 - [ ] Số dư một tài khoản = tổng các entry của nó (hàm tính số dư có test)
 
@@ -67,11 +67,14 @@
 
 > Là sàn, tôi muốn mọi đồng tiền khách trả đều được ghi nhận vào đúng tài khoản.
 
-- Khi Order được thanh toán: một LedgerTransaction (source = Order) với: tiền vào `PLATFORM_CLEARING` (= Order.total), với mỗi VendorOrder ghi `SELLER_PENDING` của shop (= sellerNet) và `PLATFORM_REVENUE` (= commission).
-- Ghi trong cùng transaction DB với việc tạo đơn (hoặc ngay sau với idempotency, ghi lý do lựa chọn trong ADR-0009).
+- Thứ tự sự kiện: (1) transaction tạo Order với `paymentStatus = UNPAID` (S10) → (2) commit → (3) `PaymentProvider.charge` → (4) charge thành công: **một transaction DB mới** gồm `paymentStatus: UNPAID → PAID` (update có điều kiện) **và** một LedgerTransaction (source = Order, loại `PAYMENT_CAPTURED`): tiền vào `PLATFORM_CLEARING` (= Order.total), với mỗi VendorOrder ghi `SELLER_PENDING` của shop (= sellerNet) và `PLATFORM_REVENUE` (= commission).
+- **Không** ghi bút toán thanh toán trong transaction tạo đơn: lúc đó tiền chưa thu được. Bút toán phản ánh sự kiện **đã xảy ra**.
+- Charge thất bại → `paymentStatus = FAILED`, không có bút toán. (Hoàn tồn kho cho đơn thất bại và cơ chế bù khi process chết giữa bước 3 và 4 (outbox) thuộc v5. Ghi rõ trong ADR-0009.)
+- Seller chỉ thấy VendorOrder của Order đã `PAID` (S11-01).
 - Migration/backfill: đơn v1 đã thanh toán → bút toán tương ứng (hoa hồng 0).
 
 **AC**
 - [ ] Đơn 2 shop → 1 transaction, các entry cân bằng, khớp `sellerNet`/`commission` của từng VendorOrder
 - [ ] Retry tạo đơn (cùng Idempotency-Key) → không ghi bút toán lần hai
+- [ ] Charge thất bại (Fake provider cấu hình lỗi) → `paymentStatus = FAILED`, không có bút toán, seller không thấy đơn
 - [ ] Test invariant toàn hệ thống: tổng mọi entry = 0 sau một loạt đơn ngẫu nhiên

@@ -15,7 +15,7 @@
 ### S10-01 · Schema Order → VendorOrder + migration đơn v1
 `Task` · Multi-vendor Checkout · **2 pts** · `api` `db`
 
-- `Order`: đơn của khách (userId, totalMinor, idempotencyKey, trạng thái thanh toán).
+- `Order`: đơn của khách (userId, totalMinor, idempotencyKey, `paymentStatus`: `UNPAID | PAID | FAILED`). Đơn v1 đã tạo được migrate thành `PAID`.
 - `VendorOrder`: một đơn con cho mỗi shop (orderId, storeId, status, subtotalMinor, shippingFeeMinor, commissionRateBps, commissionMinor, sellerNetMinor).
 - `OrderItem` chuyển sang thuộc `VendorOrder` (vẫn snapshot tên + giá).
 - Migration: mỗi đơn v1 → một VendorOrder của shop "PixelMart", trạng thái giữ nguyên, hoa hồng 0.
@@ -24,6 +24,8 @@
 - [ ] Migration chạy được trên bản sao dữ liệu v1. Số đơn, số item, tổng tiền trước và sau khớp nhau (có script kiểm tra)
 - [ ] `GET /v1/orders/:id` vẫn trả đủ field cũ, có thêm `vendorOrders[]`
 - [ ] Trang "Đơn hàng của tôi" của v1 vẫn hoạt động
+- [ ] `vendorOrders[]` trong response của khách **không** có `commissionRateBps`, `commissionMinor`, `sellerNetMinor`
+- [ ] Admin xác nhận đơn (PXM-40) cập nhật cả Order và VendorOrder trong cùng transaction
 
 ### S10-02 · Checkout tách đơn theo shop
 `Story` · Multi-vendor Checkout · **3 pts** · `api` `contracts`
@@ -54,6 +56,7 @@
 - [ ] Test đồng thời: `stock = 1`, hai khách đặt cùng lúc → đúng 1 đơn thành công, 1 nhận 409, `stock` cuối = 0
 - [ ] Đơn có 2 item, item thứ hai thiếu hàng → không item nào bị trừ kho, không có Order nào được tạo
 - [ ] Gửi lại cùng `Idempotency-Key` → không trừ kho lần hai
+- [ ] `stock = 1`, hai request đồng thời **cùng** `Idempotency-Key` → cả hai nhận cùng một order (không có 409 "hết hàng")
 
 **Ngoài phạm vi:** giữ hàng (reservation) khi đang ở trang checkout, flash sale (v4 với Redis).
 

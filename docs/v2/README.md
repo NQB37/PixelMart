@@ -38,13 +38,19 @@ flowchart LR
   AD((Admin sàn)) --> ADM["admin.&lt;domain&gt;<br/>duyệt shop · payout · đối soát"]
   WEB & SEL & ADM -->|REST /v1| API
   subgraph API["API: modular monolith"]
-    ID[identity] --- ST[stores]
-    ST --- CA[catalog]
-    CA --- OR[orders]
-    OR --- LE[ledger]
+    OR[orders] --> CA[catalog]
+    CA --> ST[stores]
+    ST --> ID[identity]
+    OR --> LE[ledger]
   end
   API --> DB[(Postgres)]
 ```
+
+Mũi tên là **chiều phụ thuộc được phép** (kiểm tra trong CI từ S8-01). Không module nào phụ thuộc ngược chiều:
+- Catalog cần biết "sản phẩm đã có đơn chưa" → DB bảo vệ bằng FK `Restrict` (S9-01), không import orders.
+- Endpoint trang shop (shop + sản phẩm) nằm ở `catalog`, không nằm ở `stores`.
+- `ledger` không biết orders. Orders gọi ledger để ghi bút toán. Báo cáo đối soát (S12-04), vốn cần cả dữ liệu đơn lẫn sổ cái, nằm ở `orders`.
+- Shop "PixelMart" của v1 được chuyển cho một **tài khoản seller chính hãng** (S8-02). Admin sàn không sở hữu shop và không được mở shop.
 
 Mô hình dữ liệu chính:
 
@@ -102,11 +108,11 @@ Giữ nguyên v1 (Render + Vercel + Neon + Sentry, 0đ). Thêm:
 
 | Sprint | Plan | Tag | Sprint Goal | Pts |
 |---|---|---|---|---|
-| [8](sprints/sprint-08.md) | plan (đang viết) | v1.1.0 | Nền multi-vendor: ranh giới module, đăng ký và duyệt shop, seller app online | 10 |
-| [9](sprints/sprint-09.md) | plan (đang viết) | v1.2.0 | Seller quản lý sản phẩm và tồn kho của shop mình; khách xem trang shop | 10 |
-| [10](sprints/sprint-10.md) | plan (đang viết) | v1.3.0 | Khách thanh toán giỏ nhiều shop một lần, đơn được tách theo shop, không oversell | 10 |
-| [11](sprints/sprint-11.md) | plan (đang viết) | v1.4.0 | Seller xử lý đơn tới khi khách nhận hàng; mọi khoản tiền được ghi vào sổ cái | 10 |
-| [12](sprints/sprint-12.md) | plan (đang viết) | **v2.0.0** | Seller thấy số dư và được chi trả; hệ thống đối soát khớp; phát hành v2.0.0 | 9 |
+| [8](sprints/sprint-08.md) | [plan](plans/sprint-08.md) | v1.1.0 | Nền multi-vendor: ranh giới module, đăng ký và duyệt shop, seller app online | 10 |
+| [9](sprints/sprint-09.md) | [plan](plans/sprint-09.md) | v1.2.0 | Seller quản lý sản phẩm và tồn kho của shop mình; khách xem trang shop | 10 |
+| [10](sprints/sprint-10.md) | [plan](plans/sprint-10.md) | v1.3.0 | Khách thanh toán giỏ nhiều shop một lần, đơn được tách theo shop, không oversell | 10 |
+| [11](sprints/sprint-11.md) | [plan](plans/sprint-11.md) | v1.4.0 | Seller xử lý đơn tới khi khách nhận hàng; mọi khoản tiền được ghi vào sổ cái | 10 |
+| [12](sprints/sprint-12.md) | [plan](plans/sprint-12.md) | **v2.0.0** | Seller thấy số dư và được chi trả; hệ thống đối soát khớp; phát hành v2.0.0 | 9 |
 
 Mọi sprint của v2 là **draft**: refine (cập nhật AC, estimate lại theo velocity v1) ở buổi refinement trước khi kéo vào sprint.
 

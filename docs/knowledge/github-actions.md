@@ -142,7 +142,7 @@ jobs:
 2. **Cache đúng thứ:** pnpm store (theo lockfile) và `.turbo` (theo SHA, kèm `restore-keys`). Không cache `node_modules` của pnpm vì nó là symlink tới store.
 3. **`--frozen-lockfile`:** CI phải fail nếu lockfile lệch với `package.json`. Không được để CI tự âm thầm cập nhật deps.
 4. **`permissions` tối thiểu** ở cấp workflow, chỉ mở thêm ở job thật sự cần (ví dụ `packages: write` khi push lên GHCR).
-5. **Pin action:** ít nhất pin major (`@v6`). Với action của bên thứ ba ít người dùng, pin theo **commit SHA**, vì tag có thể bị đổi để trỏ sang code độc hại (đã xảy ra thật: vụ `tj-actions/changed-files` năm 2025).
+5. **Pin action:** ít nhất pin major (`@v6`). Với **mọi** action của bên thứ ba (không phải `actions/*` của GitHub), pin theo **commit SHA**, vì tag có thể bị đổi để trỏ sang code độc hại. Mức độ phổ biến không bảo vệ bạn: `tj-actions/changed-files`, một action được hàng chục nghìn repo dùng, đã bị chiếm và sửa tag năm 2025.
 6. **Tách CI và CD rõ ràng:** CI chạy cho mọi PR. CD chỉ chạy trên `main`, `needs: ci`, dùng `environment: production`.
 7. **Đặt tên job ổn định** vì required check gắn theo tên job. Đổi tên job thì phải sửa lại branch ruleset.
 8. **`concurrency` cho deploy** với `cancel-in-progress: false`: đừng hủy một deploy đang chạy dở. Chỉ nên hủy các run CI cũ.
