@@ -38,13 +38,19 @@ flowchart LR
   AD((Admin sàn)) --> ADM["admin.&lt;domain&gt;<br/>duyệt shop · payout · đối soát"]
   WEB & SEL & ADM -->|REST /v1| API
   subgraph API["API: modular monolith"]
-    ID[identity] --- ST[stores]
-    ST --- CA[catalog]
-    CA --- OR[orders]
-    OR --- LE[ledger]
+    OR[orders] --> CA[catalog]
+    CA --> ST[stores]
+    ST --> ID[identity]
+    OR --> LE[ledger]
   end
   API --> DB[(Postgres)]
 ```
+
+Mũi tên là **chiều phụ thuộc được phép** (kiểm tra trong CI từ S8-01). Không module nào phụ thuộc ngược chiều:
+- Catalog cần biết "sản phẩm đã có đơn chưa" → DB bảo vệ bằng FK `Restrict` (S9-01), không import orders.
+- Endpoint trang shop (shop + sản phẩm) nằm ở `catalog`, không nằm ở `stores`.
+- `ledger` không biết orders. Orders gọi ledger để ghi bút toán. Báo cáo đối soát (S12-04), vốn cần cả dữ liệu đơn lẫn sổ cái, nằm ở `orders`.
+- Shop "PixelMart" của v1 được chuyển cho một **tài khoản seller chính hãng** (S8-02). Admin sàn không sở hữu shop và không được mở shop.
 
 Mô hình dữ liệu chính:
 

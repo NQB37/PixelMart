@@ -66,7 +66,10 @@ S8-01 ranh giới module ──▶ S8-02 role + Store owner ──▶ S8-03 cate
 - **Dependency rule:** module A chỉ được dùng module B qua `B/index.ts`. Mọi import kiểu `../catalog/products/products.repository` từ module khác đều bị cấm. Đổi cấu trúc bên trong một module không làm vỡ module khác.
 - **Kiểm tra bằng máy, không bằng thiện chí:** quy ước chỉ ghi trong README sẽ bị vi phạm trong 2 tuần. Một rule trong CI thì không. Công cụ phổ biến: **dependency-cruiser** (rule `forbidden` với group matching `$1`), hoặc ESLint (`eslint-plugin-boundaries`, `no-restricted-imports`).
 - **NestJS module ≠ module domain:** Nest `@Module` là đơn vị DI. Module domain là ranh giới **code**. Thường một module domain có một Nest module gốc, export provider cho module khác `imports`. Provider không được export = "nội bộ".
-- **Hướng phụ thuộc:** `orders → catalog → stores → identity` (orders cần biết sản phẩm, catalog cần biết shop…). **Không có chiều ngược lại.** Khi catalog "cần biết" có đơn hàng (ví dụ không cho xóa sản phẩm đã có đơn), dùng kiểm tra ở tầng DB (FK) hoặc để orders cung cấp một hàm truy vấn, đừng để catalog import orders.
+- **Hướng phụ thuộc (bắt buộc, kiểm tra trong CI):** `orders → catalog → stores → identity`, và `orders → ledger` (S11). Orders cần biết sản phẩm, catalog cần biết shop… **Không có chiều ngược lại.** Khi module ở dưới "cần biết" điều gì đó của module ở trên (ví dụ catalog không cho xóa sản phẩm đã có trong đơn), có hai cách đúng:
+  - **Để DB bảo vệ:** FK `OrderItem.productId` với `onDelete: Restrict` → xóa sản phẩm đã có đơn thì DB từ chối (`P2003`), catalog map thành 409. Catalog không cần biết orders tồn tại. PixelMart dùng cách này (S9-01).
+  - **Dependency inversion:** catalog định nghĩa một interface (port, ví dụ `ProductUsageChecker`) cùng injection token. Orders cung cấp implementation và đăng ký provider. Code catalog chỉ phụ thuộc vào interface của chính nó.
+  - **Sai:** catalog import một hàm từ `orders/index.ts`. Dù đi qua public index, đó vẫn là phụ thuộc ngược chiều và tạo vòng (rule `no-circular` sẽ bắt).
 
 ### Hướng tiếp cận
 1. Vẽ bảng module → trách nhiệm → được phép phụ thuộc vào ai. Đưa vào ADR-0008 (Claude viết ADR theo bảng của bạn).
@@ -86,7 +89,7 @@ Rule của bạn phải **chặn** những gì và **cho phép** những gì? Li
 - `orders/x.ts` import `../catalog` (tức `catalog/index.ts`) → cho phép.
 - `orders/x.ts` import `../catalog/products/products.service` → **chặn**.
 - `catalog/a.ts` import `./products/b` (trong cùng module) → cho phép.
-- `catalog/a.ts` import `../orders` → **chặn** (sai hướng phụ thuộc), nếu bạn quyết định kiểm tra cả hướng.
+- `catalog/a.ts` import `../orders` (kể cả qua `index.ts`) → **chặn** (sai hướng phụ thuộc).
 - Import type-only (`import type`) sâu chéo module → vẫn nên **chặn** (type nội bộ cũng là chi tiết bên trong).
 - `common/` (filter, pipe, helper dùng chung) → mọi module được dùng. `common` **không** được import module domain nào.
 - File test của module A import nội bộ module B để dựng dữ liệu → cân nhắc: cho phép trong `test/` hay bắt dùng API public? Quyết định và ghi lại.
@@ -169,25 +172,31 @@ Rule hướng phụ thuộc (`orders → catalog → stores → identity`, khôn
 - **Sửa SQL migration do Prisma sinh:** `prisma migrate dev --create-only` tạo file SQL mà chưa chạy. Bạn chèn câu `UPDATE` backfill vào giữa, rồi mới chạy. Migration là code: được review như code.
 - **Enum trong Postgres:** `ALTER TYPE "Role" ADD VALUE 'SELLER'` có ràng buộc: giá trị mới **không dùng được trong cùng transaction** vừa thêm nó. Prisma chạy mỗi migration trong một transaction, nên tách "thêm giá trị enum" và "dùng giá trị đó (UPDATE/DEFAULT)" ra **hai migration**.
 - **Không dựa vào biến môi trường trong migration:** migration chạy ở CI/CD, không có `ADMIN_EMAIL`. Backfill phải tìm admin bằng dữ liệu (`role = 'ADMIN'`). Và phải xử lý trường hợp **DB trống** (môi trường test, local mới): khi đó không có store nào cần backfill.
+- **Ai vận hành shop "PixelMart"? (quyết định của v2, ghi vào ADR-0008):** admin **không** được sở hữu shop để bán hàng. Nếu admin là chủ, mọi endpoint seller (yêu cầu role `SELLER`) sẽ không dùng được cho PixelMart, và admin bị "giáng chức" nếu được promote. Cách làm:
+  - Migration tạm gán `ownerId` = admin (pha expand, chỉ để thỏa NOT NULL).
+  - **Seed** (chạy được nhiều lần, đọc `OFFICIAL_SELLER_EMAIL`/`OFFICIAL_SELLER_PASSWORD` từ env như admin seed ở PXM-24) tạo tài khoản seller chính hãng role `SELLER`, rồi chuyển `ownerId` của store PixelMart sang tài khoản đó.
+  - Từ đó PixelMart được vận hành qua `seller.<domain>` như mọi shop khác. Seed là nơi được phép đọc env, migration thì không.
 - **Một user một shop:** `ownerId` **unique**. Đây là ràng buộc nghiệp vụ được DB bảo vệ, không chỉ là `if` trong service.
 - **Commission bằng basis points:** số nguyên, tránh số thực (`1000` = 10%). Validate trong khoảng `0..10000`.
 
 ### Hướng tiếp cận
 1. Migration A: thêm `SELLER` vào enum role.
-2. Migration B (`--create-only` rồi sửa tay): thêm cột `ownerId` (nullable), `status` (enum mới, default `PENDING`), `commissionRateBps` (default theo cấu hình, ví dụ 1000), `description` → backfill store hiện có: `ownerId` = admin đầu tiên, `status = 'ACTIVE'`, `commissionRateBps = 0` → `ownerId` NOT NULL + UNIQUE.
-3. Cập nhật contracts/response liên quan (chỉ **thêm** field).
-4. Chạy migration trên Neon branch có dữ liệu production. Đếm sản phẩm/đơn trước và sau.
-5. Viết test integration xác nhận constraint unique `ownerId`.
+2. Migration B (`--create-only` rồi sửa tay): thêm cột `ownerId` (nullable), `status` (enum mới, default `PENDING`), `commissionRateBps` (default ở DB = `1000`, tức 10%. Đây là **nguồn duy nhất** của giá trị mặc định, admin đổi theo từng shop sau này), `description` → backfill store hiện có: `ownerId` = admin đầu tiên (tạm thời), `status = 'ACTIVE'`, `commissionRateBps = 0` → `ownerId` NOT NULL + UNIQUE.
+   - Vì sao contract (NOT NULL/UNIQUE/FK) được làm **ngay trong cùng migration** mà vẫn an toàn: code v1 **không bao giờ insert** `Store` (store duy nhất được tạo bởi seed). Nếu code cũ có ghi bảng này, contract phải đợi tới release sau.
+3. Seed: tạo tài khoản seller chính hãng từ env (idempotent), chuyển owner của store PixelMart sang tài khoản đó. Thêm hai biến vào `.env.example` và vào environment production.
+4. Cập nhật contracts/response liên quan (chỉ **thêm** field).
+5. Chạy migration + seed trên Neon branch có dữ liệu production. Đếm sản phẩm/đơn trước và sau.
+6. Viết test integration xác nhận constraint unique `ownerId`.
 
 ### File dự kiến tạo/sửa
-`apps/api/prisma/schema.prisma`, `apps/api/prisma/migrations/<ts>_add_seller_role/`, `apps/api/prisma/migrations/<ts>_store_owner_status/migration.sql` (sửa tay), `apps/api/prisma/seed.ts`, `packages/contracts/src/stores/store.ts`, `apps/api/test/stores-schema.e2e-spec.ts`.
+`apps/api/prisma/schema.prisma`, `apps/api/prisma/migrations/<ts>_add_seller_role/`, `apps/api/prisma/migrations/<ts>_store_owner_status/migration.sql` (sửa tay), `apps/api/prisma/seed.ts` (tài khoản seller chính hãng + chuyển owner), `apps/api/.env.example`, `packages/contracts/src/stores/store.ts`, `apps/api/test/stores-schema.e2e-spec.ts`.
 
 ### Tự nghĩ test case trước
 Migration có thể hỏng theo những cách nào trên DB thật? Liệt kê trước khi viết.
 
 <details><summary>Đáp án tham khảo</summary>
 
-- DB có dữ liệu v1 → sau migration store "PixelMart" có owner là admin, `ACTIVE`, `commissionRateBps = 0`.
+- DB có dữ liệu v1 → sau migration store "PixelMart" có owner là admin (tạm), `ACTIVE`, `commissionRateBps = 0`. Sau seed → owner là tài khoản seller chính hãng (role `SELLER`). Chạy seed lần hai → không tạo thêm tài khoản, không đổi gì.
 - DB trống (CI) → migration vẫn chạy được (không có dòng nào cần backfill).
 - DB có store nhưng **không có admin** (dữ liệu bẩn) → migration nên **fail rõ ràng** thay vì gán NULL rồi lỗi khó hiểu ở bước NOT NULL. Quyết định và ghi lại.
 - Số lượng product/order trước = sau.
@@ -250,7 +259,7 @@ Tên bảng/cột và kiểu `id` phải khớp schema thật của bạn.
 
 ### Kiểm chứng AC
 - [ ] Trên Neon branch từ production: `prisma migrate deploy` thành công. Query đếm product/order trước và sau bằng nhau (dán kết quả vào PR).
-- [ ] Store "PixelMart": owner là admin, `ACTIVE`, `commissionRateBps = 0`. Storefront vẫn hiện đủ sản phẩm.
+- [ ] Store "PixelMart": sau migration + seed, owner là tài khoản seller chính hãng, `ACTIVE`, `commissionRateBps = 0`. Đăng nhập tài khoản đó vào `seller.<domain>` được (sau S8-05). Storefront vẫn hiện đủ sản phẩm.
 - [ ] Test: tạo store thứ hai cùng `ownerId` → lỗi unique.
 
 ### Đọc thêm
@@ -264,7 +273,7 @@ Tên bảng/cột và kiểu `id` phải khớp schema thật của bạn.
 
 ### Khái niệm cần nắm
 - **Đổi quan hệ có dữ liệu:** `Category` từ "thuộc store" (unique `[storeId, slug]`) thành "toàn sàn" (unique `slug`). Khi gộp, slug của các store khác nhau có thể **trùng nhau**. Ở v2, dữ liệu chỉ có một store nên không trùng, nhưng migration phải **an toàn với trường hợp trùng** (kiểm tra và fail rõ ràng, hoặc tự đổi tên có quy tắc).
-- **Deprecate thay vì xóa:** client v1 (web/admin đã deploy) có thể còn đọc `storeId` của category. Giữ field trong response (giá trị store của sàn hoặc `null`), đánh dấu `deprecated` trong schema và OpenAPI, xóa ở `v2.0.0` (S12-05).
+- **Deprecate thay vì xóa:** client v1 (web/admin đã deploy) có thể còn đọc `storeId` của category. Giữ field trong response với **kiểu không đổi** (`string`, không thành `string | null`): luôn trả id của store PixelMart. Chỉ **cột trong DB** được phép nullable. Đổi kiểu từ `string` sang `string | null` cũng là phá vỡ API, vì client v1 không xử lý `null`. Đánh dấu `deprecated` trong schema và OpenAPI, xóa ở `v2.0.0` (S12-05).
 - **Ai được quản lý category:** chỉ admin sàn. Seller **chọn** category có sẵn cho sản phẩm (S9-01), không tạo mới.
 
 ### Hướng tiếp cận
@@ -307,7 +316,7 @@ migration:
 service:
   bỏ điều kiện storeId khi tìm/tạo slug
 contract:
-  categorySchema.storeId: string().nullable() + đánh dấu deprecated
+  categorySchema.storeId: string() (không nullable, luôn = id store PixelMart) + đánh dấu deprecated
 ```
 </details>
 
@@ -337,10 +346,13 @@ contract:
 - **Role trong JWT bị "cũ":** access token đang cầm vẫn ghi `role: CUSTOMER` cho tới khi hết hạn. Lần refresh tiếp theo phải lấy role **từ DB**, không copy role từ token cũ. Kiểm tra lại code refresh của PXM-23.
 - **Phân quyền theo ownership từ ngày đầu:** `GET /v1/seller/store` trả shop của **người đang đăng nhập**, không nhận `storeId` từ URL. Không có id thì không có IDOR.
 - **Ranh giới module:** duyệt shop thuộc module `stores`, nhưng đổi role thuộc `identity`. `stores` gọi một hàm **public** của `identity` (ví dụ `promoteToSeller(userId, tx)`), không tự update bảng User.
+- **Promote có điều kiện:** với một enum role duy nhất, "promote" một ADMIN thành SELLER là **giáng chức**. `promoteToSeller` chỉ đổi khi `role = CUSTOMER` (update có điều kiện, `count = 0` → lỗi). Và ngay từ bước nộp đơn: **ADMIN không được mở shop** (403), vì admin sàn đồng thời bán hàng là xung đột lợi ích. PixelMart dùng tài khoản seller chính hãng (S8-02).
+- **Lưu kết quả duyệt:** cần cột mới cho Store: `rejectionReason`, `reviewedAt`, `reviewedBy` (→ User). S8-02 chưa có các cột này, nên ticket này có **migration riêng**.
 
 ### Hướng tiếp cận
+0. Migration: thêm `rejectionReason` (nullable), `reviewedAt`, `reviewedBy` vào Store.
 1. Contract: `createStoreApplicationSchema` (tên, mô tả), `storeSchema` (phía seller), `adminStoreSchema`, `rejectStoreSchema` (lý do bắt buộc).
-2. `POST /v1/seller/applications`: đăng nhập bắt buộc. Đã có store `PENDING`/`ACTIVE`/`SUSPENDED` → 409. Có store `REJECTED` → cho nộp lại (cập nhật store đó về `PENDING`, hoặc tạo mới: quyết định và ghi lại). Slug sinh bằng `slugify` (PXM-29).
+2. `POST /v1/seller/applications`: đăng nhập bắt buộc, role `ADMIN` → 403. Đã có store `PENDING`/`ACTIVE`/`SUSPENDED` → 409. Có store `REJECTED` → cho nộp lại (cập nhật store đó về `PENDING`, hoặc tạo mới: quyết định và ghi lại). Slug sinh bằng `slugify` (PXM-29).
 3. `GET /v1/seller/store`: shop của mình + trạng thái + lý do từ chối.
 4. Admin: list theo trạng thái, approve, reject (xem pseudo-code).
 5. `identity` export hàm đổi role nhận transaction client từ nơi gọi.
@@ -348,7 +360,7 @@ contract:
 7. Test: ma trận phân quyền, 409, đồng thời.
 
 ### File dự kiến tạo/sửa
-`packages/contracts/src/stores/*.ts`, `apps/api/src/stores/{stores.module.ts,index.ts,seller-store.controller.ts,admin-stores.controller.ts,store-applications.service.ts}`, `apps/api/src/identity/{index.ts,users.service.ts}`, `apps/api/test/store-applications.e2e-spec.ts`.
+`apps/api/prisma/schema.prisma` + migration (cột duyệt), `packages/contracts/src/stores/*.ts`, `apps/api/src/stores/{stores.module.ts,index.ts,seller-store.controller.ts,admin-stores.controller.ts,store-applications.service.ts}`, `apps/api/src/identity/{index.ts,users.service.ts}`, `apps/api/test/store-applications.e2e-spec.ts`.
 
 ### Tự nghĩ test case trước
 Ít nhất 10 case, gồm phân quyền, trạng thái và đồng thời.
@@ -361,7 +373,8 @@ contract:
 4. Admin duyệt → store `ACTIVE`, user `SELLER` (kiểm tra cả hai trong DB).
 5. Duyệt store đã `ACTIVE` → 409. Từ chối store `ACTIVE` → 409.
 6. Hai admin duyệt cùng lúc (`Promise.all`) → một 200, một 409.
-7. Giả lập lỗi ở bước đổi role (ví dụ user bị xóa) → store **vẫn** `PENDING` (rollback).
+7. Làm bước đổi role thất bại (trong test: stub `promoteToSeller` cho nó throw, hoặc dựng sẵn chủ đơn có role `ADMIN` để điều kiện `role = CUSTOMER` không khớp) → store **vẫn** `PENDING` (rollback).
+7b. Tài khoản ADMIN nộp đơn mở shop → 403.
 8. Sau duyệt: gọi `/v1/auth/refresh` → access token mới có `role: SELLER`.
 9. Từ chối không có lý do → 400. Từ chối có lý do → `REJECTED`, seller thấy lý do qua `GET /v1/seller/store`.
 10. Bị từ chối rồi nộp lại → được (theo quyết định của bạn).
@@ -391,9 +404,13 @@ approveStore(storeId, adminId):
     if n == 0:
       store = tx.store.find(storeId)
       throw store ? Conflict("Shop không ở trạng thái chờ duyệt") : NotFound
-    ownerId = tx.store.find(storeId).ownerId
-    identity.promoteToSeller(ownerId, tx)      // ném lỗi → rollback cả store
+    store = tx.store.find(storeId)              // đọc lại sau khi đã cập nhật
+    identity.promoteToSeller(store.ownerId, tx) // chỉ CUSTOMER → SELLER; không khớp thì ném lỗi → rollback cả store
   return toAdminStoreResponse(store)
+
+promoteToSeller(userId, tx):                   // trong identity
+  n = tx.user.updateMany(where { id: userId, role: CUSTOMER }, data { role: SELLER }).count
+  if n == 0: throw Conflict("Tài khoản không thể trở thành seller")
 
 applyForStore(userId, input):
   existing = store theo ownerId = userId
@@ -417,6 +434,7 @@ applyForStore(userId, input):
 - [ ] Test: duyệt shop không `PENDING` → 409. Test đồng thời: đúng một thành công.
 - [ ] Test: sau duyệt, refresh → token có `role: SELLER`.
 - [ ] Test ma trận 401/403 cho endpoint admin.
+- [ ] Test: khách B gọi `GET /v1/seller/store` chỉ thấy shop/đơn của chính B (không có endpoint nào nhận id đơn của người khác). ADMIN nộp đơn → 403.
 
 ### Đọc thêm
 - OWASP API Security, API1 BOLA và API5 Broken Function Level Authorization: https://owasp.org/API-Security/editions/2023/en/0x11-t10/
@@ -449,7 +467,8 @@ applyForStore(userId, input):
 - Khách đăng nhập, chưa có shop → `/apply`. Nộp đơn → `/status` "Đang chờ duyệt".
 - Shop bị từ chối → `/status` hiển thị lý do + nút nộp lại.
 - Admin duyệt → seller reload (sau refresh token) → vào dashboard.
-- Admin (không có shop) mở seller app → `/apply` hoặc trang "không áp dụng" (quyết định).
+- Admin mở seller app → trang "Tài khoản quản trị không thể mở shop" (S8-04 trả 403 cho admin).
+- Shop vừa được duyệt nhưng token vẫn mang role `CUSTOMER` → guard tự gọi refresh rồi vào dashboard (không kẹt ở 403).
 - Reload `/products` trên `seller.<domain>` → không 404.
 - Cookie đăng nhập dùng chung giữa `shop.`, `admin.`, `seller.`: đăng nhập ở shop rồi mở seller → đã đăng nhập.
 </details>
@@ -474,6 +493,8 @@ _authed.beforeLoad({ context, location }):
   me = ensure(meQuery)                        // 401 → redirect /login?redirect=location.href
   store = ensure(myStoreQuery)                // 404 → redirect /apply
   if store.status in [PENDING, REJECTED]: redirect /status
+  if store.status == ACTIVE and me.role != SELLER:      // vừa được duyệt, token còn role cũ
+    await refreshSession(); invalidate(meQuery); me = ensure(meQuery)
   return { me, store }                        // ACTIVE | SUSPENDED → vào app
 ```
 </details>
@@ -530,7 +551,7 @@ Mở lại code PXM-40 và PXM-31 của bạn. Ticket này gần như là ghép 
 
 <details><summary>Hint 2: khái niệm/API</summary>
 
-`onError` của mutation: `ApiError.status === 409` → toast + `invalidateQueries(['admin', 'stores'])`.
+`onError` của mutation: `ApiError.status === 409` → toast + `queryClient.invalidateQueries({ queryKey: ['admin', 'stores'] })` (TanStack Query v5 nhận object).
 </details>
 
 <details><summary>Hint 3: khung</summary>

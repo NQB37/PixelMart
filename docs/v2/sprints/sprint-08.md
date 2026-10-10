@@ -31,11 +31,12 @@
 
 - Thêm `SELLER` vào enum role.
 - `Store` thêm `ownerId` (→ User, unique: một user sở hữu tối đa một shop), `status` (`PENDING | ACTIVE | SUSPENDED | REJECTED`), `commissionRateBps`, `description`.
-- Migration expand/contract: thêm cột nullable → backfill store "PixelMart" thuộc tài khoản admin seed, `status = ACTIVE`, `commissionRateBps = 0` → đặt `ownerId` NOT NULL.
+- Migration expand/contract: thêm cột nullable → backfill store "PixelMart" (owner tạm là admin), `status = ACTIVE`, `commissionRateBps = 0` → đặt `ownerId` NOT NULL.
+- Seed tạo **tài khoản seller chính hãng** (email/mật khẩu từ env, idempotent) và chuyển quyền sở hữu store "PixelMart" sang tài khoản đó. Admin không sở hữu shop (ADR-0008).
 
 **AC**
 - [ ] Migration chạy được trên một bản sao DB có dữ liệu v1 (Neon branch), không mất sản phẩm/đơn nào
-- [ ] Sau migration: store "PixelMart" `ACTIVE`, chủ sở hữu là admin, mọi sản phẩm v1 vẫn hiển thị trên shop
+- [ ] Sau migration + seed: store "PixelMart" `ACTIVE`, chủ sở hữu là tài khoản seller chính hãng (role `SELLER`), mọi sản phẩm v1 vẫn hiển thị trên shop
 - [ ] Không thể tạo hai Store cùng `ownerId` (constraint của DB)
 
 ### S8-03 · Category toàn sàn
@@ -58,12 +59,14 @@
 - `GET /v1/seller/store`: xem shop của mình và trạng thái duyệt.
 - Admin: `GET /v1/admin/stores?status=`, `PATCH /v1/admin/stores/:id/approve`, `PATCH /v1/admin/stores/:id/reject` (kèm lý do).
 - Duyệt: Store `PENDING → ACTIVE` **và** user `CUSTOMER → SELLER` trong cùng một transaction. Từ chối: `PENDING → REJECTED`, user được nộp lại.
+- Lưu kết quả duyệt: `rejectionReason`, `reviewedAt`, `reviewedBy` (migration riêng). Tài khoản `ADMIN` không được mở shop.
 
 **AC**
 - [ ] Đã có shop `PENDING`/`ACTIVE` mà nộp đơn lần nữa → 409
 - [ ] Duyệt shop không ở trạng thái `PENDING` → 409. Hai admin duyệt cùng lúc → đúng một thành công
 - [ ] Sau khi duyệt, đăng nhập lại → access token có role `SELLER`
 - [ ] Endpoint admin: 401/403 được test. Khách không xem được đơn đăng ký của người khác
+- [ ] Tài khoản `ADMIN` nộp đơn → 403. Duyệt chỉ đổi role khi chủ đơn đang là `CUSTOMER`
 
 **Ngoài phạm vi:** upload giấy tờ, xác minh danh tính, email thông báo (v5).
 

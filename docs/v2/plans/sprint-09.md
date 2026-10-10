@@ -54,13 +54,13 @@ S9-01 seller product API ──▶ S9-03 public catalog ──▶ S9-04 trang sh
 - **Scoping thay vì kiểm tra sau:** cách an toàn nhất là **mọi truy vấn của seller đều kèm điều kiện `storeId = <shop của người đang đăng nhập>`** ngay trong `where`. Không có nhánh "lấy ra rồi mới kiểm tra quyền". Không tìm thấy → 404 (giống PXM-39: không lộ sự tồn tại).
 - **Lấy `storeId` từ đâu:** từ user đang đăng nhập (một lần tra DB, hoặc đưa `storeId` vào context của request qua guard). **Không bao giờ** từ body/query/URL. Body có `storeId` → schema strip nó đi (mass assignment).
 - **Một chỗ duy nhất định nghĩa "shop của tôi":** một guard/decorator (ví dụ `@CurrentStore()`) resolve shop của seller, kiểm tra shop `ACTIVE` khi ghi, và gắn vào request. Controller seller nào cũng dùng nó → không ai quên.
-- **Trạng thái sản phẩm + tồn kho:** `status` (`DRAFT | ACTIVE | ARCHIVED`) và `stock` (int ≥ 0). Xóa sản phẩm đã từng nằm trong đơn: v1 dùng `SetNull` trên `OrderItem.productId`, nên xóa cứng vẫn giữ được snapshot. Nhưng seller sẽ mất lịch sử bán. Chọn: cấm xóa cứng khi đã có đơn, chuyển sang `ARCHIVED`. Ghi lại quyết định.
-- **Endpoint admin cũ:** `/v1/admin/products` của v1 vẫn dùng cho admin, nay xem được mọi shop. Hai controller dùng chung service, khác nhau ở **scope** được truyền vào.
+- **Trạng thái sản phẩm + tồn kho:** `status` (`DRAFT | ACTIVE | ARCHIVED`) và `stock` (int ≥ 0). Xóa sản phẩm đã từng nằm trong đơn: v1 dùng `SetNull` trên `OrderItem.productId`, nên xóa cứng vẫn giữ được snapshot, nhưng seller mất lịch sử bán. v2 chọn: **đổi FK sang `onDelete: Restrict`** (migration). Xóa sản phẩm đã có đơn → DB từ chối (`P2003`) → 409 "hãy ngừng bán (ARCHIVED)". Nhờ vậy catalog **không cần hỏi module orders** (giữ đúng chiều phụ thuộc của S8-01), và không có race giữa "đếm đơn" và "xóa".
+- **Endpoint admin cũ:** `/v1/admin/products` của v1 vẫn dùng cho admin, nay xem được mọi shop. Hai controller dùng chung service, khác nhau ở **scope** được truyền vào. Contract admin **phải thêm `status` và `stock`** (form admin cập nhật ở S9-02). Nếu không, sản phẩm admin tạo sau S9 sẽ mặc định `DRAFT`, `stock = 0`, tức là ẩn và không mua được.
 
 ### Hướng tiếp cận
 1. Viết test ma trận (xem đáp án tham khảo) cho 5 endpoint × 5 vai trò.
 2. Migration: `Product.stock` (int, default 0, `CHECK stock >= 0`), `Product.status` (enum, default `DRAFT`). Sản phẩm v1 hiện có → backfill `ACTIVE` và một giá trị `stock` hợp lý (ví dụ 100, ghi trong mô tả PR).
-3. Guard/decorator `CurrentStore`: từ `req.user.id` → store của user. Không có store → 403. Với method ghi: store phải `ACTIVE`, nếu không → 403 kèm lý do (`STORE_SUSPENDED`, `STORE_PENDING`).
+3. Guard/decorator `CurrentStore`: từ `req.user.id` → store của user. Không có store → 403. Với method ghi: store phải `ACTIVE`, nếu không → 403 kèm lý do `STORE_SUSPENDED`. (Shop `PENDING`/`REJECTED` không tới được bước này: chủ shop khi đó vẫn là `CUSTOMER` và bị chặn ở bước kiểm tra role.)
 4. `SellerProductsController` + service nhận `scope = { storeId }`. Mọi `findFirst/updateMany/deleteMany` có `storeId` trong `where`.
 5. Contract: `sellerProductSchema` (có `stock`, `status`), create/update schema **không có** `storeId`.
 6. Xóa: đã có `OrderItem` tham chiếu → 409 kèm gợi ý "hãy ngừng bán (ARCHIVED)".
@@ -99,7 +99,7 @@ Viết test ma trận bằng `it.each` trên bảng ở trên. Chạy, thấy đ
 
 - `createParamDecorator` để lấy store đã resolve từ request. Guard chạy trước, gắn `req.store`.
 - `updateMany({ where: { id, storeId }, data })` → `count === 0` → 404. Dùng `findFirst({ where: { id, storeId } })` cho get.
-- Lỗi FK khi xóa product đã có `OrderItem`: với `SetNull` thì DB **không** chặn. Bạn phải tự kiểm tra (`orderItem.count({ where: { productId } })`). Kiểm tra này đi qua public API của module `orders`, không import sâu (S8-01).
+- Đổi FK `OrderItem.productId` sang `onDelete: Restrict` (migration). Khi xóa, bắt `P2003` → 409. **Đừng** gọi sang module `orders` để đếm đơn: đó là phụ thuộc ngược chiều (catalog → orders) tạo vòng với orders → catalog.
 - `CHECK` constraint trong Postgres thêm bằng SQL trong migration (`--create-only`).
 </details>
 
@@ -157,6 +157,7 @@ SellerProductsService.update(scope, productId, input):
 1. Liệt kê những gì giống hệt bảng/form sản phẩm của admin. Quyết định tách gì vào `packages/ui` (nếu đã tạo ở S8-05).
 2. `features/products` trong seller app: query list (key gồm `status`, `page`), mutation tạo/sửa/đổi trạng thái.
 3. Form: category lấy từ `GET /v1/categories` (toàn sàn), giá dùng `parseMoneyInput`, `stock` là số nguyên.
+3b. Form sản phẩm của **admin** (PXM-32) thêm `status` và `stock`. Nếu đã tách `ProductForm` dùng chung thì cả hai app nhận field mới cùng lúc.
 4. Nhãn "Hết hàng" khi `stock === 0`, nhãn trạng thái.
 
 ### File dự kiến tạo/sửa
@@ -213,6 +214,8 @@ admin:  onSubmit → api.admin.createProduct / updateProduct
 
 ### Khái niệm cần nắm
 - **Một định nghĩa "được hiển thị công khai":** `product.status = ACTIVE AND store.status = ACTIVE`. Đặt điều kiện này **ở một chỗ** (một hàm tạo `where` trong service public), dùng cho list, chi tiết, `?ids=` của giỏ hàng, trang shop. Mỗi chỗ tự viết lại sẽ có chỗ quên.
+- **Checkout v1 cũng phải dùng định nghĩa này:** từ v1.2.0 (sprint này) tới v1.3.0 (S10), production vẫn chạy checkout của PXM-37. Nếu không sửa, khách gọi thẳng API vẫn mua được sản phẩm `DRAFT`/`ARCHIVED` hoặc của shop `SUSPENDED`. S9-03 sửa checkout hiện tại: sản phẩm không thỏa `publicVisibility()` → 422. **Tồn kho** thì chưa được trừ cho tới S10-03: đây là khoảng trống được chấp nhận trong một sprint và đã ghi ở file sprint.
+- **Endpoint trang shop thuộc module nào?** `GET /v1/shops/:slug` trả shop **kèm sản phẩm**. Đặt nó ở module `catalog` (catalog → stores là đúng chiều). Nếu đặt ở `stores` thì stores phải import catalog, tức là ngược chiều.
 - **Không lộ dữ liệu kinh doanh:** `stock` chính xác là thông tin nhạy cảm với seller (đối thủ theo dõi được tốc độ bán). Public chỉ trả `inStock: boolean`. Không trả `commissionRateBps`, `ownerId` (OWASP API3).
 - **`?ids=` cho giỏ hàng:** sản phẩm vừa bị ngừng bán hoặc shop vừa bị khóa → không có trong kết quả → giỏ hàng tự loại bỏ (logic PXM-36 vẫn đúng).
 - **Trang shop:** `GET /v1/shops/:slug` trả thông tin shop + trang đầu sản phẩm, hoặc tách hai endpoint (`/v1/shops/:slug` và `/v1/products?shop=`). Chọn một và giữ nhất quán.
@@ -225,7 +228,7 @@ admin:  onSubmit → api.admin.createProduct / updateProduct
 5. Test cho bảng hiển thị ở mục 1.
 
 ### File dự kiến tạo/sửa
-`apps/api/src/catalog/{products.service.ts,products.controller.ts,public-visibility.ts}`, `apps/api/src/stores/shops.controller.ts`, `packages/contracts/src/catalog/public-product.ts`, `packages/contracts/src/stores/public-shop.ts`, `apps/api/test/public-catalog-multishop.e2e-spec.ts`.
+`apps/api/src/catalog/{products.service.ts,products.controller.ts,public-visibility.ts}`, `apps/api/src/catalog/shops.controller.ts`, `apps/api/src/orders/orders.service.ts` (checkout v1 dùng `publicVisibility`), `packages/contracts/src/catalog/public-product.ts`, `packages/contracts/src/stores/public-shop.ts`, `apps/api/test/public-catalog-multishop.e2e-spec.ts`.
 
 ### Tự nghĩ test case trước
 <details><summary>Đáp án tham khảo</summary>
@@ -234,6 +237,7 @@ admin:  onSubmit → api.admin.createProduct / updateProduct
 - `?ids=` chứa sản phẩm của shop bị khóa → không có trong kết quả.
 - `GET /v1/shops/<slug của shop PENDING>` → 404.
 - Response public không có key `stock`, `commissionRateBps`, `ownerId` (assert bằng `not.toHaveProperty`).
+- Checkout hiện tại (PXM-37) với sản phẩm `DRAFT` hoặc của shop `SUSPENDED` → 422, không tạo đơn.
 - `stock = 0` → `inStock: false`, sản phẩm **vẫn hiển thị** (để khách thấy "Hết hàng").
 - `?shop=<slug>` → chỉ sản phẩm của shop đó.
 </details>
@@ -285,7 +289,7 @@ listPublic(filters) → findMany(where { ...publicVisibility(), ...filters }, se
 ### Khái niệm cần nắm
 - **Lặp lại pattern SSR + phân trang của PXM-34**, áp cho `/shops/[slug]`.
 - **Trạng thái "hết hàng" ở UI:** khách vẫn xem được sản phẩm, nhưng nút "Thêm vào giỏ" bị vô hiệu. Đây chỉ là UX: tồn kho thật được kiểm tra lúc checkout (S10-03), vì giữa lúc xem và lúc mua có thể có người khác mua mất.
-- **Cache và trạng thái shop:** trang chi tiết dùng ISR 60 giây (PXM-35). Shop vừa bị khóa có thể còn hiển thị tối đa 60 giây trên trang đã cache. Chấp nhận được không? Checkout vẫn chặn (S10-02), nên là chấp nhận được. Ghi lại.
+- **Cache và trạng thái shop:** trang chi tiết dùng ISR 60 giây (PXM-35). Shop vừa bị khóa có thể còn hiển thị tối đa 60 giây trên trang đã cache. Chấp nhận được không? Checkout từ chối sản phẩm không còn hiển thị công khai (từ S9-03), nên là chấp nhận được. Ghi lại.
 
 ### Hướng tiếp cận
 1. `/shops/[slug]/page.tsx`: header shop + `ProductGrid` (dùng lại) + phân trang. `notFound()` khi 404.
@@ -319,7 +323,8 @@ Copy cấu trúc trang category của PXM-34 rồi đổi nguồn dữ liệu. P
 
 ```
 ShopPage({ params, searchParams }):
-  shop = await api.getShop(slug) ?? notFound()
+  { slug } = await params                    // params là Promise ở Next.js 15+/16
+  shop = await getShopOrNull(slug) ?? notFound()   // hàm này phải trả null khi API 404, không throw
   products = await api.listProducts({ shop: slug, page })
   <ShopHeader shop/> <ProductGrid items/> <Pagination/>
 ```
@@ -328,8 +333,8 @@ ShopPage({ params, searchParams }):
 ### Bẫy thường gặp
 | Triệu chứng | Nguyên nhân | Cách tránh |
 |---|---|---|
-| Nút "Hết hàng" bị bypass bằng DevTools rồi đặt được hàng | Tin UI | Checkout kiểm tra tồn kho (S10-03) |
-| Trang shop bị khóa vẫn hiện | ISR cache | Chấp nhận có thời hạn, checkout chặn. Ghi lại quyết định |
+| Nút "Hết hàng" bị bypass bằng DevTools rồi đặt được hàng | Tin UI | Checkout kiểm tra tồn kho từ S10-03. Trong sprint này đây là khoảng trống đã được chấp nhận |
+| Trang shop bị khóa vẫn hiện | ISR cache | Chấp nhận có thời hạn, checkout chặn (S9-03). Ghi lại quyết định |
 
 ### Kiểm chứng AC
 - [ ] View source `/shops/[slug]` có HTML sản phẩm.
@@ -387,14 +392,16 @@ STORE_TRANSITIONS = { PENDING: [ACTIVE, REJECTED], REJECTED: [PENDING], ACTIVE: 
 transition(storeId, from, to, audit):
   assert to in STORE_TRANSITIONS[from]
   n = updateMany(where { id: storeId, status: from }, data { status: to, ...audit }).count
-  if n == 0: store ? throw 409 : throw 404
+  if n == 0:
+    store = findStore(storeId)
+    throw store ? Conflict : NotFound
 ```
 </details>
 
 ### Bẫy thường gặp
 | Triệu chứng | Nguyên nhân | Cách tránh |
 |---|---|---|
-| Khóa shop xong sản phẩm vẫn mua được | Checkout không kiểm tra trạng thái shop | S10-02 kiểm tra `store.status` lúc đặt hàng |
+| Khóa shop xong sản phẩm vẫn mua được | Checkout không kiểm tra trạng thái shop | Checkout dùng `publicVisibility()` (S9-03, và S10-02 giữ nguyên quy tắc này) |
 | Mở khóa làm sản phẩm `DRAFT` hiện ra | Khóa bằng cách đổi status từng sản phẩm, mở khóa thì set lại `ACTIVE` hàng loạt | Không đụng tới sản phẩm, chỉ đổi trạng thái shop |
 | Không biết ai khóa shop | Không lưu audit | Trường audit hoặc bảng lịch sử |
 

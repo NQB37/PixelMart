@@ -25,10 +25,10 @@ flowchart LR
   CART["Giỏ: 2 sp shop A, 1 sp shop B"] -->|"POST /v1/orders + Idempotency-Key"| TX
   subgraph TX["Một transaction DB"]
     direction TB
-    V["Kiểm tra: shop ACTIVE, sp ACTIVE, giá từ DB"] --> K["Trừ kho có điều kiện<br/>(theo thứ tự productId)"]
-    K --> O["Order (tổng = Σ subtotal + Σ ship)"]
+    V["Đọc trong tx: shop ACTIVE, sp ACTIVE, giá từ DB"] --> O["Bước 1: insert Order (unique userId+key)<br/>tổng = Σ subtotal + Σ ship"]
     O --> VA["VendorOrder A<br/>subtotal · ship · commission · sellerNet"]
     O --> VB["VendorOrder B<br/>subtotal · ship · commission · sellerNet"]
+    O --> K["Bước 2: trừ kho có điều kiện<br/>(theo thứ tự productId)"]
   end
   TX -->|"commit"| PAY["PaymentProvider.charge(Order.total) một lần"]
 ```
@@ -61,13 +61,17 @@ S10-01 schema + migration ──▶ S10-02 checkout tách đơn ──▶ S10-03
 - **Lưu số đã tính hay tính lại?** `sellerNet = subtotal + ship − commission` có thể tính lại từ các cột khác. Lưu luôn thì ledger (S11) và báo cáo đọc trực tiếp, nhưng phải đảm bảo nhất quán (một `CHECK` constraint hoặc test). Quyết định và ghi lại.
 - **Migration dữ liệu đơn hàng thật:** mỗi Order v1 → một VendorOrder thuộc shop "PixelMart", `commission = 0`, `shippingFee = 0`, trạng thái lấy từ Order cũ, các `OrderItem` chuyển sang trỏ VendorOrder. Đây là migration **có rủi ro mất dữ liệu nếu viết sai**: phải có script đối soát trước/sau.
 - **API chỉ thêm, không bớt:** response `GET /v1/orders/:id` giữ mọi field cũ (`items`, `status`, `totalMinor`) và **thêm** `vendorOrders[]`. Field cũ có thể được đánh dấu deprecated (xóa ở S12-05).
+- **Hai schema VendorOrder ngay từ đầu:** `customerVendorOrderSchema` (shop, items, ship, status) cho khách, **không có** `commissionRateBps`, `commissionMinor`, `sellerNetMinor` (OWASP API3). Các field kế toán chỉ có trong schema của seller/admin. Định nghĩa ngay ở S10-01, vì đây là lúc `vendorOrders[]` bắt đầu xuất hiện trong response của khách.
+- **Admin confirm của v1 (PXM-40) không được lệch:** từ sprint này, trạng thái nằm ở VendorOrder. Endpoint `PATCH /v1/admin/orders/:id/confirm` phải cập nhật **cả** Order và VendorOrder duy nhất của nó (đơn v1, hoặc đơn chỉ có một shop) trong cùng transaction, cho tới khi S11-01 thay thế luồng này.
 
 ### Hướng tiếp cận
 1. Vẽ lại ER của orders sau thay đổi (VendorOrder nằm giữa Order và OrderItem).
 2. Viết **script đối soát** trước: đếm Order, OrderItem, tổng `totalMinor`, tổng `Σ unitPrice × qty`. Chạy trên Neon branch, lưu kết quả.
 3. Migration (`--create-only` rồi sửa tay): tạo bảng `VendorOrder` → mỗi Order tạo một VendorOrder (store PixelMart) → thêm `vendorOrderId` vào `OrderItem` (nullable) → backfill → NOT NULL → (pha sau) bỏ `orderId` trực tiếp của OrderItem hoặc giữ làm cột phụ: quyết định.
 4. Chạy migration trên Neon branch, chạy lại script đối soát, so sánh.
-5. Cập nhật service đọc đơn: response có thêm `vendorOrders`. Field `status` của Order: tạm thời lấy từ VendorOrder duy nhất (đơn v1), trạng thái tổng hợp làm ở S11-01.
+5. Cập nhật service đọc đơn: response có thêm `vendorOrders` theo `customerVendorOrderSchema` (không có field kế toán). Viết test `not.toHaveProperty('commissionMinor')`.
+6. Sửa admin confirm (PXM-40): cập nhật trạng thái Order và VendorOrder trong cùng transaction.
+7. Ghi chú: Field `status` của Order: tạm thời lấy từ VendorOrder duy nhất (đơn v1), trạng thái tổng hợp làm ở S11-01.
 
 ### File dự kiến tạo/sửa
 `apps/api/prisma/schema.prisma`, `apps/api/prisma/migrations/<ts>_vendor_orders/migration.sql`, `apps/api/scripts/reconcile-orders.ts` (hoặc `.sql`), `packages/contracts/src/orders/order.ts`, `apps/api/src/orders/orders.service.ts`, `apps/api/test/orders-read.e2e-spec.ts`.
@@ -107,9 +111,9 @@ ALTER TABLE "OrderItem" ADD COLUMN "vendorOrderId" TEXT;
 
 -- 2) BACKFILL: mỗi Order v1 → 1 VendorOrder của shop PixelMart
 INSERT INTO "VendorOrder" ("id", "orderId", "storeId", "status", "subtotalMinor", "shippingFeeMinor",
-                           "commissionRateBps", "commissionMinor", "sellerNetMinor", "createdAt")
+                           "commissionRateBps", "commissionMinor", "sellerNetMinor", "createdAt", "updatedAt")
 SELECT gen_random_uuid(), o."id", (SELECT "id" FROM "Store" WHERE "slug" = 'pixelmart'),
-       o."status"::text::"VendorOrderStatus", o."totalMinor", 0, 0, 0, o."totalMinor", o."createdAt"
+       o."status"::text::"VendorOrderStatus", o."totalMinor", 0, 0, 0, o."totalMinor", o."createdAt", now()
 FROM "Order" o;
 
 UPDATE "OrderItem" oi SET "vendorOrderId" = vo."id"
@@ -121,7 +125,7 @@ FROM "VendorOrder" vo WHERE vo."orderId" = oi."orderId";
 ALTER TABLE "OrderItem" ALTER COLUMN "vendorOrderId" SET NOT NULL;
 -- (tự viết) FK, index, CHECK
 ```
-Tên bảng/cột, slug store, cách ép kiểu enum phải khớp schema thật của bạn.
+Tên bảng/cột, slug store, cách ép kiểu enum phải khớp schema thật của bạn. Cột `@updatedAt` của Prisma là NOT NULL nhưng **không có default ở DB** (Prisma tự điền khi ghi qua client), nên `INSERT … SELECT` phải tự đặt giá trị cho nó.
 </details>
 
 ### Bẫy thường gặp
@@ -149,7 +153,7 @@ Tên bảng/cột, slug store, cách ép kiểu enum phải khớp schema thật
 ### Khái niệm cần nắm
 - **Contract request không đổi:** khách vẫn gửi `[{ productId, quantity }]` + `Idempotency-Key` như v1. Việc nhóm theo shop là chuyện **bên trong** server. Client v1 vẫn đặt được hàng.
 - **Quy tắc làm tròn là quyết định kinh doanh:** `commission = floor(subtotal × rateBps / 10000)`. Phần lẻ thuộc seller. Viết nó ở **một hàm thuần**, có bảng test, và ghi trong ADR. Tính bằng số nguyên (nhân trước, chia sau). Không bao giờ dùng `rateBps / 10000` ra số thực rồi nhân.
-- **Invariant tiền:** `Σ sellerNet + Σ commission = Order.total`. Nếu invariant này đúng ở **mọi** đơn thì ledger ở S11 sẽ cân bằng. Kiểm tra trong code (assert trước khi ghi) **và** trong test (property-based hoặc ngẫu nhiên nhiều đơn).
+- **Invariant tiền:** `Σ sellerNet + Σ commission = Order.total`. Nếu invariant này đúng ở **mọi** đơn thì ledger ở S11 sẽ cân bằng. Lưu ý: nếu bạn **định nghĩa** `sellerNet = subtotal + ship − commission` và `total = Σ (subtotal + ship)` trong cùng một hàm, invariant đúng theo định nghĩa và test trên hàm đó không chứng minh được gì. Test có giá trị khi so sánh **các giá trị đã lưu trong DB** (đọc lại sau khi tạo đơn) và khi `total` được tính từ một nguồn độc lập (ví dụ `Σ unitPrice × qty` của OrderItem + `Σ ship`). Kiểm tra trong code (assert trước khi ghi) **và** trong test.
 - **Một lần thanh toán:** khách trả **một** khoản `Order.total`. Việc chia tiền cho seller là kế toán nội bộ (ledger), không phải nhiều lần charge.
 - **Kiểm tra nghiệp vụ trước khi ghi:** shop `ACTIVE`, sản phẩm `ACTIVE`, giá lấy từ DB. Sai → 422 kèm **danh sách** sản phẩm lỗi (để UI hiển thị đúng sản phẩm, S10-04).
 - **Ranh giới module:** `orders` cần đọc sản phẩm (catalog) và shop (stores) qua public API. Đừng để `orders` query thẳng bảng của module khác bằng Prisma: hãy để `catalog` cung cấp `getProductsForCheckout(ids)` trả đúng dữ liệu cần thiết. (Cân nhắc: transaction xuyên module cần truyền `tx`, như S8-04.)
@@ -182,7 +186,7 @@ Checkout:
 5. Sản phẩm `DRAFT`/`ARCHIVED` → 422.
 6. Client gửi kèm `commissionMinor`, `shippingFeeMinor` → bị bỏ qua.
 7. Cùng `Idempotency-Key` gửi tuần tự và đồng thời → cùng Order, không nhân đôi VendorOrder.
-8. Invariant trên 200 giỏ ngẫu nhiên: `Σ sellerNet + Σ commission = total`, `total = Σ subtotal + Σ ship`.
+8. Invariant trên 200 giỏ ngẫu nhiên, **đọc lại từ DB** sau khi tạo: `Σ sellerNet + Σ commission = Order.total` và `Order.total = Σ (unitPrice × qty) của OrderItem + Σ ship`.
 9. `PaymentProvider.charge` được gọi **một lần** với `Order.total`.
 10. Seller mua hàng của chính shop mình: cho phép hay không? Quyết định (thường là cho phép hoặc chặn để tránh gian lận đánh giá), viết test theo quyết định.
 </details>
@@ -222,8 +226,12 @@ splitCart(lines, catalogInfo, shippingFee):
 
 createOrder(userId, key, lines):
   existing? → trả lại (như PXM-37)
-  plan = splitCart(lines, catalog.getProductsForCheckout(ids), config.shippingFee)
-  transaction(tx → tạo Order(total) + vendorOrders (nested create items))   // + trừ kho ở S10-03
+  transaction(tx →
+    info = catalog.getProductsForCheckout(ids, tx)     // đọc trong tx: shop/sản phẩm vừa bị khóa cũng bị bắt
+    plan = splitCart(lines, info, config.shippingFee)
+    tạo Order(total) + vendorOrders (nested create items)   // Order mang unique (userId, key) → tạo TRƯỚC
+    // + trừ kho ở S10-03, SAU khi đã insert Order
+  )
   bắt unique (userId, key) → trả order đã có
   payment.charge(order.id, plan.total)
 ```
@@ -242,7 +250,7 @@ createOrder(userId, key, lines):
 ### Kiểm chứng AC
 - [ ] Test: giỏ 3 sản phẩm của 2 shop → 1 Order, 2 VendorOrder, số liệu đúng.
 - [ ] Test: đổi `commissionRateBps` sau khi đặt → hoa hồng đơn cũ không đổi.
-- [ ] Unit test làm tròn: (999, 1000) → 99.
+- [ ] Unit test làm tròn: (999, 1000) → 99, và integration test cùng ví dụ: `sellerNet = 999 − 99 + ship = 900 + ship`.
 - [ ] Test invariant trên nhiều giỏ ngẫu nhiên.
 - [ ] Test idempotency của v1 vẫn xanh (tuần tự và đồng thời).
 - [ ] `/security-review` trên PR.
@@ -261,14 +269,16 @@ createOrder(userId, key, lines):
 - **Update có điều kiện là atomic:** `UPDATE product SET stock = stock - :qty WHERE id = :id AND stock >= :qty`. Ở READ COMMITTED, khi hai transaction cùng nhắm một dòng, transaction thứ hai **chờ** khóa dòng, rồi **đánh giá lại điều kiện `WHERE`** trên phiên bản mới nhất. Nó thấy `stock = 0`, điều kiện sai, 0 dòng bị ảnh hưởng. Không cần `SERIALIZABLE`, không cần `SELECT … FOR UPDATE`.
 - **Tất cả hoặc không có gì:** đơn có 3 item, item thứ 3 thiếu hàng → item 1, 2 đã trừ phải được hoàn lại. Đặt toàn bộ việc trừ kho **trong cùng transaction** với việc tạo Order, và **throw** khi một item thất bại để rollback. (Ngược với bài học PXM-23: ở đây rollback là điều ta muốn.)
 - **Deadlock:** khách X mua (A, B), khách Y mua (B, A) cùng lúc. X khóa A rồi chờ B, Y khóa B rồi chờ A. Postgres phát hiện deadlock và hủy một transaction. Phòng tránh bằng cách **luôn cập nhật theo một thứ tự cố định** (ví dụ sắp xếp theo `productId`). Vẫn nên xử lý lỗi deadlock bằng cách trả lỗi có thể retry.
-- **Idempotency và tồn kho:** gửi lại cùng `Idempotency-Key` phải trả order cũ **trước khi** trừ kho, nếu không sẽ trừ hai lần.
+- **Idempotency và tồn kho: thứ tự trong transaction quyết định kết quả.**
+  - Request lặp lại **tuần tự**: bước kiểm tra `existing` ở đầu trả order cũ, không trừ kho.
+  - Hai request **đồng thời** cùng key, `stock = 1`: cả hai qua được bước kiểm tra `existing`. Nếu transaction **trừ kho trước**, request thứ hai chờ khóa dòng sản phẩm, rồi thấy `stock = 0` và trả **409 "hết hàng"**. Kết quả này sai, vì lẽ ra phải trả lại order của request thứ nhất. Nếu transaction **insert Order trước** (dòng mang unique `(userId, key)`), request thứ hai chờ ở unique index, nhận lỗi unique (`P2002`) khi request thứ nhất commit, rồi trả lại order đã có. Vì vậy: **insert Order trước, trừ kho sau**.
 - **Giới hạn của cách này:** mỗi lần mua khóa dòng sản phẩm trong thời gian transaction. Với flash sale hàng nghìn người mua một sản phẩm, dòng đó thành điểm nghẽn. Đó chính là bài toán của **v4** (Redis), và lý do ta đo trước khi tối ưu.
 
 ### Hướng tiếp cận
 1. Viết test đồng thời **đầu tiên**: `stock = 1`, hai request với hai user khác nhau chạy `Promise.all` → đúng một 201, một 409, `stock` cuối = 0. Chạy nó với cài đặt ngây thơ để thấy nó **đỏ** (chứng minh test bắt được lỗi).
-2. Trong transaction của S10-02: sắp xếp item theo `productId`, với mỗi item chạy update có điều kiện, kiểm tra `count`. Thiếu hàng → gom danh sách → throw `Conflict` (409) kèm danh sách sản phẩm (để rollback mọi thứ).
+2. Trong transaction của S10-02, **sau** khi đã insert Order (xem "Idempotency và tồn kho"): sắp xếp item theo `productId`, với mỗi item chạy update có điều kiện, kiểm tra `count`. Thiếu hàng → gom danh sách → throw `Conflict` (409) kèm danh sách sản phẩm (để rollback mọi thứ).
 3. Gộp item trùng `productId` trước khi trừ (nếu contract cho phép trùng).
-4. Bắt lỗi deadlock/serialization của Postgres (mã lỗi `40P01`) → trả 409/503 có thể retry, hoặc retry một lần phía server.
+4. Bắt lỗi deadlock/write conflict → trả 409/503 có thể retry, hoặc retry một lần phía server. Với Prisma, lỗi này đến dưới dạng `PrismaClientKnownRequestError` mã **`P2034`** (Postgres gốc là `40P01`/`40001`). Hết thời gian chờ mở transaction là `P2028`.
 
 ### File dự kiến tạo/sửa
 `apps/api/src/catalog/{index.ts,inventory.ts}` (hàm trừ kho public nhận `tx`), `apps/api/src/orders/orders.service.ts`, `apps/api/test/orders-stock-concurrency.e2e-spec.ts`.
@@ -280,6 +290,7 @@ createOrder(userId, key, lines):
 2. `stock = 5`, 10 khách mỗi người mua 1, đồng thời → đúng 5 thành công, `stock = 0`, không bao giờ âm.
 3. Đơn 2 item, item 2 thiếu hàng → 409 liệt kê item 2. `stock` của item 1 **không đổi**. Không có Order.
 4. Cùng `Idempotency-Key` gửi lại → không trừ kho lần hai.
+4b. `stock = 1`, **cùng một khách, cùng `Idempotency-Key`**, hai request đồng thời → cả hai nhận **cùng một order** (không request nào nhận 409 "hết hàng"), `stock = 0`.
 5. X mua (A, B), Y mua (B, A) đồng thời, mỗi sản phẩm đủ hàng → cả hai thành công (không deadlock nhờ sắp xếp).
 6. Mua `quantity` lớn hơn `stock` (một người) → 409.
 7. Sản phẩm `stock = 0` nhưng `ACTIVE` → 409 (không phải 422).
@@ -296,7 +307,8 @@ Chạy test 1 với cài đặt "đọc rồi ghi" để thấy nó **đỏ** (b
 - Prisma: `tx.product.updateMany({ where: { id, stock: { gte: qty } }, data: { stock: { decrement: qty } } })` → `{ count }`.
 - `CHECK (stock >= 0)` ở S9-01 là lưới an toàn cuối: nếu code sai, DB báo lỗi thay vì âm thầm âm kho.
 - Để test đồng thời thật sự đồng thời trên một DB: cần hai kết nối khác nhau (pool của Prisma có nhiều kết nối) và `Promise.all`. Có thể thêm độ trễ nhỏ trong transaction (chỉ ở môi trường test) để tăng xác suất hai transaction chồng lên nhau.
-- Mã lỗi Postgres: `40P01` deadlock_detected, `40001` serialization_failure.
+- Mã lỗi: Prisma `P2034` (gói lại `40P01` deadlock_detected / `40001` serialization_failure của Postgres), `P2028` (lỗi API transaction, ví dụ hết `maxWait`).
+- Interactive transaction có mặc định `maxWait` 2 giây và `timeout` 5 giây. Test đồng thời có độ trễ nhân tạo hoặc nhiều request sẽ chạm các giới hạn này. Đặt `prisma.$transaction(fn, { maxWait, timeout })` cho checkout, và đảm bảo connection pool đủ lớn cho số request đồng thời trong test.
 </details>
 
 <details><summary>Hint 3: pseudo-code</summary>
@@ -311,11 +323,14 @@ reserveStock(tx, lines):                       // public API của catalog, ch�
   if failed: throw Conflict("Không đủ hàng", failed)   // throw → rollback toàn bộ transaction
 
 createOrder(...):
-  existing? → return existing                   // TRƯỚC khi trừ kho
-  plan = splitCart(...)
-  transaction(tx):
-    catalog.reserveStock(tx, lines)
-    tạo Order + VendorOrders
+  existing? → return existing                   // fast path cho request lặp lại tuần tự
+  try:
+    transaction(tx):
+      plan = splitCart(lines, catalog.getProductsForCheckout(ids, tx), shippingFee)
+      tạo Order + VendorOrders                  // 1) insert row mang unique (userId, key) TRƯỚC
+      catalog.reserveStock(tx, lines)           // 2) rồi mới trừ kho
+  catch unique (userId, key):                   // request trùng key chạy đồng thời đã chờ ở unique index
+    return findOrder(userId, key)
   …
 ```
 </details>
@@ -326,7 +341,8 @@ createOrder(...):
 | Bán vượt tồn kho khi có hai người mua cùng lúc | Đọc rồi ghi | Update có điều kiện trong `WHERE` |
 | Item đầu bị trừ kho dù đơn thất bại | Trừ kho ngoài transaction, hoặc không throw khi thất bại | Cùng transaction, throw để rollback |
 | Thỉnh thoảng lỗi 500 "deadlock detected" | Thứ tự cập nhật khác nhau giữa các đơn | Sắp xếp theo `productId`, xử lý mã `40P01` |
-| Retry cùng key trừ kho hai lần | Kiểm tra idempotency sau khi trừ | Kiểm tra trước. Unique constraint vẫn rollback nếu hai request đồng thời |
+| Retry cùng key trừ kho hai lần | Kiểm tra idempotency sau khi trừ | Kiểm tra `existing` trước. Trong transaction: insert Order trước, trừ kho sau |
+| Hai request đồng thời cùng key nhận 409 "hết hàng" thay vì cùng một order | Trừ kho trước khi insert Order, request thứ hai bị chặn ở khóa dòng sản phẩm | Insert Order (unique key) trước để request thứ hai dừng ở unique index |
 | Test đồng thời luôn xanh kể cả với code sai | Hai request chạy tuần tự (một kết nối, hoặc `await` lần lượt) | `Promise.all`, kiểm tra test **đỏ** với code ngây thơ |
 | Dùng `SERIALIZABLE` cho toàn bộ checkout | Lo lắng quá mức | Update có điều kiện đủ cho bài toán này, và rẻ hơn nhiều |
 
@@ -498,7 +514,7 @@ Hai transaction khóa hai dòng theo thứ tự ngược nhau rồi chờ nhau. 
 5. Vì sao kiểm tra Idempotency-Key phải nằm trước bước trừ kho?
 <details><summary>Gợi ý</summary>
 
-Nếu trừ kho trước, request lặp lại sẽ trừ kho thêm lần nữa rồi mới phát hiện order đã tồn tại. Với request đồng thời, unique constraint làm transaction thua rollback, kể cả phần trừ kho.
+Request lặp lại tuần tự: kiểm tra `existing` ở đầu tránh trừ kho lần hai. Request đồng thời: cả hai qua bước kiểm tra, nên trong transaction phải **insert Order trước** để request thứ hai dừng ở unique index và nhận lại order cũ. Nếu trừ kho trước, khi hàng chỉ còn 1, request thứ hai thấy hết hàng và trả 409 sai.
 </details>
 
 6. Cách trừ kho của sprint này sẽ gặp vấn đề gì trong flash sale, và v4 giải quyết thế nào?
@@ -518,6 +534,6 @@ Migration "chạy thành công" không có nghĩa là dữ liệu đúng. Đối
 1. Kết quả script đối soát trước/sau migration trên Neon branch.
 2. Storefront: giỏ có sản phẩm của 2 shop → nhóm theo shop, mỗi shop một phí ship.
 3. Đặt hàng → "Đơn của tôi" hiển thị 2 khối shop.
-4. REST client: `GET` đơn → `vendorOrders` với `commissionMinor`, `sellerNetMinor` đúng bảng ví dụ (dùng tài khoản admin hoặc log).
+4. Mở DB (Prisma Studio/Neon console) để xem `commissionMinor`, `sellerNetMinor` của VendorOrder đúng bảng ví dụ. `GET /v1/orders/:id` của khách **không** có các field này.
 5. Chạy test đồng thời trên màn hình: `stock = 1`, hai khách → một thành công, một 409.
 6. Admin đổi tỷ lệ hoa hồng shop → đơn cũ không đổi.
