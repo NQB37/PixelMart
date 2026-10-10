@@ -111,8 +111,8 @@ Giữ nguyên v1 (Render + Vercel + Neon + Sentry, 0đ). Thêm:
 | [8](sprints/sprint-08.md) | [plan](plans/sprint-08.md) | v1.1.0 | Nền multi-vendor: ranh giới module, đăng ký và duyệt shop, seller app online | 10 |
 | [9](sprints/sprint-09.md) | [plan](plans/sprint-09.md) | v1.2.0 | Seller quản lý sản phẩm và tồn kho của shop mình; khách xem trang shop | 10 |
 | [10](sprints/sprint-10.md) | [plan](plans/sprint-10.md) | v1.3.0 | Khách thanh toán giỏ nhiều shop một lần, đơn được tách theo shop, không oversell | 10 |
-| [11](sprints/sprint-11.md) | plan (đang viết) | v1.4.0 | Seller xử lý đơn tới khi khách nhận hàng; mọi khoản tiền được ghi vào sổ cái | 10 |
-| [12](sprints/sprint-12.md) | plan (đang viết) | **v2.0.0** | Seller thấy số dư và được chi trả; hệ thống đối soát khớp; phát hành v2.0.0 | 9 |
+| [11](sprints/sprint-11.md) | [plan](plans/sprint-11.md) | v1.4.0 | Seller xử lý đơn tới khi khách nhận hàng; mọi khoản tiền được ghi vào sổ cái | 10 |
+| [12](sprints/sprint-12.md) | [plan](plans/sprint-12.md) | **v2.0.0** | Seller thấy số dư và được chi trả; hệ thống đối soát khớp; phát hành v2.0.0 | 9 |
 
 Mọi sprint của v2 là **draft**: refine (cập nhật AC, estimate lại theo velocity v1) ở buổi refinement trước khi kéo vào sprint.
 
