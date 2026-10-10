@@ -16,8 +16,8 @@ Epic        (1 module lớn / 1 sprint)      PXM-1  "Identity & Auth"
  Spike      (nghiên cứu có time-box)       PXM-8  "So sánh Render vs Fly.io (time-box 2h)"
 ```
 
-Epic dự kiến cho v1 (khớp với roadmap):
-`Platform & CI/CD` · `Identity & Auth` · `Catalog Admin` · `Storefront & Cart` · `Checkout & Orders` · `Hardening & Release`
+Epic của từng version nằm trong `docs/vN/README.md`. Ví dụ v1:
+`Platform & DevOps` · `Identity & Auth` · `Catalog` · `Storefront & Cart` · `Checkout & Orders` · `Release v1.0`
 
 ## 2. Viết ticket tốt
 
