@@ -480,7 +480,7 @@ RolesGuard.canActivate(ctx):
 1. Env `CORS_ORIGINS` (danh sách, validate là URL). `app.enableCors({ origin: allowlist, credentials: true })`.
 2. Guard hoặc middleware: với method `POST/PUT/PATCH/DELETE` có body, nếu `Content-Type` không phải `application/json` → 415 Problem Details.
 3. Rà lại cấu hình cookie cho production: `Domain` = domain gốc, `Secure` luôn bật.
-4. Viết ADR-0006 "JWT access + refresh rotation": quyết định về cookie vs localStorage, TTL, reuse detection, grace period (PXM-23), Bearer cho mobile, hạn chế preview, các phương án đã loại (session server-side, Auth0/Clerk, Better Auth…).
+4. ADR-0006 "JWT access + refresh rotation" (Claude viết theo quyết định của bạn, bạn review): quyết định về cookie vs localStorage, TTL, reuse detection, grace period (PXM-23), Bearer cho mobile, hạn chế preview, các phương án đã loại (session server-side, Auth0/Clerk, Better Auth…).
 
 ### File dự kiến tạo/sửa
 `apps/api/src/main.ts` (hoặc `configure-app.ts`), `apps/api/src/common/guards/json-content-type.guard.ts` (hoặc middleware), `apps/api/src/config/env.ts`, `apps/api/test/cors.e2e-spec.ts`, `docs/adr/0006-jwt-refresh-rotation.md`.

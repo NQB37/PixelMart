@@ -359,7 +359,7 @@ CategoryPage({ params, searchParams }):
 1. `/products/[slug]/page.tsx`: fetch sản phẩm theo slug, `notFound()` khi 404.
 2. Chọn cơ chế cache (mục 0), đặt thời gian 60 giây.
 3. `generateMetadata` dùng cùng hàm fetch. Dùng `cache()` của React để không gọi API hai lần trong một lần render.
-4. Ảnh: quyết định chiến lược trong ADR-0007, cấu hình `next.config`.
+4. Ảnh: bạn chọn chiến lược và cấu hình `next.config`. Claude ghi quyết định thành ADR-0007.
 5. Kiểm chứng ISR trên production (dev mode không cache giống production).
 
 ### File dự kiến tạo/sửa

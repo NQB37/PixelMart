@@ -269,7 +269,7 @@ app/global-error.tsx   'use client' · phải tự có <html><body>
 - **"Clean clone test":** clone repo vào thư mục mới (hoặc máy khác/Codespaces), chỉ làm theo README. Mỗi chỗ bạn phải "biết sẵn" là một lỗ hổng của tài liệu.
 - **Bảng biến môi trường:** tên, app nào dùng, bắt buộc hay không, ví dụ, ý nghĩa. `.env.example` của từng app phải khớp với bảng này.
 - **Video demo 3–5 phút:** kể câu chuyện người dùng (khách mua hàng → admin xác nhận), không đọc code. Đây là thứ đưa vào portfolio.
-- Theo [rule 05](../../rules/05-working-with-claude.md), tài liệu và README là phần có thể giao Claude viết nháp, nhưng **bạn** phải chạy clean clone test.
+- **Phân công (CLAUDE.md):** Claude viết README, bảng env và index ADR. **Bạn** chạy clean clone test và báo lại mọi chỗ bị vấp để Claude sửa, quay video demo, và kiểm tra `.env.example` (file này là code, do bạn sửa).
 
 ### Hướng tiếp cận
 1. README: giới thiệu (1 đoạn + ảnh chụp màn hình), sơ đồ kiến trúc (lấy từ [v1/README](../README.md)), tech stack, cấu trúc repo, chạy local (yêu cầu → `pnpm install` → `docker compose up -d` → migrate/seed → `pnpm dev`), bảng env, lệnh hay dùng, link OpenAPI, link ADR, link lộ trình.
@@ -343,7 +343,7 @@ GitHub hiển thị được Mermaid trong README. Dùng `gh codespace create` h
 1. Code freeze → release checklist (rule 04).
 2. PR `develop → main`, tiêu đề `release: v1.0.0 (Sprint 7)`, mô tả = changelog đầy đủ v0.1.0 → v1.0.0. Merge commit.
 3. Tag `v1.0.0`, GitHub Release. Kiểm tra production (smoke test toàn luồng). Sentry không có lỗi mới.
-4. Retro sprint 7 (`docs/retro/sprint-7.md`) **và** retro tổng v1 (`docs/retro/v1.md`): velocity từng sprint (biểu đồ/bảng), 3 điều làm tốt, 3 điều cần đổi, các tech debt đã ghi lại (ví dụ dọn refresh token hết hạn, câu hỏi charge trong/ngoài transaction).
+4. Retro sprint 7 (`docs/retro/sprint-7.md`) **và** retro tổng v1 (`docs/retro/v1.md`). Bạn cung cấp ghi chú + velocity (Jira), Claude viết thành tài liệu. Nội dung cần có: velocity từng sprint (biểu đồ/bảng), 3 điều làm tốt, 3 điều cần đổi, các tech debt đã ghi lại (ví dụ dọn refresh token hết hạn, câu hỏi charge trong/ngoài transaction).
 5. Jira: complete sprint, tạo Epic "v2 — Marketplace", đưa tech debt vào backlog.
 
 ### File dự kiến tạo/sửa
