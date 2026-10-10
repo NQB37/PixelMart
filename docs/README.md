@@ -31,7 +31,7 @@ Thứ tự đọc khi bắt đầu một version:
 |---|---|---|---|---|---|
 | [v1](v1/README.md) | MVP single-store | Bán hàng được end-to-end | NestJS monolith, Next.js, Vite admin, Docker cơ bản, GitHub Actions, Render/Vercel/Neon, Sentry | 1–7 | Đang làm · sprints + plans ✅ |
 | [v2](v2/README.md) | Marketplace multi-vendor | Seller đăng ký mở shop, tồn kho theo shop, một giỏ hàng nhiều shop, tách đơn theo shop, hoa hồng, chi trả cho seller | Modular monolith, RBAC + ownership, aggregate Order/VendorOrder, double-entry ledger. *Không thêm infra* | 8–12 | Sẵn sàng · sprints + plans ✅ |
-| v3 | Self-host | Chi phí và giới hạn của PaaS, muốn tự kiểm soát hạ tầng | Docker chuyên sâu, Compose production, **Nginx** (TLS, load balance, gzip, rate limit), Postgres tự host + backup, deploy qua SSH | 13–15 | Chưa viết |
+| [v3](v3/README.md) | Self-host | Chi phí và giới hạn của PaaS, muốn tự kiểm soát hạ tầng | Docker chuyên sâu, Compose production, **Nginx** (TLS qua Cloudflare, load balance, gzip, rate limit), Postgres tự host + backup off-site, GHCR + deploy qua SSH | 13–15 | Đang viết · sprints ✅ |
 | v4 | Performance & Observability | Flash sale chậm và oversell. Muốn tối ưu thì phải đo trước | **Prometheus**, **Grafana**, Alertmanager, k6, **Redis** (cache, rate limit phân tán, giữ tồn kho atomic) | 16–18 | Chưa viết |
 | v5 | Async processing | Checkout chậm vì gửi email, đơn chưa thanh toán phải tự hủy | **RabbitMQ**: worker, retry, DLQ, delayed message, idempotent consumer, outbox | 19–21 | Chưa viết |
 | v6 | Mobile app | Khách mua hàng trên điện thoại, nhận push notification | Expo (React Native), dùng lại `contracts`/`api-client`, push qua worker | 22–25 | Chưa viết |
@@ -52,12 +52,12 @@ Thứ tự đọc khi bắt đầu một version:
 
 ```mermaid
 flowchart LR
-  A["v1–v2 · PaaS<br/>Render + Vercel + Neon<br/>0đ"] --> B["v3–v6 · 1 VPS (~8GB)<br/>Docker Compose + Nginx<br/>~€7/tháng"]
+  A["v1–v2 · PaaS<br/>Render + Vercel + Neon<br/>0đ"] --> B["v3–v6 · 1 VPS Hetzner (~8GB)<br/>Docker Compose + Nginx<br/>~€6–12/tháng"]
   B --> C["v7–v8 · k3s trên VPS (~16GB)<br/>Ingress-NGINX + Helm + Jenkins<br/>~€15–20/tháng"]
 ```
 
 - Domain: dùng domain đã mua, DNS quản lý qua Cloudflare. Mỗi thành phần một subdomain (`api.`, `shop.`, `admin.`, `seller.`, `grafana.`, `jenkins.`…).
-- Giá VPS là ước tính, sẽ kiểm tra lại khi viết v3.
+- Giá VPS là ước tính (Hetzner tăng giá từ 04/2026). Kiểm tra lại trang giá khi đặt máy, chi tiết ở [v3](v3/README.md#hạ-tầng--chi-phí).
 - PaaS tự host (Coolify…) **không** nằm trong lộ trình vì nó che mất đúng những thứ ta cần học. Xem phần so sánh trong knowledge base (v3).
 
 ## Công nghệ ↔ version
