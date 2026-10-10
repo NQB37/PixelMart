@@ -34,6 +34,7 @@
 - Dump Neon (kết nối **direct**, không qua pooler) bằng `pg_dump` cùng hoặc mới hơn phiên bản server. Restore vào Postgres trên VPS (thay dữ liệu seed của preview).
 - Xử lý khác biệt giữa Neon và Postgres tự host: owner/role, extension, quyền. Bảng `_prisma_migrations` đi cùng dữ liệu: sau restore, `prisma migrate status` báo "up to date".
 - Kiểm chứng: số bản ghi các bảng chính, đối soát ledger (S12-04), đăng nhập bằng một tài khoản thật (hash mật khẩu dùng được), tạo đơn mới trên preview (sequence/ID không đụng nhau).
+- Trong lúc diễn tập: tạm dừng deploy lên VPS và kiểm tra lịch backup timer. Sau khi restore dữ liệu thật vào preview, **giữ maintenance bật** cho `next-*` (chỉ lối đi riêng vào được) tới cutover: dữ liệu và tài khoản thật không được lộ trên hostname preview.
 - **Bấm giờ** từng bước. Thời gian dump + restore + kiểm chứng = độ dài tối thiểu của maintenance window.
 - Claude viết `docs/runbooks/cutover-v3.md` từ ghi chú của bạn: các bước có thời gian, điểm go/no-go, điểm không quay lại, cách rollback ở từng bước.
 
@@ -51,10 +52,11 @@
 
 - Làm theo runbook của S15-02. Khung bước (chi tiết nằm trong runbook):
   1. Trước 24–48 giờ: hạ TTL của các bản ghi DNS production, thông báo maintenance window.
-  2. Bật maintenance trên VPS, chuyển DNS production sang VPS (proxied), **chặn ghi** vào Neon từ phía PaaS.
-  3. Dump Neon → restore VPS → kiểm chứng như diễn tập.
-  4. Go/no-go. Go → đổi runtime config/`CORS_ORIGINS` sang hostname production (chỉ đổi env, cùng image), tắt maintenance.
-  5. Theo dõi sát 24 giờ đầu (uptime monitor, Sentry, log).
+  2. Tạm dừng deploy và backup timer. Bật maintenance trên VPS, **rồi** đổi env của stack VPS sang hostname production (Nginx `server_name`, runtime config, `CORS_ORIGINS`: chỉ đổi env, cùng image).
+  3. Chuyển DNS production sang VPS (proxied) → khách thấy trang bảo trì. **Chặn ghi** vào Neon từ phía PaaS.
+  4. Dump Neon → restore VPS → kiểm chứng như diễn tập (qua lối đi riêng, trên hostname production).
+  5. Go/no-go. Go → tắt maintenance, bật lại deploy và backup timer.
+  6. Theo dõi sát 24 giờ đầu (uptime monitor, Sentry, log).
 - Rollback được định nghĩa trước: trước điểm không quay lại thì quay về PaaS. Sau điểm đó thì sửa tiến (fix forward) trên VPS.
 - Neon chuyển sang chỉ đọc (hoặc dừng compute), **chưa xóa**.
 
@@ -70,6 +72,7 @@
 
 - Xóa job deploy Render/Vercel khỏi workflow. Pipeline VPS (S14-02) giờ là CD duy nhất cho production.
 - Gỡ các hostname `next-*` (DNS, server block, `CORS_ORIGINS`).
+- Giới hạn `workflow_dispatch`: sau cutover chỉ được deploy tag đã có (rollback) từ `main`, không build một ref bất kỳ lên production.
 - Render, Vercel: xóa service/project (hoặc gỡ domain trước, xóa sau N ngày). Neon: lưu một bản dump cuối lên R2, giữ project N ngày rồi xóa. N ghi trong ADR.
 - ADR-0011: Self-host trên một VPS. Claude viết từ quyết định và số liệu của bạn: lý do, single point of failure được chấp nhận, RPO/RTO, chi phí trước/sau (số thật), điều kiện để chuyển sang K8s (v7).
 

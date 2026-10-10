@@ -123,6 +123,76 @@ jobs:
 
 </details>
 
+**Build image → GHCR → deploy qua SSH (v3)**
+
+> Lần đầu viết job build/push và deploy (S14-01, S14-02), hãy tự viết từ docs của từng action (mục 10) rồi mới mở phần dưới để đối chiếu. Major version của action dưới đây là tại thời điểm viết, kiểm tra lại trước khi dùng.
+
+<details><summary>Mở sau khi đã tự viết job build/deploy (S14-01, S14-02): các đoạn YAML mẫu</summary>
+
+**Push image lên GHCR bằng `GITHUB_TOKEN`** (không cần PAT)
+
+```yaml
+  build-images:
+    needs: ci
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write                     # chỉ job này được ghi vào GHCR
+    steps:
+      - uses: actions/checkout@v6
+      - uses: docker/setup-buildx-action@v4
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/pixelmart-api   # tên image phải viết thường
+          tags: |
+            type=sha,prefix=sha-
+            # tag vX.Y.Z: gắn cho image đã có bằng `docker buildx imagetools create`, không build lại
+      - uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: apps/api/Dockerfile
+          platforms: linux/amd64
+          push: ${{ github.event_name != 'pull_request' }}             # PR: chỉ build để kiểm tra
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}                     # label OCI: source, revision…
+          cache-from: type=gha,scope=api
+          cache-to: type=gha,mode=max,scope=api
+```
+
+**Deploy qua SSH: environment, concurrency, host key cố định**
+
+```yaml
+  deploy-vps:
+    needs: build-images
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    environment: production-vps          # secret riêng: SSH_HOST, SSH_PRIVATE_KEY, SSH_KNOWN_HOSTS
+    concurrency:
+      group: deploy-vps
+      cancel-in-progress: false          # không bao giờ hủy một deploy đang chạy dở
+    steps:
+      - name: Configure SSH
+        env:                             # secret qua env, không nội suy thẳng vào lệnh
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}   # lấy bằng ssh-keyscan MỘT LẦN, đã xác minh fingerprint
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519 && chmod 600 ~/.ssh/id_ed25519
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+      - name: Deploy
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}   # IP của VPS hoặc bản ghi DNS-only: SSH không đi qua proxy Cloudflare
+        run: ssh "deploy@$SSH_HOST" "/srv/pixelmart/deploy.sh sha-${GITHUB_SHA::7}"
+```
+
+</details>
+
 **`gh` CLI để theo dõi từ terminal**
 
 | Lệnh | Dùng khi |
@@ -146,7 +216,11 @@ jobs:
 6. **Tách CI và CD rõ ràng:** CI chạy cho mọi PR. CD chỉ chạy trên `main`, `needs: ci`, dùng `environment: production`.
 7. **Đặt tên job ổn định** vì required check gắn theo tên job. Đổi tên job thì phải sửa lại branch ruleset.
 8. **`concurrency` cho deploy** với `cancel-in-progress: false`: đừng hủy một deploy đang chạy dở. Chỉ nên hủy các run CI cũ.
-9. **Đo thời gian pipeline.** Mục tiêu của PixelMart là PR xanh trong dưới 5 phút. Chậm thì xem lại cache, và tách job song song nếu có ích.
+9. **Push image bằng `GITHUB_TOKEN`** với `permissions: packages: write` chỉ ở job build. Không tạo PAT dài hạn chỉ để push GHCR.
+10. **Deploy job `needs:` job build**, và deploy đúng tag vừa build (`sha-<short>`), không dùng `latest`. Nhờ vậy rollback chỉ là deploy lại tag cũ.
+11. **SSH an toàn:** key riêng cho CI (không dùng key cá nhân), lưu trong secret của **Environment** (ví dụ `production-vps`), và **cố định host key** bằng secret `known_hosts`. Không dùng `StrictHostKeyChecking=no`: nó tắt đúng cơ chế chống giả mạo server.
+12. **Tránh action SSH bên thứ ba khi lệnh `ssh` có sẵn là đủ.** Runner Ubuntu đã có OpenSSH. Mỗi action bên thứ ba là thêm một chỗ có thể đọc được private key của bạn.
+13. **Đo thời gian pipeline.** Mục tiêu của PixelMart là PR xanh trong dưới 5 phút. Chậm thì xem lại cache, và tách job song song nếu có ích.
 
 ## 5. Khi nào nên / không nên dùng
 
@@ -180,6 +254,12 @@ jobs:
 | Deploy chạy cả khi test fail | Job `deploy` thiếu `needs: ci` nên chạy song song | Luôn có `needs:` và điều kiện `if:` theo branch |
 | CI pass nhưng production lỗi vì thiếu biến môi trường | CI không kiểm tra env của production | Validate env lúc boot (fail fast, PXM-9). Release checklist có bước đặt biến môi trường mới |
 | `pnpm install` trên CI tự sửa lockfile | Thiếu `--frozen-lockfile` | Luôn dùng `--frozen-lockfile` trong CI |
+| Push GHCR báo `denied: installation not allowed to Create organization package` hoặc `permission_denied` | Thiếu `permissions: packages: write`, hoặc package đã tồn tại mà repo chưa được cấp quyền ghi | Thêm permission cho job. Trong cài đặt package, cấp quyền "Write" cho repo |
+| `invalid reference format: repository name must be lowercase` | Tên owner/repo có chữ hoa (`NQB37`) | Dùng `docker/metadata-action` hoặc tự chuyển sang chữ thường |
+| Dùng `StrictHostKeyChecking=no` cho "nhanh" | Bỏ qua kiểm tra host key → kẻ giả mạo server nhận được lệnh deploy và secret | Lưu `known_hosts` đã xác minh vào secret |
+| Hai merge liên tiếp, hai deploy chạy chồng nhau, server ở trạng thái nửa nọ nửa kia | Không có `concurrency` cho job deploy | `concurrency` group cố định, `cancel-in-progress: false` |
+| Job deploy SSH timeout | Firewall chỉ mở port 22 cho IP của bạn, hoặc VPS chỉ có IPv6 (runner GitHub-hosted không có IPv6 ra Internet) | Port 22 nhận mọi IP nhưng chỉ chấp nhận key. VPS phải có IPv4 |
+| Build image trong CI lần nào cũng chậm như lần đầu | Runner sạch, không có layer cache | `cache-from`/`cache-to: type=gha` của buildx |
 | Workflow tạo commit/tag xong không kích hoạt workflow khác | Sự kiện tạo bởi `GITHUB_TOKEN` không trigger workflow mới (để tránh vòng lặp) | Dùng `workflow_call`/`needs`, hoặc PAT/GitHub App nếu thật sự cần |
 
 ## 7. Debug nhanh
@@ -196,7 +276,7 @@ jobs:
 | Version | Dùng thế nào | Ticket/plan |
 |---|---|---|
 | v1 | CI: lint → typecheck → test (Postgres service) → build → docker build. Required check `ci`. CD: migrate Neon → Render deploy hook. Upload source map cho Sentry | PXM-12, PXM-13 ([plan Sprint 1](../v1/plans/sprint-01.md)), PXM-14, PXM-15, PXM-19 ([plan Sprint 2](../v1/plans/sprint-02.md)) |
-| v3 | Build image → push GHCR → SSH vào VPS → `docker compose pull && up -d` | v3 (chưa viết) |
+| v3 | Build 3 image (`api`, `web`, `edge`) → push GHCR (tag `sha-…`, cache gha) → job deploy qua SSH (environment `production-vps`, `concurrency`) chạy script trên VPS: migrate → rolling `api-1`/`api-2` → smoke test → rollback bằng tag cũ | [v3](../v3/README.md): S14-01, S14-02 ([plan Sprint 14](../v3/plans/sprint-14.md)), S15-04 (xóa job Render/Vercel) |
 | v7 | GitHub Actions giữ vai trò CI cho PR. Jenkins nhận nhiệm vụ CD lên Kubernetes | v7 (chưa viết) |
 
 ## 9. Câu hỏi phỏng vấn hay gặp
@@ -237,6 +317,12 @@ Code mới có thể cần cột/bảng mới. Nếu deploy trước thì code m
 Là rule của branch: chỉ cho merge khi các check được chỉ định đã xanh. Nhờ vậy CI trở thành một "cổng" bắt buộc thay vì một gợi ý.
 </details>
 
+7. Deploy qua SSH từ CI: bạn bảo vệ server và key thế nào?
+<details><summary>Gợi ý trả lời</summary>
+
+Key riêng cho CI, lưu trong secret của environment, user deploy có quyền tối thiểu (không sudo mật khẩu trống, có thể giới hạn lệnh bằng `command=` trong `authorized_keys`). Cố định host key bằng `known_hosts` đã xác minh, không tắt `StrictHostKeyChecking`. Dùng `concurrency` để không deploy chồng nhau. Xoay key định kỳ và ngay khi nghi bị lộ.
+</details>
+
 ## 10. Tài liệu chính thức
 
 - Tổng quan: https://docs.github.com/en/actions/get-started/understand-github-actions
@@ -246,3 +332,8 @@ Là rule của branch: chỉ cho merge khi các check được chỉ định đ�
 - Service containers (Postgres): https://docs.github.com/en/actions/tutorials/use-containerized-services/create-postgresql-service-containers
 - `pnpm/action-setup`: https://github.com/pnpm/action-setup
 - Turborepo trên GitHub Actions: https://turborepo.com/docs/guides/ci-vendors/github-actions
+- Publish Docker image lên GHCR: https://docs.github.com/en/actions/tutorials/publish-packages/publish-docker-images
+- Environments: https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/manage-environments
+- `concurrency`: https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/control-workflow-concurrency
+- `docker/build-push-action`: https://github.com/docker/build-push-action
+- `docker/metadata-action`: https://github.com/docker/metadata-action

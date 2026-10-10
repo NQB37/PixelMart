@@ -52,7 +52,7 @@ flowchart LR
 Một vài điểm cần để ý ngay từ đầu:
 - **Chỉ `edge` mở cổng ra ngoài** (443, và 80 để redirect). Postgres, API, web chỉ nằm trong mạng nội bộ của Compose.
 - **Tên miền không đổi:** `shop.`, `admin.`, `seller.`, `api.<domain>`. Cookie, CORS và mọi URL client đang dùng giữ nguyên. Khách hàng không cần biết hạ tầng đã đổi.
-- **Hai replica API** để học load balancing và rolling update thủ công. Một VPS vẫn là một điểm lỗi duy nhất (single point of failure). Ta chấp nhận điều đó ở v3, và ghi rõ trong ADR.
+- **Hai replica API** để học load balancing và rolling update thủ công. `web` và `edge` chỉ có một replica: lúc thay chúng có gián đoạn vài giây, được đo và chấp nhận ở v3. Một VPS vẫn là một điểm lỗi duy nhất (single point of failure). Ta chấp nhận điều đó ở v3, và ghi rõ trong ADR.
 - **Parallel run:** trong sprint 13–14, stack trên VPS chạy song song với PaaS ở các hostname preview (`next-shop.<domain>`…) với dữ liệu riêng. Production chỉ chuyển sang VPS ở sprint 15 (cutover).
 
 ## Học xong bạn làm được
@@ -98,8 +98,8 @@ Sau cutover (S15-04), Render, Vercel và Neon được dọn đi. Neon giữ th�
 | Epic | Phạm vi | Sprint |
 |---|---|---|
 | **Self-host Foundation** | VPS + hardening, image production, Compose production, Nginx edge, TLS Cloudflare | 13 |
-| **Delivery Pipeline** | Build/push GHCR, deploy SSH, rolling update, rollback | 14 |
-| **Data Safety** | Postgres backup off-site, restore drill, hardening Nginx | 14 |
+| **Delivery Pipeline** | Build/push GHCR, deploy SSH, rolling update, rollback, hardening Nginx | 14 |
+| **Data Safety** | Postgres backup off-site, restore drill | 14 |
 | **Cutover** | Diễn tập chuyển dữ liệu, cutover production, dọn PaaS, uptime monitor | 15 |
 | **Release v3.0** | Runbook vận hành, ADR, release, retro | 15 |
 
@@ -120,7 +120,7 @@ Mọi sprint của v3 là **draft**: refine (cập nhật AC, estimate lại the
 | Giai đoạn | `main` deploy tới | Ghi chú |
 |---|---|---|
 | Sprint 13 | PaaS (như v2). VPS được cập nhật **bằng tay** | Stack VPS chạy ở hostname preview, dữ liệu seed |
-| Sprint 14 | PaaS **và** VPS (preview), cùng một commit | Pipeline VPS chạy song song, chưa phục vụ khách |
+| Sprint 14 | PaaS **và** VPS (preview), cùng một commit | Pipeline VPS chạy song song, chưa phục vụ khách. Giữa hai release, preview được deploy bằng `workflow_dispatch` (không bao giờ thử nghiệm bằng cách merge vào `main`) |
 | Sprint 15, sau cutover | **Chỉ VPS** | Job deploy Render/Vercel bị xóa ở S15-04 |
 
 Hostname preview (`next-shop.<domain>`, `next-admin.<domain>`, `next-seller.<domain>`, `next-api.<domain>`) là **một level** dưới domain gốc, để Origin Certificate wildcard `*.<domain>` phủ được (xem plan S13-05). Chúng bị gỡ sau cutover.
@@ -143,8 +143,8 @@ Hostname preview (`next-shop.<domain>`, `next-admin.<domain>`, `next-seller.<dom
 
 - [ ] Mọi ticket sprint 13–15 Done theo [Definition of Done](../rules/06-definition-of-ready-and-done.md)
 - [ ] `shop.`, `admin.`, `seller.`, `api.<domain>` phục vụ từ VPS qua Cloudflare, Full (strict); truy cập thẳng IP của VPS không trả nội dung PixelMart
-- [ ] Từ Internet chỉ thấy cổng 80/443 (và 22 cho SSH). Quét port từ máy ngoài xác nhận Postgres, API, web không lộ
-- [ ] Merge vào `main` → VPS tự cập nhật, trong lúc deploy một script gọi `/v1/health` liên tục không nhận lỗi 5xx
+- [ ] Quét port từ một máy ngoài (không thuộc Cloudflare): chỉ thấy 22. Cổng 80/443 chỉ mở cho dải IP Cloudflare. Postgres, API, web không lộ
+- [ ] Merge vào `main` → VPS tự cập nhật. Trong pha rolling API, một script gọi `/v1/health` liên tục không nhận lỗi 5xx. Khoảng gián đoạn khi thay `edge`/`web` được đo và ghi trong ADR-0011
 - [ ] Rollback về image của release trước trong ≤ 5 phút, có ghi lại thời gian thật
 - [ ] Backup chạy hằng đêm lên R2. Đã diễn tập restore thành công, RPO/RTO đo được ghi trong runbook
 - [ ] Sau cutover: số bản ghi các bảng chính và báo cáo đối soát ledger (S12-04) khớp giữa Neon và VPS

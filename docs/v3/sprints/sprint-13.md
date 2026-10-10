@@ -16,9 +16,9 @@
 ### S13-01 · VPS: tạo máy + hardening + Docker
 `Task` · Self-host Foundation · **2 pts** · `devops` `security`
 
-- Tạo VPS Hetzner Cloud: x86, ~8 GB RAM, Ubuntu 24.04 LTS, **có IPv4**, đăng nhập bằng SSH key ngay từ lúc tạo.
+- Tạo VPS (ví dụ trong tài liệu: Hetzner Cloud): KVM, x86, ~8 GB RAM, Ubuntu 24.04 LTS, **có IPv4**, có console web, đăng nhập bằng SSH key ngay từ lúc tạo. Nhà cung cấp khác: đối chiếu "Checklist chọn VPS" trong [linux-vps.md](../../knowledge/linux-vps.md).
 - Hardening: user `deploy` có sudo, tắt đăng nhập root và đăng nhập bằng mật khẩu qua SSH, cài cập nhật bảo mật tự động, đặt timezone UTC, thêm swap.
-- Firewall: **Hetzner Cloud Firewall** (nằm ngoài VM) chỉ mở 22, 80, 443. Hiểu vì sao UFW một mình không đủ khi chạy Docker.
+- Firewall **nằm ngoài VM** (Hetzner Cloud Firewall hoặc tương đương) chỉ mở 22, 80, 443. Hiểu vì sao UFW một mình không đủ khi chạy Docker. Nhà cung cấp không có firewall ngoài VM → lọc bằng chain `DOCKER-USER` (xem plan).
 - Cài Docker Engine + Compose plugin từ repo chính thức của Docker (không dùng bản snap). Cấu hình xoay log mặc định cho Docker.
 - Ghi lại mọi lệnh đã chạy. Claude viết thành runbook `docs/runbooks/vps-setup.md` từ ghi chú của bạn.
 
@@ -76,7 +76,7 @@
   - `shop.`: reverse proxy tới `web`. `/_next/static/` cache dài hạn.
   - `admin.`, `seller.`: phục vụ file tĩnh, **SPA fallback** về `index.html`, asset có hash cache dài hạn, `index.html` không cache.
 - Default server: host lạ (truy cập thẳng bằng IP, domain khác) → đóng kết nối, không trả nội dung PixelMart.
-- Header proxy đầy đủ (`Host`, `X-Forwarded-For`, `X-Forwarded-Proto`). API cấu hình `trust proxy` đúng số lớp proxy để `req.ip` và cookie `Secure` hoạt động.
+- Header proxy đầy đủ (`Host`, `X-Forwarded-For`, `X-Forwarded-Proto`). API cấu hình `trust proxy` đúng số lớp proxy để `req.ip` và cookie `Secure` hoạt động. Số lớp đọc từ env (ví dụ `TRUST_PROXY_HOPS`), vì code này lên production Render ở v2.1.0, nơi số lớp proxy khác VPS.
 - gzip cho text/JSON. Access log có `request_time` và `upstream_addr`.
 - Hostname điều khiển bằng biến môi trường (dùng được cho cả `next-*` lẫn hostname production).
 
@@ -96,14 +96,14 @@
 
 - Cloudflare: tạo bản ghi DNS **proxied** cho `next-shop.`, `next-admin.`, `next-seller.`, `next-api.<domain>` → IP VPS.
 - Tạo **Origin Certificate** (phủ `<domain>` và `*.<domain>`), gắn vào `edge`. Private key nằm trên VPS (quyền chặt), **không** nằm trong image và repo.
-- SSL/TLS mode **Full (strict)**. Port 80 chỉ redirect sang HTTPS.
+- SSL/TLS mode **Full (strict)**. Mode này áp dụng cho **cả zone** (mọi bản ghi proxied): kiểm tra các bản ghi proxied khác trước khi đổi, hoặc đặt theo hostname bằng Configuration Rule. Port 80 chỉ redirect sang HTTPS.
 - `CORS_ORIGINS` và URL trong runtime config của stack VPS dùng hostname `next-*`.
 - Đọc phần ACME/Let's Encrypt trong [dns-tls.md](../../knowledge/dns-tls.md) để biết cách làm khi không dùng Cloudflare.
 
 **AC**
 - [ ] Mở `https://next-shop.<domain>` → trình duyệt báo HTTPS hợp lệ. Đăng ký, đăng nhập, đặt một đơn trên stack VPS thành công
 - [ ] Đổi SSL mode sang Full (strict) không gây lỗi 526
-- [ ] `curl -vk https://<ip>` trả chứng chỉ Origin (không được trình duyệt tin), không phải nội dung PixelMart
+- [ ] `curl -vk https://<ip>` (không có SNI hợp lệ) → handshake bị từ chối, không có nội dung PixelMart. `curl -vk --resolve next-shop.<domain>:443:<ip> https://next-shop.<domain>` → issuer là Cloudflare Origin CA
 - [ ] Không có file `.pem`/`.key` nào trong git (`git ls-files` kiểm tra)
 - [ ] Production (`shop.<domain>`…) vẫn chạy trên PaaS, không bị ảnh hưởng
 
@@ -113,4 +113,4 @@
 
 ## Release v2.1.0
 
-Production vẫn ở PaaS. Release này mang các thay đổi trong code (Next.js `standalone`, runtime config, `trust proxy`) lên production hiện tại. **Kiểm tra trên production PaaS rằng không có gì hỏng**, đặc biệt là runtime config và cookie đăng nhập.
+Production vẫn ở PaaS. Release này mang các thay đổi trong code (Next.js `standalone`, runtime config, `trust proxy`) lên production hiện tại. **Kiểm tra trên production PaaS rằng không có gì hỏng**, đặc biệt là runtime config, cookie đăng nhập và IP client trong log API (`TRUST_PROXY_HOPS` đúng cho Render).
