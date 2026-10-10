@@ -17,10 +17,10 @@ Muốn viết thêm file mới thì copy [`_template.md`](_template.md).
 |---|---|---|---|
 | [docker.md](docker.md) | Container, image, Compose | v1 → v3 → v7 | ✅ |
 | [github-actions.md](github-actions.md) | CI/CD trên GitHub | v1 → v8 | ✅ |
-| `nginx.md` | Reverse proxy, TLS, load balancing | v3 | Chưa viết |
-| `linux-vps.md` | SSH, user, firewall, systemd trên VPS | v3 | Chưa viết |
-| `dns-tls.md` | DNS record, Cloudflare, Let's Encrypt | v3 | Chưa viết |
-| `paas-vs-self-host.md` | Render/Vercel vs VPS vs Coolify | v3 | Chưa viết |
+| [nginx.md](nginx.md) | Reverse proxy, TLS, load balancing | v3 | ✅ |
+| [linux-vps.md](linux-vps.md) | SSH, user, firewall, systemd trên VPS | v3 | ✅ |
+| [dns-tls.md](dns-tls.md) | DNS record, Cloudflare, Let's Encrypt | v3 | ✅ |
+| [paas-vs-self-host.md](paas-vs-self-host.md) | Render/Vercel vs VPS vs Coolify | v3 | ✅ |
 | `prometheus.md` | Metrics, PromQL, alerting | v4 | Chưa viết |
 | `grafana.md` | Dashboard, đọc số liệu | v4 | Chưa viết |
 | `redis.md` | Cache, rate limit, atomic ops | v4 | Chưa viết |

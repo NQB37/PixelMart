@@ -88,6 +88,59 @@ RUN pnpm build                        ← build lại, nhưng không phải cài
 | `docker image prune` | Xóa image "dangling" (không có tag) |
 | `docker builder prune` | Xóa build cache |
 | `docker system prune` | Xóa container dừng, network thừa, image dangling. Thêm `--volumes` sẽ xóa cả volume, **cẩn thận** |
+| `docker image prune -a --filter "until=168h"` | Xóa image không còn container nào dùng và cũ hơn 7 ngày. Hợp để chạy sau mỗi lần deploy trên VPS |
+
+**Registry (GHCR) — v3**
+
+| Lệnh | Dùng khi | Ghi chú |
+|---|---|---|
+| `echo "$TOKEN" \| docker login ghcr.io -u <user> --password-stdin` | Đăng nhập GHCR (khi package private) | Token trên VPS chỉ cần quyền `read:packages`. Đừng gõ token thẳng vào lệnh (lưu vào shell history) |
+| `docker pull ghcr.io/nqb37/pixelmart-api:sha-1a2b3c4` | Lấy đúng một phiên bản | Tag theo SHA: biết chính xác commit nào đang chạy |
+| `docker image inspect --format '{{index .RepoDigests 0}}' <img>` | Xem digest (`@sha256:…`) | Digest là định danh **bất biến** của image. Tag có thể bị ghi đè, digest thì không |
+| `docker image inspect --format '{{ index .Config.Labels "org.opencontainers.image.revision" }}' <img>` | Image này build từ commit nào | Cần gắn label OCI lúc build (S14-01) |
+
+**Compose production — v3**
+
+| Lệnh / cấu hình | Dùng khi | Ghi chú |
+|---|---|---|
+| `docker compose -f compose.prod.yaml config` | Xem cấu hình cuối cùng sau khi thay biến | ⚠️ Output **có cả secret** đã thay vào. Đừng dán lên PR/chat |
+| `docker compose -f compose.prod.yaml pull` | Kéo image mới về trước, rút ngắn thời gian gián đoạn | |
+| `docker compose -f compose.prod.yaml up -d --no-deps api-1` | Cập nhật **một** service, không đụng service phụ thuộc | Nền tảng của rolling update thủ công (S14-02) |
+| `docker compose -f compose.prod.yaml run --rm migrate` | Chạy một container một lần (migration) rồi xóa | Dùng image API, target có Prisma CLI |
+| `docker inspect --format '{{.State.Health.Status}}' <ctr>` | Chờ container `healthy` trong script | Lặp có timeout, đừng `sleep 30` rồi hy vọng |
+| `docker inspect -f '{{.HostConfig.RestartPolicy.Name}}' <ctr>` | Xem restart policy | |
+| `sudo kill -9 $(docker inspect -f '{{.State.Pid}}' <ctr>)` | **Mô phỏng crash** để kiểm tra restart policy | Kill từ host. `docker stop`/`docker kill` bị Docker coi là dừng thủ công nên **không** kích hoạt restart |
+
+Xoay log mặc định cho mọi container, đặt trong `/etc/docker/daemon.json` của VPS (restart Docker sau khi sửa; chỉ áp dụng cho container tạo mới):
+
+```json
+{
+  "log-driver": "json-file",
+  "log-opts": { "max-size": "10m", "max-file": "3" }
+}
+```
+
+Mảnh cấu hình hay dùng trong `compose.prod.yaml` (không phải file hoàn chỉnh):
+
+```yaml
+services:
+  api-1:
+    image: ghcr.io/nqb37/pixelmart-api:${IMAGE_TAG:?IMAGE_TAG is required}   # thiếu biến → compose báo lỗi ngay
+    restart: unless-stopped
+    env_file: .env                     # file trên VPS, quyền 600, không commit
+    networks: [backend]                # không có "ports:" → không lộ ra ngoài
+    mem_limit: 512m
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/v1/health"]
+      interval: 10s
+      retries: 5
+      start_period: 20s
+
+networks:
+  backend: {}
+```
+
+> Có thể đặt `internal: true` cho một network để nó **không có đường ra Internet**. Nhưng `internal` chặn cả chiều ra: API trong mạng đó không gửi lỗi lên Sentry được. Chỉ đặt `internal` cho mạng mà mọi thành viên chỉ cần nói chuyện nội bộ (ví dụ mạng riêng giữa API và Postgres). Việc "không lộ ra ngoài" đã được bảo đảm bằng cách **không khai báo `ports:`**.
 
 **Ví dụ `compose.yaml` cho dev (v1, PXM-11)**
 
@@ -139,6 +192,13 @@ volumes:
 8. **Có `HEALTHCHECK` hoặc healthcheck trong Compose/K8s** để orchestrator biết lúc nào app sẵn sàng thật sự, không chỉ là process đang sống.
 9. **Dùng BuildKit cache mount** cho package manager để build lại nhanh hơn: `RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store pnpm install --frozen-lockfile`. `target` phải trùng với store thật của pnpm trong image: kiểm tra bằng `pnpm store path` (store đổi chỗ nếu bạn đặt `PNPM_HOME`/`store-dir`, hoặc build bằng user khác root).
 10. **Gắn tag image bằng version hoặc git SHA**, không ghi đè cùng một tag. Rollback khi đó chỉ là chạy lại tag cũ.
+11. **Build once, deploy anywhere.** Cùng một image chạy ở preview và production, chỉ khác env lúc chạy. Cẩn thận với frontend: `NEXT_PUBLIC_*` (Next.js) và `VITE_*` (Vite) được **thay thẳng vào bundle JS lúc build**, đổi env lúc chạy không có tác dụng. Giá trị phụ thuộc môi trường phải đi qua runtime config (ADR-0010, S13-02).
+12. **Production chỉ publish port của reverse proxy.** DB, API, web nằm trong mạng nội bộ, gọi nhau bằng tên service. Port đã publish **vượt qua UFW** vì Docker tự ghi rule iptables, xem [linux-vps.md](linux-vps.md).
+13. **Healthcheck + `depends_on: condition: service_healthy` + `restart: unless-stopped`** cho mọi service production. Healthcheck đo "sẵn sàng phục vụ" (gọi endpoint health), không chỉ "process còn sống".
+14. **Đặt giới hạn bộ nhớ** (`mem_limit` hoặc `deploy.resources.limits.memory`). Container rò rỉ bộ nhớ sẽ tự chết và restart, thay vì kéo cả VPS vào OOM.
+15. **Giới hạn log và dọn image** trên server. Log `json-file` mặc định không giới hạn kích thước, image cũ tích tụ sau mỗi lần deploy. Đây là nguyên nhân hàng đầu làm VPS đầy ổ.
+16. **Cache build trong CI** bằng buildx (`cache-from`/`cache-to` với `type=gha`) để runner sạch vẫn dùng lại được layer cũ.
+17. **Named volume cho dữ liệu, bind mount cho file cấu hình/chứng chỉ** (mount read-only `:ro`). Secret như private key TLS nằm trên host và được mount vào, **không** copy vào image.
 
 ## 5. Khi nào nên / không nên dùng
 
@@ -172,9 +232,17 @@ volumes:
 | `docker stop` mất 10 giây mới dừng, request đang xử lý bị cắt | Process không nhận được SIGTERM vì `CMD` dạng shell (`CMD npm start`), hoặc npm không chuyển tiếp signal | Dùng dạng exec `CMD ["node", "dist/main.js"]`, gọi thẳng `node` thay vì qua `npm`, bật `enableShutdownHooks()` trong NestJS |
 | `exec ./entrypoint.sh: no such file or directory` dù file có tồn tại | File có line ending CRLF (sửa trên Windows) | Cấu hình `.gitattributes` với `*.sh text eol=lf`, hoặc chuyển file sang LF |
 | Dùng `node:latest`, build tuần sau tự nhiên lỗi | Base image đã lên major mới | Pin version cụ thể |
-| Data Postgres mất khi recreate container | Không mount volume vào `/var/lib/postgresql/data` | Khai báo named volume |
+| Data Postgres mất khi recreate container | Không mount volume vào thư mục dữ liệu | Khai báo named volume: `/var/lib/postgresql/data` với image ≤ 17. Image `postgres:18` đổi sang mount `/var/lib/postgresql` (dữ liệu ở `18/docker`), mount kiểu cũ có thể làm container không khởi động. Đọc docs image trước khi viết volume |
 | Build trên Mac M-series, deploy lên server x86 báo `exec format error` | Image được build cho kiến trúc arm64 | `docker buildx build --platform linux/amd64`, hoặc build trong CI |
 | `depends_on` đã có mà API vẫn lỗi vì DB chưa sẵn sàng | `depends_on` mặc định chỉ chờ container **start**, không chờ **ready** | Dùng `condition: service_healthy` kèm healthcheck, đồng thời cho app có retry khi kết nối |
+| Đổi `NEXT_PUBLIC_API_URL`/`VITE_API_URL` trong `.env` của server mà trang vẫn gọi URL cũ | Biến public của frontend bị nhúng vào bundle lúc build | Runtime config (ADR-0010). Kiểm tra bằng cách `grep` URL trong bundle của image |
+| `ufw deny 5432` rồi mà từ ngoài vẫn vào được Postgres | Port do Docker publish đi qua bảng `nat`, không qua chain của UFW | Không publish port DB. Dùng firewall ngoài VM. Buộc phải lọc trong máy thì dùng chain `DOCKER-USER` |
+| `docker kill` để thử restart policy, container không lên lại | Docker đánh dấu container bị dừng thủ công, restart policy bị bỏ qua | Kill PID của container từ host (`docker inspect -f '{{.State.Pid}}'`) |
+| VPS đầy ổ sau vài tuần | Log `json-file` không giới hạn, image cũ sau mỗi lần deploy | Giới hạn log trong `daemon.json`, `docker image prune` trong script deploy, kiểm tra bằng `docker system df` |
+| Deploy bằng tag `latest`, không biết server đang chạy commit nào, không rollback được | Tag bị ghi đè mỗi lần build | Tag theo SHA/version, ghi tag đang chạy ra file trên server |
+| `docker pull` trên VPS báo `denied`/`unauthorized` | Package GHCR private mà VPS chưa login, hoặc token thiếu `read:packages` | Đặt package public (repo public), hoặc login bằng token chỉ đọc |
+| Container trong mạng `internal: true` không gửi được lỗi lên Sentry | Mạng internal chặn cả kết nối ra ngoài | Cho service đó vào thêm một mạng thường |
+| Nginx báo `host not found in upstream "api-1"` khi khởi động | Container upstream chưa tồn tại lúc Nginx đọc cấu hình | `depends_on` + healthcheck, hoặc dùng DNS nội bộ của Docker (`resolver 127.0.0.11`), xem [nginx.md](nginx.md) |
 
 ## 7. Debug nhanh
 
@@ -191,6 +259,12 @@ Không gọi được service:
 3. Hai container có cùng network không? `docker network inspect <net>`.
 4. Từ container A thử kết nối: `docker compose exec api nc -zv postgres 5432` (kiểm tra cổng TCP; Postgres không nói HTTP nên đừng dùng `curl`/`wget`), hoặc `docker compose exec postgres pg_isready -U pixelmart`. Với service HTTP thì dùng `docker compose exec web wget -qO- http://api:3000/v1/health`.
 
+Container production không tự lên lại sau crash hoặc reboot:
+1. `docker inspect -f '{{.HostConfig.RestartPolicy.Name}}' <ctr>`: có phải `unless-stopped`/`always` không?
+2. Trước đó container có bị dừng thủ công (`docker stop`/`docker kill`) không? Nếu có, restart policy bị bỏ qua cho tới khi bạn `docker compose up -d` lại.
+3. `systemctl is-enabled docker`: Docker có tự chạy khi boot không?
+4. `docker inspect <ctr> --format '{{json .State.Health}}'`: healthcheck lỗi gì? Container `unhealthy` **không** tự restart trong Compose, nó chỉ bị đánh dấu.
+
 Build chậm hoặc image to:
 1. `docker history <img>`: tìm layer nặng.
 2. Kiểm tra `.dockerignore`. Dòng "transferring context: X MB" trong log build cho biết context lớn cỡ nào.
@@ -201,7 +275,7 @@ Build chậm hoặc image to:
 | Version | Dùng thế nào | Ticket/plan |
 |---|---|---|
 | v1 | Dockerfile multi-stage cho API (`turbo prune`), Compose local với Postgres. Render chạy image API | PXM-11 ([plan Sprint 1](../v1/plans/sprint-01.md)), PXM-12 (docker build trong CI), PXM-13 |
-| v3 | Compose **production** trên VPS: api ×2, web, admin, postgres, nginx. Image push lên GHCR, deploy qua SSH | v3 (chưa viết) |
+| v3 | Image web (Next.js `standalone`) + runtime config. Compose **production** trên VPS: `edge` (Nginx + admin/seller tĩnh), `web`, `api-1`/`api-2`, `postgres`. Image push lên GHCR theo tag SHA, deploy qua SSH, rolling từng replica | [v3](../v3/README.md): S13-02, S13-03, S13-04 ([plan Sprint 13](../v3/plans/sprint-13.md)), S14-01, S14-02 ([plan Sprint 14](../v3/plans/sprint-14.md)) |
 | v4–v5 | Thêm Prometheus, Grafana, Redis, RabbitMQ vào Compose | v4, v5 |
 | v7 | Image trở thành đơn vị deploy của Kubernetes. Thêm tag theo SHA, quét lỗ hổng | v7 |
 
@@ -249,6 +323,18 @@ Nếu app bị khai thác, kẻ tấn công có quyền root trong container. K�
 Mặc định thì không, nó chỉ đảm bảo thứ tự start. Cần `condition: service_healthy` + healthcheck. Ngoài ra app vẫn nên có retry vì trong production DB có thể restart bất kỳ lúc nào.
 </details>
 
+8. Vì sao không nên deploy bằng tag `latest`?
+<details><summary>Gợi ý trả lời</summary>
+
+`latest` bị ghi đè mỗi lần build: không biết server đang chạy phiên bản nào, hai máy pull ở hai thời điểm có thể chạy hai bản khác nhau, và không rollback được về "bản trước". Tag theo version/SHA thì bất biến theo quy ước. Muốn chắc chắn tuyệt đối thì pin theo digest `@sha256:…`.
+</details>
+
+9. Biến môi trường lúc build và lúc chạy khác nhau thế nào? Ví dụ với frontend?
+<details><summary>Gợi ý trả lời</summary>
+
+Biến lúc chạy được đọc khi process khởi động, đổi được mà không cần build lại. Biến lúc build được dùng (và có thể bị nhúng vào kết quả) trong quá trình build. `NEXT_PUBLIC_*` của Next.js và `VITE_*` của Vite được thay thẳng vào bundle JS, nên image build cho môi trường A vẫn gọi URL của A dù chạy ở B. Cách xử lý: runtime config, ví dụ file config sinh ra lúc container khởi động, hoặc server đọc env rồi truyền xuống client.
+</details>
+
 ## 10. Tài liệu chính thức
 
 - Docker docs, phần concepts: https://docs.docker.com/get-started/docker-concepts/the-basics/what-is-a-container/
@@ -258,3 +344,8 @@ Mặc định thì không, nó chỉ đảm bảo thứ tự start. Cần `condi
 - Compose file reference: https://docs.docker.com/reference/compose-file/
 - Turborepo + Docker (`turbo prune --docker`): https://turborepo.com/docs/guides/tools/docker
 - Node.js Docker best practices: https://github.com/nodejs/docker-node/blob/main/docs/BestPractices.md
+- Restart policy: https://docs.docker.com/engine/containers/start-containers-automatically/
+- Docker và firewall (UFW, `DOCKER-USER`): https://docs.docker.com/engine/network/packet-filtering-firewalls/
+- Logging driver `json-file`: https://docs.docker.com/engine/logging/drivers/json-file/
+- GHCR: https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry
+- Cache backend GitHub Actions cho buildx: https://docs.docker.com/build/cache/backends/gha/
