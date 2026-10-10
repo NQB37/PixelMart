@@ -1,19 +1,23 @@
 # 05 — Làm việc với Claude Code
 
-Claude trong dự án này có 3 vai: **Mentor** (giải thích, đặt câu hỏi), **Pair programmer** (cùng plan, gợi ý), **Reviewer** (review PR).
-Vì đây là dự án **học**, nguyên tắc vàng: **Claude giúp bạn hiểu nhanh hơn, không làm thay phần bạn cần học.**
+Claude trong dự án này có 4 vai: **Mentor** (giải thích, đặt câu hỏi), **Pair programmer** (cùng plan, gợi ý), **Reviewer** (review PR) và **Technical writer** (viết toàn bộ tài liệu).
+Vì đây là dự án **học**, nguyên tắc vàng: **Claude giúp bạn hiểu nhanh hơn, không làm thay phần bạn cần học.** Phần bạn cần học là **code**. Tài liệu do Claude viết để bạn dồn thời gian cho code.
 
-## 1. Chia việc: tự viết vs giao cho Claude
+## 1. Chia việc
 
-| Bạn tự viết (đây là bài học) | Có thể giao Claude viết (bạn review kỹ) |
+**Tài liệu: Claude viết, bạn review.** Gồm `docs/**` (lộ trình, sprints, plans, knowledge, ADR, retro), README, changelog/release notes, mô tả PR, nội dung ticket Jira. Bạn cung cấp quyết định và số liệu (ví dụ velocity, ghi chú retro, lựa chọn trong ADR), Claude viết thành tài liệu. Chi tiết phân công ở `CLAUDE.md`.
+
+**Code: bạn viết.** Bảng dưới áp dụng cho code:
+
+| Bạn tự viết (đây là bài học) | Có thể giao Claude viết code (bạn review kỹ) |
 |---|---|
 | Logic auth: hash, JWT, refresh rotation | Boilerplate: config ESLint/tsconfig, Dockerfile lần 2 trở đi |
 | Service/business logic (checkout, tính tiền) | Seed data, fixture cho test |
 | Prisma schema & quyết định quan hệ | Component UI lặp lại (sau khi bạn đã tự làm 1 cái) |
 | Test case: **bạn nghĩ ra các trường hợp** | Viết thêm test theo danh sách case bạn đã liệt kê |
-| Workflow GitHub Actions lần đầu | Tài liệu, README, changelog từ danh sách PR |
+| Workflow GitHub Actions lần đầu | |
 
-Quy tắc: **lần đầu gặp một pattern → tự làm. Lần thứ 3 → có thể giao.**
+Quy tắc cho code: **lần đầu gặp một pattern → tự làm. Lần thứ 3 → có thể giao.**
 
 ## 2. Quy trình cho mỗi ticket: Explore → Plan → Code → Verify
 
@@ -63,7 +67,7 @@ Giải thích "vì sao" cho mỗi blocker.
 - Mỗi phiên làm việc nên **1 ticket**. Ticket mới → `/clear` để context sạch.
 - Dán **AC của ticket** vào đầu phiên. Claude không đọc được Jira của bạn (trừ khi kết nối MCP Atlassian).
 - Tham chiếu file cụ thể bằng `@path/to/file` thay vì mô tả chung chung.
-- Quyết định quan trọng trong lúc chat → ghi vào ADR/Jira. Lịch sử chat không phải tài liệu.
+- Quyết định quan trọng trong lúc chat → yêu cầu Claude ghi vào ADR (hoặc ghi vào Jira). Lịch sử chat không phải tài liệu.
 
 ## 6. An toàn
 
@@ -81,5 +85,6 @@ Giải thích "vì sao" cho mỗi blocker.
 | Thiết kế | "Mình định làm X theo cách Y. Phản biện: ưu/nhược, phương án khác?" |
 | Test | "Đây là danh sách test case mình nghĩ ra cho endpoint Z. Còn thiếu case nào?" |
 | Học | "Giải thích refresh token reuse detection bằng ví dụ có kẻ tấn công." |
-| ADR | "Viết nháp ADR cho quyết định X theo template, mình sẽ chỉnh." |
-| Retro | "Đây là ghi chú sprint của mình. Gợi ý 2 hành động cải thiện cụ thể." |
+| ADR | "Mình chọn X vì Y, đã cân nhắc Z. Viết ADR theo template và mở PR." |
+| Retro | "Đây là ghi chú + velocity sprint N. Viết `docs/retro/sprint-N.md`, gợi ý 2 hành động cải thiện cụ thể." |
+| Tài liệu | "Ticket PXM-xx vừa merge. Cập nhật README/plan/knowledge liên quan và mở PR." |

@@ -518,6 +518,8 @@ Web/Admin: SENTRY_AUTH_TOKEN (secret) trong env build của Vercel, release = gi
 - **Alternatives phải trung thực:** liệt kê phương án bị loại kèm **lý do thật** (kể cả "chưa đủ thời gian học"). Một ADR mà mọi phương án khác đều "tệ" là ADR viết để bào chữa.
 
 ### Hướng tiếp cận
+> **Phân công (CLAUDE.md):** tài liệu do Claude viết. Việc của bạn trong ticket này: với mỗi ADR, nói cho Claude biết **bạn đã chọn gì, vì sao, và đã cân nhắc những phương án nào** dựa trên trải nghiệm thật ở Sprint 1–2. Sau đó review PR ADR mà Claude mở. Các bước dưới đây mô tả nội dung một ADR đạt yêu cầu, dùng để bạn review.
+
 1. Tạo `docs/adr/README.md` (index + template) và 5 file `0001-…md` → `0005-…md`.
 2. Template: Title, Status (Proposed/Accepted/Superseded), Date, Context, Decision, Alternatives considered, Consequences (tích cực **và** tiêu cực).
 3. Viết dựa trên những gì **thật sự** đã xảy ra trong Sprint 1–2. Ví dụ ADR-0004 nên nhắc rằng không có staging và hệ quả là integration test càng quan trọng (rule 01 đã có ý này).
@@ -558,7 +560,7 @@ Template phổ biến: Michael Nygard's ADR template (Context/Decision/Status/Co
 ## Alternatives   (tRPC, GraphQL, OpenAPI-first codegen… → vì sao không)
 ## Consequences   (+ type an toàn hai phía / − phải giữ contracts không phụ thuộc Node…)
 ```
-Có thể nhờ Claude viết nháp (rule 05 cho phép với ADR), nhưng **bạn** phải sửa phần Alternatives và Consequences theo trải nghiệm thật.
+Claude viết ADR, nhưng nội dung Alternatives và Consequences phải đến từ **bạn** (trải nghiệm thật). Khi review, nếu thấy phần nào là "lý do chung chung" mà bạn chưa từng nghĩ tới, hãy yêu cầu sửa.
 </details>
 
 ### Bẫy thường gặp
