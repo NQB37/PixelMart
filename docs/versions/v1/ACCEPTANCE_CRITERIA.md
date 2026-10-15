@@ -1,0 +1,97 @@
+# V1 Acceptance Criteria
+
+Mỗi tiêu chí phải được **kiểm chứng bằng cách chạy thật**. Ghi bằng chứng (lệnh + phần output liên quan, hoặc tên test) vào cột Bằng chứng. Tiêu chí chưa có bằng chứng thì chưa được coi là xong.
+
+## Sprint V1.1 — Workspace foundations
+
+| ID | Tiêu chí | Cách kiểm chứng | Bằng chứng |
+|---|---|---|---|
+| AC-1.1-01 | Repo là một git repository, `.env` bị ignore còn `.env.example` được track | `git check-ignore -v .env` in ra một rule; `git ls-files .env.example` in ra tên file | |
+| AC-1.1-02 | `pnpm install` chạy thành công ở thư mục gốc và tạo ra `pnpm-lock.yaml` | Chạy lệnh trên repo sạch | |
+| AC-1.1-03 | `pnpm db:up` khởi động PostgreSQL 18 và đạt trạng thái `healthy` | `docker compose ps` hiển thị `(healthy)` | |
+| AC-1.1-04 | Bạn chạy được SQL bên trong database | `pnpm db:psql` → `SELECT version();` hiển thị 18.x | |
+| AC-1.1-05 | Cả hai database `pixelmart` và `pixelmart_test` đều tồn tại | `\l` trong psql | |
+| AC-1.1-06 | Dữ liệu còn sau `db:down`/`db:up`, và bị xoá sạch bởi `down -v` | Thí nghiệm về tính bền vững trong IMPLEMENTATION §6 | |
+| AC-1.1-07 | Không có secret thật nào bị commit; `.env.example` chỉ chứa giá trị giả | Xem `git show --stat HEAD` và nội dung file | |
+
+## Sprint V1.2 — API skeleton
+| ID | Tiêu chí |
+|---|---|
+| AC-1.2-01 | `GET /health` trả về 200 kèm JSON |
+| AC-1.2-02 | API từ chối khởi động với thông báo rõ ràng khi thiếu một env var bắt buộc |
+| AC-1.2-03 | Route không tồn tại và lỗi được throw đều trả về đúng định dạng lỗi đã mô tả, có `requestId` |
+| AC-1.2-04 | Log là JSON có cấu trúc (dạng dễ đọc khi ở dev) và có request ID |
+| AC-1.2-05 | Truy cập được Swagger UI tại `/docs` |
+| AC-1.2-06 | `pnpm --filter api test` và `test:e2e` đều pass |
+
+## Sprint V1.3 — Database schema
+| ID | Tiêu chí |
+|---|---|
+| AC-1.3-01 | Migration áp dụng sạch sẽ lên một database trống |
+| AC-1.3-02 | Bảng, FK, unique constraint và index khớp với DATABASE.md |
+| AC-1.3-03 | Các cột tiền là `numeric(12,2)`; các cột thời gian là `timestamptz` |
+| AC-1.3-04 | CHECK constraint từ chối giá âm, số lượng ngoài khoảng 1–99 và `line_total` không khớp (được chứng minh bằng test) |
+| AC-1.3-05 | Seed là idempotent và tạo một admin có mật khẩu đã hash, không bao giờ lưu dạng plain text |
+| AC-1.3-06 | `/health` báo trạng thái DB và trả về mã khác 200 khi DB bị dừng |
+
+## Sprint V1.4 — Catalog API
+| ID | Tiêu chí |
+|---|---|
+| AC-1.4-01 | Các endpoint sản phẩm public không bao giờ trả về sản phẩm DRAFT |
+| AC-1.4-02 | Pagination validate input (`page ≥ 1`, `1 ≤ pageSize ≤ 100`) và trả về tổng số đúng |
+| AC-1.4-03 | Lọc theo danh mục hoạt động; slug không tồn tại trả về 404 theo định dạng lỗi chuẩn |
+| AC-1.4-04 | Các trường tiền là chuỗi có hai chữ số thập phân |
+| AC-1.4-05 | Integration test chạy trên `pixelmart_test`, không bao giờ trên DB dev |
+
+## Sprint V1.5 — Storefront
+| ID | Tiêu chí |
+|---|---|
+| AC-1.5-01 | Trang chủ, trang chi tiết sản phẩm và trang danh mục hiển thị sản phẩm và ảnh lấy từ API |
+| AC-1.5-02 | Có thể trình diễn được từng state: loading, empty, not-found và error |
+| AC-1.5-03 | API URL chỉ dùng phía server (không xuất hiện trong bundle của trình duyệt) |
+| AC-1.5-04 | Link pagination hoạt động trên các trang danh mục |
+
+## Sprint V1.6 — Cart
+| ID | Tiêu chí |
+|---|---|
+| AC-1.6-01 | Thêm, đổi số lượng (1–99) và xoá đều hoạt động và vẫn còn sau khi reload trang |
+| AC-1.6-02 | localStorage bị hỏng không làm app crash |
+| AC-1.6-03 | Không có cảnh báo hydration trong console |
+| AC-1.6-04 | Unit test của reducer pass |
+
+## Sprint V1.7 — Checkout
+| ID | Tiêu chí |
+|---|---|
+| AC-1.7-01 | Guest đặt được đơn hàng và thấy mã đơn hàng trên trang xác nhận |
+| AC-1.7-02 | Tổng tiền được tính trên server từ giá trong DB; giá do client gửi lên bị từ chối/bỏ qua |
+| AC-1.7-03 | Sản phẩm không hợp lệ, sản phẩm chưa publish và số lượng không hợp lệ đều trả về 4xx với `code` ổn định, và UI hiển thị thông báo hữu ích |
+| AC-1.7-04 | Lỗi giữa transaction **không** để lại đơn hàng dở dang nào (được chứng minh bằng test) |
+| AC-1.7-05 | Order item giữ snapshot của tên và giá |
+| AC-1.7-06 | Endpoint summary không để lộ PII của khách hàng |
+
+## Sprint V1.8 — Admin auth
+| ID | Tiêu chí |
+|---|---|
+| AC-1.8-01 | Admin được seed đăng nhập được. Sai thông tin đăng nhập nhận về 401 chung chung. |
+| AC-1.8-02 | Endpoint admin: không có/không hợp lệ/hết hạn token → 401; không phải admin → 403 |
+| AC-1.8-03 | Token nằm trong httpOnly cookie và không đọc được qua `document.cookie` |
+| AC-1.8-04 | Các trang `/admin/*` chuyển hướng về login khi chưa đăng nhập; logout hoạt động |
+
+## Sprints V1.9 / V1.10 — Admin management
+| ID | Tiêu chí |
+|---|---|
+| AC-1.9-01 | CRUD danh mục và sản phẩm hoạt động end-to-end qua admin UI |
+| AC-1.9-02 | Slug trùng → 409. Xoá danh mục còn sản phẩm → 409. Cả hai đều được hiển thị trên UI. |
+| AC-1.9-03 | Publish/unpublish có tác dụng ngay lập tức lên storefront |
+| AC-1.9-04 | **Mọi** route API `/admin/*` đều từ chối request chưa xác thực (một test tự động bao phủ danh sách route) |
+| AC-1.10-01 | Admin xem danh sách (có pagination, lọc được), xem chi tiết và chuyển trạng thái đơn hàng |
+| AC-1.10-02 | Chuyển trạng thái không hợp lệ trả về 409 (table-driven test) |
+
+## V1 overall (Sprint V1.11)
+| ID | Tiêu chí |
+|---|---|
+| AC-1-01 | Clone mới → làm theo các bước trong README → app chạy được, không có bước nào không được ghi lại |
+| AC-1-02 | Toàn bộ unit test và integration test đều pass |
+| AC-1-03 | Mọi tiêu chí ở trên đều đã có bằng chứng được ghi lại |
+| AC-1-04 | ROADMAP, ARCHITECTURE (trạng thái hiện tại) và TROUBLESHOOTING đều được cập nhật |
+| AC-1-05 | Đã viết danh sách tech debt và điều kiện tiên quyết cho V2 |
