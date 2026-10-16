@@ -6,12 +6,27 @@ Một nền tảng thương mại điện tử theo định hướng production,
 
 ## Trạng thái
 
-Đã hoàn tất kế hoạch cho V1. Phần triển khai bắt đầu từ Sprint V1.1. Xem [docs/ROADMAP.md](docs/ROADMAP.md).
+Sprint V1.1 (nền tảng workspace + PostgreSQL local) đã hoàn thành. Sprint tiếp theo: V1.2 — khung NestJS API. Xem [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## Tài liệu
 
 Bắt đầu từ [docs/README.md](docs/README.md).
 
-## Bắt đầu
+## Bắt đầu (đến V1.1)
 
-_Sẽ được Sprint V1.1 điền vào, chỉ gồm các lệnh đã được kiểm chứng._
+Hiện tại repo mới có workspace và một database PostgreSQL chạy trong Docker. Chưa có API hay web.
+
+**Cần có:** Node.js 24, pnpm 12 (phiên bản chính xác được ghim trong `package.json`), Git và Docker Desktop **đang chạy**. Chi tiết xem [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
+
+```sh
+git clone <repo-url> pixelmart
+cd pixelmart
+cp .env.example .env   # rồi sửa giá trị nếu cần; .env không bao giờ được commit
+pnpm install
+pnpm db:up             # khởi động PostgreSQL 18 và chờ đến khi healthy
+pnpm db:psql           # mở psql bên trong container
+```
+
+Trong psql, chạy `SELECT version();` (phải hiện `PostgreSQL 18.x`) và `\l` (phải có `pixelmart` và `pixelmart_test`). Thoát bằng `\q`.
+
+Dừng database bằng `pnpm db:down`. Dữ liệu vẫn được giữ trong Docker volume cho lần sau.

@@ -5,8 +5,8 @@
 | Công cụ | Đã cài | Yêu cầu | Ghi chú |
 |---|---|---|---|
 | Node.js | 24.19.0 | 24.x LTS | Prisma 7 cần `^20.19 \|\| ^22.12 \|\| >=24`. nestjs-pino cần `>=22.12`. |
-| pnpm | 12.4.2 | 12.4.x | Được ghim qua `packageManager` trong `package.json` ở thư mục gốc. |
-| Git | 2.55 | bản mới gần đây | Đặt `core.autocrlf=false`. Ký tự xuống dòng do `.gitattributes` xử lý. |
+| pnpm | 12.11.2 | 12.x | Được ghim qua `packageManager` (và `devEngines`) trong `package.json` ở thư mục gốc. |
+| Git | 2.55 | bản mới gần đây | Nên đặt `core.autocrlf=false` (máy hiện đang là `true`). Ký tự xuống dòng do `.gitattributes` xử lý. |
 | Docker Engine / Desktop | 29.8.0 | 27+ | Docker Desktop phải **đang chạy** trước mọi lệnh `docker`. |
 | Docker Compose | v5.5.1 | cú pháp v2+ | Dùng `docker compose` (có dấu cách), không dùng `docker-compose` kiểu cũ. |
 | psql (local) | chưa cài | không cần | Dùng `psql` bên trong container: `pnpm db:psql`. |
@@ -44,4 +44,28 @@ Xem [ADR-0002](decisions/0002-tool-and-dependency-versions.md) để biết bằ
 
 _Được bổ sung khi mỗi sprint thêm lệnh mới. Chỉ liệt kê những lệnh đã được kiểm chứng._
 
-(chưa có — V1.1 thêm `db:up`, `db:down`, `db:logs`, `db:psql`)
+Chạy mọi lệnh ở thư mục gốc của repo.
+
+| Lệnh | Tác dụng | Kiểm chứng ở |
+|---|---|---|
+| `pnpm install` | Cài dependency cho toàn bộ workspace, cập nhật `pnpm-lock.yaml` | V1.1 |
+| `pnpm db:up` | `docker compose up -d --wait`: chạy PostgreSQL ở chế độ nền và chờ đến khi `healthy` | V1.1 |
+| `pnpm db:down` | `docker compose down`: dừng và xoá container. **Volume vẫn còn**, dữ liệu không mất | V1.1 |
+| `pnpm db:logs` | Theo dõi log của Postgres (`-f`). Nhấn `Ctrl+C` để thoát | V1.1 |
+| `pnpm db:psql` | Mở `psql` bên trong container, kết nối user `pixelmart` vào database `pixelmart` | V1.1 |
+| `docker compose ps` | Xem trạng thái container (`starting` / `healthy` / `unhealthy`) | V1.1 |
+
+### Reset database (xoá sạch dữ liệu)
+
+```sh
+docker compose down -v   # -v xoá luôn volume postgres_data
+pnpm db:up               # khởi tạo lại từ đầu; init script tạo lại pixelmart_test
+```
+
+Chỉ làm việc này khi bạn chấp nhận mất toàn bộ dữ liệu local.
+
+### Lưu ý
+
+- `db:psql` gõ cứng user `pixelmart`, nên giữ `POSTGRES_USER=pixelmart` trong `.env` như `.env.example`.
+- Biến `POSTGRES_*` và các init script trong `infra/docker/postgres/init/` **chỉ có tác dụng ở lần khởi động đầu tiên**, khi volume còn trống. Đổi user hoặc mật khẩu trong `.env` sau đó sẽ không có hiệu lực cho đến khi bạn reset database như trên. Xem [TROUBLESHOOTING](versions/v1/TROUBLESHOOTING.md).
+- Nếu port 5432 đã bị chiếm, đổi `POSTGRES_PORT` trong `.env`. Port phía trong container vẫn là 5432.

@@ -106,6 +106,7 @@ _Mỗi sprint hoàn thành sẽ có một bản tóm tắt ở đây: đã tri�
 - **Đã triển khai:** git repo, pnpm workspace, `docker-compose.yml` với PostgreSQL 18 (named volume, healthcheck, port lấy từ env), init script tạo `pixelmart_test`, các script `db:up/down/logs/psql`, `.editorconfig`, `.node-version`.
 - **Đã học:** `environment` trong Compose là map *hoặc* list `KEY=value`, không được trộn; đổi `POSTGRES_USER` sau khi volume đã khởi tạo không có tác dụng, phải `down -v`; `db:psql` không nên gõ cứng user.
 - **Đã test:** AC-1.1-01…07 đều được kiểm chứng bằng cách chạy thật (bằng chứng trong ACCEPTANCE_CRITERIA).
-- **Còn dang dở:** phần "Getting started (so far)" trong `README.md` chưa viết (IMPLEMENTATION bước 9); cần rà lại bảng lệnh trong `docs/DEVELOPMENT.md`; bài tập troubleshooting §8 và câu hỏi ôn tập §9 chưa làm.
+- **Docs đã cập nhật:** `README.md` (Bắt đầu đến V1.1), `docs/DEVELOPMENT.md` (bảng lệnh hằng ngày, reset database, lưu ý), ACCEPTANCE_CRITERIA.
+- **Còn dang dở:** bài tập troubleshooting §8 và câu hỏi ôn tập §9 chưa làm.
 - **Tech debt:** `pnpm-workspace.yaml` có `packages/*` dù chưa cần; IMPLEMENTATION ghi `pnpm@12.4.2` trong khi thực tế là 12.11.2.
 - **Sprint tiếp theo:** V1.2 — Khung NestJS API.
