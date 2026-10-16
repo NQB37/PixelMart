@@ -1,0 +1,25 @@
+{
+  "name": "pixelmart",
+  "version": "1.0.0",
+  "description": "Pixelmart - E-Commerce",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "db:up": "docker compose up -d --wait",
+    "db:down": "docker compose down",
+    "db:logs": "docker compose logs -f postgres",
+    "db:psql": "docker compose exec postgres psql -U pixelmart -d pixelmart"
+  },
+  "keywords": [],
+  "author": "NQB37",
+  "license": "ISC",
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "12.11.2",
+      "onFail": "download"
+    }
+  },
+  "packageManager": "pnpm@12.11.2",
+  "type": "module"
+}
