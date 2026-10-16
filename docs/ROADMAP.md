@@ -86,7 +86,7 @@ Chi tiết: [`versions/v1/IMPLEMENTATION.md`](versions/v1/IMPLEMENTATION.md) · 
 
 | Sprint | Mục tiêu | Trạng thái |
 |---|---|---|
-| V1.1 | Nền tảng workspace: git, pnpm workspace, PostgreSQL trong Docker Compose | 🟦 Tiếp theo |
+| V1.1 | Nền tảng workspace: git, pnpm workspace, PostgreSQL trong Docker Compose | ✅ |
 | V1.2 | Khung NestJS API: config, health, validation, xử lý lỗi, logging, Swagger | ⬜ |
 | V1.3 | Database schema với Prisma: model, migration, constraint, seed | ⬜ |
 | V1.4 | API catalog public: danh mục, sản phẩm, pagination | ⬜ |
@@ -102,4 +102,10 @@ Chi tiết: [`versions/v1/IMPLEMENTATION.md`](versions/v1/IMPLEMENTATION.md) · 
 
 _Mỗi sprint hoàn thành sẽ có một bản tóm tắt ở đây: đã triển khai gì, đã học gì, đã test gì, còn dang dở gì, tech debt, docs đã cập nhật, sprint tiếp theo._
 
-(chưa có)
+### V1.1 — Workspace foundations (2026-10-16) ✅
+- **Đã triển khai:** git repo, pnpm workspace, `docker-compose.yml` với PostgreSQL 18 (named volume, healthcheck, port lấy từ env), init script tạo `pixelmart_test`, các script `db:up/down/logs/psql`, `.editorconfig`, `.node-version`.
+- **Đã học:** `environment` trong Compose là map *hoặc* list `KEY=value`, không được trộn; đổi `POSTGRES_USER` sau khi volume đã khởi tạo không có tác dụng, phải `down -v`; `db:psql` không nên gõ cứng user.
+- **Đã test:** AC-1.1-01…07 đều được kiểm chứng bằng cách chạy thật (bằng chứng trong ACCEPTANCE_CRITERIA).
+- **Còn dang dở:** phần "Getting started (so far)" trong `README.md` chưa viết (IMPLEMENTATION bước 9); cần rà lại bảng lệnh trong `docs/DEVELOPMENT.md`; bài tập troubleshooting §8 và câu hỏi ôn tập §9 chưa làm.
+- **Tech debt:** `pnpm-workspace.yaml` có `packages/*` dù chưa cần; IMPLEMENTATION ghi `pnpm@12.4.2` trong khi thực tế là 12.11.2.
+- **Sprint tiếp theo:** V1.2 — Khung NestJS API.

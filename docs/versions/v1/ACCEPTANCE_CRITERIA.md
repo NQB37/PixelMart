@@ -6,13 +6,13 @@ Mỗi tiêu chí phải được **kiểm chứng bằng cách chạy thật**. 
 
 | ID | Tiêu chí | Cách kiểm chứng | Bằng chứng |
 |---|---|---|---|
-| AC-1.1-01 | Repo là một git repository, `.env` bị ignore còn `.env.example` được track | `git check-ignore -v .env` in ra một rule; `git ls-files .env.example` in ra tên file | |
-| AC-1.1-02 | `pnpm install` chạy thành công ở thư mục gốc và tạo ra `pnpm-lock.yaml` | Chạy lệnh trên repo sạch | |
-| AC-1.1-03 | `pnpm db:up` khởi động PostgreSQL 18 và đạt trạng thái `healthy` | `docker compose ps` hiển thị `(healthy)` | |
-| AC-1.1-04 | Bạn chạy được SQL bên trong database | `pnpm db:psql` → `SELECT version();` hiển thị 18.x | |
-| AC-1.1-05 | Cả hai database `pixelmart` và `pixelmart_test` đều tồn tại | `\l` trong psql | |
-| AC-1.1-06 | Dữ liệu còn sau `db:down`/`db:up`, và bị xoá sạch bởi `down -v` | Thí nghiệm về tính bền vững trong IMPLEMENTATION §6 | |
-| AC-1.1-07 | Không có secret thật nào bị commit; `.env.example` chỉ chứa giá trị giả | Xem `git show --stat HEAD` và nội dung file | |
+| AC-1.1-01 | Repo là một git repository, `.env` bị ignore còn `.env.example` được track | `git check-ignore -v .env` in ra một rule; `git ls-files .env.example` in ra tên file | ✅ `git check-ignore -v .env` → `.gitignore:63:*.env	.env`; `git ls-files .env.example` → `.env.example`; `git ls-files .env` → 0 dòng (commit `abd2b64`) |
+| AC-1.1-02 | `pnpm install` chạy thành công ở thư mục gốc và tạo ra `pnpm-lock.yaml` | Chạy lệnh trên repo sạch | ✅ `pnpm install` → "Already up to date"; có `pnpm-lock.yaml` (pnpm 12.11.2, Node 24.19.0) |
+| AC-1.1-03 | `pnpm db:up` khởi động PostgreSQL 18 và đạt trạng thái `healthy` | `docker compose ps` hiển thị `(healthy)` | ✅ `pnpm db:up` → container `Healthy`; `docker compose ps` → `postgres:18-alpine ... Up (healthy)` |
+| AC-1.1-04 | Bạn chạy được SQL bên trong database | `pnpm db:psql` → `SELECT version();` hiển thị 18.x | ✅ `current_user` = `pixelmart`; `SELECT version();` → `PostgreSQL 18.6` |
+| AC-1.1-05 | Cả hai database `pixelmart` và `pixelmart_test` đều tồn tại | `\l` trong psql | ✅ `pg_database` liệt kê `pixelmart` và `pixelmart_test` |
+| AC-1.1-06 | Dữ liệu còn sau `db:down`/`db:up`, và bị xoá sạch bởi `down -v` | Thí nghiệm về tính bền vững trong IMPLEMENTATION §6 | ✅ Sau `db:down` + `db:up`, `SELECT` vẫn trả dòng `1\|persist`; sau `docker compose down -v` + `db:up`, `to_regclass('ac_probe')` rỗng và `pixelmart_test` được tạo lại |
+| AC-1.1-07 | Không có secret thật nào bị commit; `.env.example` chỉ chứa giá trị giả | Xem `git show --stat HEAD` và nội dung file | ✅ Commit `abd2b64` chỉ có `.env.example` (giá trị giả `pixelmart_dev_password`), không có `.env` |
 
 ## Sprint V1.2 — API skeleton
 | ID | Tiêu chí |
